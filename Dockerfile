@@ -14,6 +14,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgeos-dev \
     gcc \
     libc6-dev \
+    libpangocairo-1.0-0 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    libxml2 \
+    libxslt1.1 \
+    libjpeg-dev \
+    zlib1g-dev \
+    libgobject-2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

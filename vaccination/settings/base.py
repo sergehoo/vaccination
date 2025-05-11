@@ -246,19 +246,6 @@ ACCOUNT_SIGNUP_REDIRECT_URL = "account_login"
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
-# DJOSER = {
-#     'LOGIN_FIELD': 'username',
-#     'USER_CREATE_PASSWORD_RETYPE': True,
-#     'SEND_CONFIRMATION_EMAIL': False,
-#     'PASSWORD_CHANGED_EMAIL_CONFIRMATION': False,
-#     'USERNAME_CHANGED_EMAIL_CONFIRMATION': False,
-#     'ACTIVATION_URL': 'auth/activate/{uid}/{token}/',
-#     'SEND_ACTIVATION_EMAIL': False,
-#     'SERIALIZERS': {
-#         'user_create': 'djoser.serializers.UserCreateSerializer',
-#         'user': 'djoser.serializers.UserSerializer',
-#     },
-# }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
