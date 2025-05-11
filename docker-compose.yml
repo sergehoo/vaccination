@@ -46,7 +46,7 @@ services:
   redis:
     image: redis:6
     ports:
-      - "6379:6379"  # Redirection directe pour éviter la confusion
+      - "6380:6379"  # Redirection directe pour éviter la confusion
     restart: always
 
   celery:
