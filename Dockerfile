@@ -6,6 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Installer dépendances système nécessaires à WeasyPrint
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpango-1.0-0 \
@@ -13,8 +14,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     libgdk-pixbuf2.0-0 \
     libffi-dev \
-    libgobject-2.0-0 \
     libglib2.0-0 \
+    libgirepository-1.0-1 \
+    gir1.2-pango-1.0 \
+    gir1.2-glib-2.0 \
+    gir1.2-gdkpixbuf-2.0 \
     libxml2 \
     libxslt1.1 \
     libjpeg-dev \
