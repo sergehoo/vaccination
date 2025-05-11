@@ -1,0 +1,89 @@
+
+services:
+  vaccinationweb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn vaccination.wsgi:application --bind 0.0.0.0:8000"
+    ports:
+      - "1105:8000"
+    volumes:
+      - .:/app
+      - static_volume:/app/static
+      - staticfiles_volume:/app/staticfiles
+      - media_volume:/app/media
+    env_file:
+      - ./.env
+    depends_on:
+      - vaccinationdb
+      - redis
+    restart: always
+
+  vaccinationdb:
+    image: postgis/postgis:13-3.1
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+    restart: always
+
+  vaccinationadminer:
+    image: adminer
+    restart: always
+    ports:
+      - 1830:8080  # Port mapping for Adminer
+    environment:
+      - ADMINER_DEFAULT_SERVER=vaccinationdb  # Default DB server in Adminer
+
+  redis:
+    image: redis:6
+    ports:
+      - "6379:6379"  # Redirection directe pour éviter la confusion
+    restart: always
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A vaccination worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - vaccinationdb
+    environment:
+      CELERY_BROKER_URL: redis://redis:6380/0  # Utilisation du nom du service Docker
+    restart: always
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A vaccination beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - vaccinationdb
+    environment:
+      CELERY_BROKER_URL: redis://redis:6380/0  # Utilisation du nom du service Docker
+    restart: always
+
+volumes:
+  pgdata:
+    driver: local
+  static_volume:
+  staticfiles_volume:
+  media_volume:

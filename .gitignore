@@ -1,0 +1,17 @@
+.env
+# Environnement virtuel
+venv/
+.env.*
+
+# Fichiers compilés
+*.pyc
+__pycache__/
+
+# Bases de données locales
+*.sqlite3
+
+# Fichiers temporaires
+*.log
+*.pot
+*.mo
+*.swp

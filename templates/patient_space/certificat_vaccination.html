@@ -1,0 +1,179 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Certificat de Vaccination - {{ maladie.nom }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            color: #000;
+            {#background-image: url("{% static 'images/logo/filira.png' %}");#}
+            background: url("{{ STATIC_URL }}images/logo/filira.png") no-repeat center;
+
+        }
+
+        .header, .footer {
+            text-align: center;
+            font-size: xx-small;
+        }
+
+        .header {
+            margin-bottom: 10px;
+        }
+
+        .institut {
+            font-style: italic;
+        }
+
+        .divider {
+            border-top: 1px solid #000;
+            margin: 10px 0;
+        }
+
+        .contact-info {
+            font-size: 11pt;
+        }
+
+        .republique {
+            margin: 5px 0;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .titre {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 30px 0 20px;
+        }
+
+        .contenu {
+            text-align: justify;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .vaccination-details {
+            margin-left: 40px;
+            margin-top: 10px;
+            font-size: 10px;
+        }
+
+        .dose {
+            margin-bottom: 15px;
+        }
+
+        .signature {
+            margin-top: 40px;
+            text-align: right;
+        }
+
+        .footer {
+            font-size: 10pt;
+            margin-top: 20px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+        }
+
+        .code {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 12pt;
+        }
+
+
+    </style>
+</head>
+<body style="background-image: url({{ mshplogo }})">
+
+<div class="header">
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 45%; vertical-align: top;"> <img alt="Logo" src="{{ mshplogo }}" width="100"></td>
+            <td style="width: 15%; vertical-align: top;"></td>
+            <td style="width: 45%; vertical-align: top;"> <img alt="Logo" src="{{ rcilogo }}" width="150"></td>
+        </tr>
+        <tr>
+            <!-- Partie gauche : Ministère + INHP -->
+            <td style="width: 45%; vertical-align: top;">
+                <strong>MINISTERE DE LA SANTE DE L'HYGIENE PUBLIQUE<br>
+                ET DE LA COUVERTURE MALADIE UNIVERSELLE</strong>
+                <div class="">--------------------</div>
+                <img alt="Logo" src="{{ inhplogo }}" width="150">
+                <div>Bp V 14 Abidjan<br>
+                 Tél : 27 21 25 92 54 / 27 21 25 92 78<br>
+                    Fax : 27 21 24 69 81</div>
+                
+    Email : info@inhp.ci | Site web : www.inhp.ci
+
+            </td>
+<td style="width: 15%; vertical-align: top; "></td>
+            <!-- Partie droite : République -->
+            <td style="width: 40%; text-align: right; vertical-align: top;">
+                <div class="republique">
+                    Union - Discipline - Travail
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div style="text-align: right; font-size: 8pt; margin-top: 10px;">
+    Abidjan le {{ date_emission|date:"d M Y" }}
+</div>
+
+<div class="titre">
+    CERTIFICAT DE VACCINATION CONTRE LA {{ maladie.nom|upper }}
+</div>
+
+<div class="contenu">
+    Je soussigné, Professeur <strong>Professeur EKRA Kouadio Daniel</strong>, <strong>Directeur </strong> de l’Institut
+    National d’Hygiène Publique (INHP) d’Abidjan,
+    certifie que M. (Mme), (Mlle) <strong>{{ patient.nom }} {{ patient.prenoms }}</strong>, né(e) le
+    <strong>{{ patient.date_naissance|date:"d-m-Y" }}</strong>,
+    a bénéficié de doses de vaccin contre la {{ maladie.nom|lower }} dont :
+
+    <div class="vaccination-details">
+        {% for vacc in vaccinations %}
+            <div class="dose">
+                {{ forloop.counter }}<sup>{% if forloop.counter == 1 %}ère{% else %}ième{% endif %}</sup> dose
+                : <strong>{{ vacc.date_vaccination|date:"d-m-Y" }}</strong><br>
+                Site de vaccination : <strong>{{ vacc.centre.name }}</strong><br>
+                Vaccin : <strong>{{ vacc.vaccin.nom }}</strong><br>
+                Lot Numéro : <strong>{{ vacc.lot.numero_lot|default:"-" }}</strong>
+            </div>
+        {% endfor %}
+    </div>
+
+    En foi de quoi je lui délivre ce présent certificat pour servir et valoir ce que de droit.
+</div>
+
+<div class="signature">
+    <strong>Professeur EKRA Kouadio Daniel
+</strong><br>
+    Le Directeur de l'INHP
+</div>
+
+<div class="code">
+    <p style="font-size: 8px;">Scanner pour vérifier l'authenticité du certificat</p>
+    <img src="{{ qr_code_data }}" alt="QR Code de vérification" width="120">
+</div>
+    CODE : {{ patient.code_patient }}
+</div>
+
+<div class="footer">
+    INHP - Institut National d'Hygiène Publique | BP V 14 Abidjan | Tél : 27 21 25 92 54<br>
+    <small style="font-size: 8px; color: #3c763d">DOC-REF-{{ reference }}</small>
+</div>
+</body>
+</html>

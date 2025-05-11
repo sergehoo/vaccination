@@ -1,0 +1,165 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% block content %}
+<!-- main @s -->
+<div class="nk-main">
+    <!-- wrap @s -->
+    <div class="nk-wrap nk-wrap-nosidebar">
+        <!-- content @s -->
+        <div class="nk-content">
+            <div class="nk-split nk-split-page nk-split-md">
+                <!-- Partie gauche - Formulaire -->
+                <div class="nk-split-content nk-block-area nk-block-area-column nk-auth-container bg-white">
+                    <div class="absolute-top-right d-lg-none p-3 p-sm-5">
+                        <a href="#" class="toggle btn-white btn btn-icon btn-light" data-target="athPromo"><em class="icon ni ni-info text-primary"></em></a>
+                    </div>
+                    <div class="nk-block nk-block-middle nk-auth-body">
+                        <div class="brand-logo pb-5 text-center">
+                            <a href="/" class="logo-link">
+                                <img class="logo-img logo-img-lg" src="{% static 'images/logo/logoMSHPCMU.svg' %}" alt="KENEYA" width="280">
+                            </a>
+                            <h5 class="mt-2 mb-0 text-primary">Plateforme de santé numérique</h5>
+                        </div>
+                        <div class="nk-block-head">
+                            <div class="nk-block-head-content">
+                                <h3 class="nk-block-title">Connexion Patient</h3>
+                                <div class="nk-block-des">
+                                    <p>Accédez à votre espace personnel KENEYA</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form method="post" class="mt-4">
+                            {% csrf_token %}
+                            {% if form.errors %}
+                            <div class="alert alert-danger">
+                                <em class="icon ni ni-cross-circle"></em> 
+                                Identifiants incorrects. Veuillez réessayer.
+                            </div>
+                            {% endif %}
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="code_patient">Code Patient</label>
+                                <div class="form-control-wrap">
+                                    <input type="text" class="form-control form-control-lg" id="code_patient" name="code_patient" placeholder="Votre code patient" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="telephone">Numéro de Téléphone</label>
+                                <div class="form-control-wrap">
+                                    <input type="password" class="form-control form-control-lg" id="telephone" name="telephone" placeholder="Votre numéro enregistré" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-lg btn-primary btn-block">
+                                    <em class="icon ni ni-signin"></em> Se connecter
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="form-note-s2 pt-3 text-center">
+                            <a href="" class="text-soft">Mot de passe oublié ?</a>
+                        </div>
+                        <div class="text-center pt-4 pb-3">
+                            <h6 class="overline-title overline-title-sap"><span>OU</span></h6>
+                        </div>
+                        <div class="text-center">
+                            <p>Première visite ? <a href="" class="text-primary">Créer un compte</a></p>
+                        </div>
+                    </div><!-- .nk-block -->
+
+                    <div class="nk-block nk-auth-footer">
+                        <div class="text-center">
+                            <p class="text-soft small">&copy; {{ now|date:"Y" }} KENEYA - Plateforme de l'INHP<br>
+                            Ministère de la Santé et de l'Hygiène Publique - Côte d'Ivoire</p>
+                        </div>
+                    </div>
+                </div><!-- .nk-split-content -->
+
+                <!-- Partie droite - Carousel -->
+                <div class="nk-split-content nk-split-stretch d-flex toggle-break-lg toggle-slide toggle-slide-right bg-primary" data-content="athPromo" data-toggle-screen="lg" data-toggle-overlay="true">
+                    <div class="slider-wrap w-100 w-max-550px p-3 p-sm-5 m-auto">
+                        <div class="slider-init" data-slick='{"dots":true, "arrows":false}'>
+                            <div class="slider-item">
+                                <div class="nk-feature nk-feature-center text-white">
+                                    <div class="nk-feature-img">
+                                        <img class="round" src="{% static 'images/slides/vaccination.jpg' %}" alt="Vaccination">
+                                    </div>
+                                    <div class="nk-feature-content py-4 p-sm-5">
+                                        <h3 class="text-white">Suivi Vaccinal</h3>
+                                        <p>Consultez votre historique vaccinal et recevez des alertes pour vos rappels.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slider-item">
+                                <div class="nk-feature nk-feature-center text-white">
+                                    <div class="nk-feature-img">
+                                        <img class="round" src="{% static 'images/slides/rdv.jpg' %}" alt="Rendez-vous">
+                                    </div>
+                                    <div class="nk-feature-content py-4 p-sm-5">
+                                        <h3 class="text-white">Gestion des Rendez-vous</h3>
+                                        <p>Prenez rendez-vous en ligne avec les centres de santé partenaires.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slider-item">
+                                <div class="nk-feature nk-feature-center text-white">
+                                    <div class="nk-feature-img">
+                                        <img class="round" src="{% static 'images/slides/dossier.jpg' %}" alt="Dossier médical">
+                                    </div>
+                                    <div class="nk-feature-content py-4 p-sm-5">
+                                        <h3 class="text-white">Dossier Médical Sécurisé</h3>
+                                        <p>Accédez à vos résultats d'analyse et prescriptions en toute sécurité.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <img src="{% static 'images/logo-white.png' %}" alt="INHP" width="120" class="mb-2">
+                            <p class="text-white-50 small">Institut National d'Hygiène Publique</p>
+                        </div>
+                    </div>
+                </div><!-- .nk-split-content -->
+            </div><!-- .nk-split -->
+        </div>
+    </div>
+    <!-- wrap @e -->
+</div>
+<!-- main @e -->
+
+<style>
+    /* Style personnalisé pour la page de login */
+    .bg-primary {
+        background: linear-gradient(135deg, #009A44, #0055A4) !important;
+    }
+    .btn-primary {
+        background-color: #FF9F0D;
+        border-color: #FF9F0D;
+    }
+    .btn-primary:hover {
+        background-color: #e08a00;
+        border-color: #e08a00;
+    }
+    .text-primary {
+        color: #009A44 !important;
+    }
+    .overline-title-sap span {
+        background-color: #fff;
+        padding: 0 10px;
+    }
+    .form-control:focus {
+        border-color: #FF9F0D;
+        box-shadow: 0 0 0 2px rgba(255, 159, 13, 0.2);
+    }
+    .slider-dots li button:before {
+        color: rgba(255,255,255,0.5) !important;
+    }
+    .slider-dots li.slick-active button:before {
+        color: white !important;
+    }
+    .round {
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}

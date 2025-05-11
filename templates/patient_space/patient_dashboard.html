@@ -1,0 +1,392 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="nk-main">
+    <!-- wrap @s -->
+    <div class="nk-wrap">
+        <!-- main header @s -->
+        <div class="nk-header nk-header-fixed is-light" style="background: #009A44;">
+            <div class="container-fluid">
+                <div class="nk-header-wrap">
+                    <div class="nk-menu-trigger d-xl-none ml-n1">
+                        <a href="#" class="nk-nav-toggle nk-quick-nav-icon" data-target="sidebarMenu"><em class="icon ni ni-menu text-white"></em></a>
+                    </div>
+                    <div class="nk-header-brand d-xl-none">
+                        <a href="#" class="logo-link">
+                            <img class="logo-img" src="{% static 'images/logo-white.png' %}" alt="KENEYA" width="120">
+                        </a>
+                    </div>
+                    <div class="nk-header-news d-none d-xl-block">
+                        <div class="nk-news-list">
+                            <a class="nk-news-item text-white" href="#">
+                                <div class="nk-news-icon">
+                                    <em class="icon ni ni-alert text-white"></em>
+                                </div>
+                                <div class="nk-news-text">
+                                    <p class="text-white">KENEYA - Votre santé numérique<span> Plateforme officielle de l'INHP</span></p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="nk-header-tools">
+                        <ul class="nk-quick-nav">
+                            <li class="dropdown notification-dropdown mr-n1">
+                                <a href="#" class="dropdown-toggle nk-quick-nav-icon" data-toggle="dropdown">
+                                    <div class="icon-status icon-status-info"><em class="icon ni ni-bell text-white"></em></div>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-xl dropdown-menu-right dropdown-menu-s1">
+                                    <div class="dropdown-head">
+                                        <span class="sub-title nk-dropdown-title">Notifications</span>
+                                        <a href="#">Tout marquer comme lu</a>
+                                    </div>
+                                    <div class="dropdown-body">
+                                        <div class="nk-notification">
+                                            {% for notif in notifications %}
+                                            <div class="nk-notification-item dropdown-inner">
+                                                <div class="nk-notification-icon">
+                                                    <em class="icon icon-circle bg-{% if notif.important %}danger{% else %}success{% endif %}-dim ni ni-{% if notif.type == 'vaccin' %}syringe{% else %}calendar{% endif %}"></em>
+                                                </div>
+                                                <div class="nk-notification-content">
+                                                    <div class="nk-notification-text">{{ notif.message }}</div>
+                                                    <div class="nk-notification-time">{{ notif.date|timesince }}</div>
+                                                </div>
+                                            </div>
+                                            {% empty %}
+                                            <div class="nk-notification-item dropdown-inner text-center py-3">
+                                                Aucune nouvelle notification
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="dropdown-foot center">
+                                        <a href="#">Voir tout</a>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="dropdown user-dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <div class="user-toggle">
+                                        <div class="user-avatar sm bg-orange">
+                                            {{ request.user.nom|first }}{{ request.user.prenoms|first }}
+                                        </div>
+                                        <div class="user-info d-none d-md-block">
+                                            <div class="user-status text-white">Patient</div>
+                                            <div class="user-name dropdown-indicator text-white">{{ request.user.nom }} {{ request.user.prenoms }}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-md dropdown-menu-right dropdown-menu-s1">
+                                    <div class="dropdown-inner user-card-wrap bg-lighter d-none d-md-block">
+                                        <div class="user-card">
+                                            <div class="user-avatar bg-orange">
+                                                <span>{{ request.user.nom|first }}{{ request.user.prenoms|first }}</span>
+                                            </div>
+                                            <div class="user-info">
+                                                <span class="lead-text">{{ request.user.nom }} {{ request.user.prenoms }}</span>
+                                                <span class="sub-text">{{ request.user.code_patient }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown-inner">
+                                        <ul class="link-list">
+                                            <li><a href=""><em class="icon ni ni-user-alt"></em><span>Mon Profil</span></a></li>
+                                            <li><a href=""><em class="icon ni ni-calendar"></em><span>Mes Rendez-vous</span></a></li>
+                                            <li><a href=""><em class="icon ni ni-file-text"></em><span>Mes Documents</span></a></li>
+                                        </ul>
+                                    </div>
+                                    <div class="dropdown-inner">
+                                        <ul class="link-list">
+                                            <li><a href="{% url 'account_logout' %}"><em class="icon ni ni-signout"></em><span>Déconnexion</span></a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- main header @e -->
+
+        <!-- content @s -->
+        <div class="nk-content" style="background-color: #f8f9fa;">
+            <div class="container-fluid">
+                <div class="nk-content-inner">
+                    <div class="nk-content-body">
+                        <div class="nk-block">
+                            <div class="card card-bordered" style="border-radius: 10px; overflow: hidden;">
+                                <div class="card-aside-wrap">
+                                    <div class="card-inner card-inner-lg">
+                                        <div class="nk-block-head nk-block-head-lg">
+                                            <div class="nk-block-between">
+                                                <div class="nk-block-head-content">
+                                                    <h4 class="nk-block-title">Bonjour {{ request.user.prenoms }} <span class="text-success">👋</span></h4>
+                                                    <div class="nk-block-des">
+                                                        <p>Bienvenue sur votre espace personnel KENEYA. Consultez et gérez vos informations de santé en toute sécurité.</p>
+                                                    </div>
+                                                </div>
+                                                <div class="nk-block-head-content align-self-start d-lg-none">
+                                                    <a href="#" class="toggle btn btn-icon btn-trigger mt-n1" data-target="userAside"><em class="icon ni ni-menu-alt-r"></em></a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Statistiques rapides -->
+                                        <div class="row g-4 mb-4">
+                                            <div class="col-md-4">
+                                                <div class="card card-bordered bg-light" style="border-left: 4px solid #FF9F0D;">
+                                                    <div class="card-inner">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="icon-circle bg-orange me-3">
+{#                                                                <em class="ni ni-syringe text-orange"></em>#}
+                                                                <em class="icon ni ni-share-alt"></em>
+                                                            </div>
+                                                            <div>
+                                                                <h5 class="mb-0">{{ vaccins_complets }}2 / {{ vaccins_total }}3</h5>
+                                                                <span class="text-soft">Vaccins complets</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card card-bordered bg-light" style="border-left: 4px solid #009A44;">
+                                                    <div class="card-inner">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="icon-circle bg-success me-3">
+                                                                <em class="icon ni ni-calendar-fill"></em>
+                                                            </div>
+                                                            <div>
+                                                                <h5 class="mb-0">{{ rdv_count }}</h5>
+                                                                <span class="text-soft ml-2">Rendez-vous à venir</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card card-bordered bg-light" style="border-left: 4px solid #0055A4;">
+                                                    <div class="card-inner">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="icon-circle bg-primary me-3">
+                                                                <em class="icon ni ni-file"></em>
+                                                            </div>
+                                                            <div>
+                                                                <h5 class="mb-0">{{ documents_count }}</h5>
+                                                                <span class="text-soft ml-2">Documents médicaux</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Prochains rendez-vous -->
+                                        <div class="card card-bordered mb-4">
+                                            <div class="card-header border-bottom">
+                                                <h5 class="title">Mes prochains rendez-vous <em class="icon ni ni-calendar"></em></h5>
+                                            </div>
+                                            <div class="card-body">
+                                                {% if prochains_rdv %}
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped">
+                                                        <thead class="bg-light">
+                                                            <tr>
+                                                                <th>Date</th>
+                                                                <th>Heure</th>
+                                                                <th>Médecin/Spécialité</th>
+                                                                <th>Centre</th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for rdv in prochains_rdv %}
+                                                            <tr>
+                                                                <td>{{ rdv.date|date:"d/m/Y" }}</td>
+                                                                <td>{{ rdv.heure|time:"H:i" }}</td>
+                                                                <td>
+                                                                    <div class="d-flex align-items-center">
+                                                                        <em class="icon ni ni-user-alt-fill me-2 text-primary"></em>
+                                                                        <div>
+                                                                            <span class="d-block">{{ rdv.medecin.nom_complet }}</span>
+                                                                            <small class="text-muted">{{ rdv.specialite }}</small>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>{{ rdv.centre.nom }}</td>
+                                                                <td>
+                                                                    <a href="#" class="btn btn-sm btn-outline-primary">Détails</a>
+                                                                    <a href="#" class="btn btn-sm btn-outline-danger">Annuler</a>
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                {% else %}
+                                                <div class="text-center py-4">
+                                                    <em class="icon ni ni-calendar text-soft" style="font-size: 2rem;"></em>
+                                                    <h5 class="mt-3">Aucun rendez-vous à venir</h5>
+                                                    <p class="text-soft">Prenez rendez-vous avec un professionnel de santé.</p>
+                                                    <a href="" class="btn btn-primary">Prendre rendez-vous</a>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <!-- Vaccinations récentes -->
+                                        <div class="card card-bordered">
+                                            <div class="card-header border-bottom">
+                                                <h5 class="title">Mes dernières vaccinations <em class="icon ni ni-syringe"></em></h5>
+                                            </div>
+                                            <div class="card-body">
+                                                {% if vaccinations_recentes %}
+                                                <div class="table-responsive">
+                                                    <table class="table table-striped">
+                                                        <thead class="bg-light">
+                                                            <tr>
+                                                                <th>Date</th>
+                                                                <th>Vaccin</th>
+                                                                <th>Dose</th>
+                                                                <th>Centre</th>
+                                                                <th>Certificat</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for vacc in vaccinations_recentes %}
+                                                            <tr>
+                                                                <td>{{ vacc.date_vaccination|date:"d/m/Y" }}</td>
+                                                                <td>
+                                                                    <div class="d-flex align-items-center">
+                                                                        <em class="icon ni ni-check-circle-fill text-success me-2"></em>
+                                                                        <div>
+                                                                            <span class="d-block">{{ vacc.vaccin.nom }}</span>
+                                                                            <small class="text-muted">{{ vacc.vaccin.fabricant }}</small>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <span class="badge {% if vacc.dose == 1 %}bg-primary{% else %}bg-success{% endif %}">
+                                                                        {{ vacc.dose }}/{{ vacc.vaccin.doses_requises }}
+                                                                    </span>
+                                                                </td>
+                                                                <td>{{ vacc.centre.nom }}</td>
+                                                                <td>
+                                                                    <a href="{% url 'certificat_vaccination' vacc.id %}" class="btn btn-sm btn-outline-success">
+                                                                        <em class="icon ni ni-download"></em> Télécharger
+                                                                    </a>
+                                                                </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <div class="text-center mt-3">
+                                                    <a href="{% url 'mes_vaccins' %}" class="btn btn-outline-primary">Voir tout l'historique</a>
+                                                </div>
+                                                {% else %}
+                                                <div class="text-center py-4">
+                                                    <em class="icon ni ni-syringe text-soft" style="font-size: 2rem;"></em>
+                                                    <h5 class="mt-3">Aucune vaccination enregistrée</h5>
+                                                    <p class="text-soft">Votre historique vaccinal apparaîtra ici après votre première vaccination.</p>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sidebar -->
+                                    <div class="card-aside card-aside-left user-aside toggle-slide toggle-slide-left toggle-break-lg" data-content="userAside" data-toggle-screen="lg" data-toggle-overlay="true">
+                                        <div class="card-inner-group">
+                                            <div class="card-inner p-0">
+                                                <div class="user-card" style="background: linear-gradient(135deg, #40880e, #98f626);">
+                                                    <div class="user-avatar bg-white text-orange">
+                                                        <span>{{ request.user.nom|first }}{{ request.user.prenoms|first }}</span>
+                                                    </div>
+                                                    <div class="user-info text-white">
+                                                        <span class="lead-text">{{ request.user.nom }} {{ request.user.prenoms }}</span>
+                                                        <span class="sub-text text-white">{{ request.user.code_patient|default:"Patient" }}</span>
+                                                    </div>
+                                                    <div class="user-action">
+                                                        <a href="{" class="btn btn-icon btn-trigger" title="Modifier le profil">
+                                                            <em class="icon ni ni-edit text-white"></em>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-inner p-0">
+                                                <ul class="link-list-menu">
+                                                    <li>
+                                                        <a href="{% url 'patient_dashboard' %}">
+                                                            <em class="icon ni ni-dashboard"></em>
+                                                            <span>Tableau de bord</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="{% url 'mes_vaccins' %}">
+                                                            <em class="icon ni ni-syringe"></em>
+                                                            <span>Mes Vaccins</span>
+                                                            <span class="badge badge-pill bg-success">{{ vaccins_total }}</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="">
+                                                            <em class="icon ni ni-calendar"></em>
+                                                            <span>Mes Rendez-vous</span>
+                                                            <span class="badge badge-pill bg-primary">{{ rdv_count }}</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="">
+                                                            <em class="icon ni ni-file-text"></em>
+                                                            <span>Mes Documents</span>
+                                                            <span class="badge badge-pill bg-info">{{ documents_count }}</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="">
+                                                            <em class="icon ni ni-lab"></em>
+                                                            <span>Mes Analyses</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="">
+                                                            <em class="icon ni ni-user"></em>
+                                                            <span>Mon Profil</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="">
+                                                            <em class="icon ni ni-setting"></em>
+                                                            <span>Paramètres</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div class="card-inner text-center bg-light">
+                                                <div class="p-3">
+                                                    <img src="{% static 'images/logo/logoMSHPCMU.svg' %}" alt="INHP" width="120" class="mb-2">
+                                                    <p class="small text-soft">Ministère de la Santé, </p>
+                                                    <p class="small text-soft">Plateforme KENEYA<br>Institut National d'Hygiène Publique</p>
+                                                    <a href="#" class="btn btn-sm btn-outline-primary">Aide & Support</a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- content @e -->
+
+        <!-- footer @s -->
+        <div class="nk-footer">
+            <div class="container-fluid">
+                <div class="nk-footer-wrap">
+                    <div class="nk-footer-copyright">
+
+                        {% endblock %}
