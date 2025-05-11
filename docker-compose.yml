@@ -53,7 +53,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: celery -A vaccination worker --loglevel=info
+    command: /app/.venv/bin/celery -A vaccination worker --loglevel=info
     volumes:
       - .:/app
     env_file:
@@ -62,14 +62,14 @@ services:
       - redis
       - vaccinationdb
     environment:
-      CELERY_BROKER_URL: redis://redis:6380/0  # Utilisation du nom du service Docker
+      CELERY_BROKER_URL: redis://redis:6379/0
     restart: always
 
   celery-beat:
     build:
       context: .
       dockerfile: Dockerfile
-    command: celery -A vaccination beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: /app/.venv/bin/celery -A vaccination beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - .:/app
     env_file:
@@ -78,7 +78,7 @@ services:
       - redis
       - vaccinationdb
     environment:
-      CELERY_BROKER_URL: redis://redis:6380/0  # Utilisation du nom du service Docker
+      CELERY_BROKER_URL: redis://redis:6379/0
     restart: always
 
 volumes:
