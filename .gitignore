@@ -1,4 +1,7 @@
 .env
+sync_fiche_retro.py
+sync_local_to_prod.py
+sync_utilisateur.py
 
 venv/
 .env.*
