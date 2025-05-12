@@ -119,7 +119,7 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    phone = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    phone = models.CharField(max_length=20, null=True, blank=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.AGENT_SAISIE)
     # Affectation
     centre = models.ForeignKey('CentreVaccination', on_delete=models.SET_NULL, null=True, blank=True,
@@ -132,23 +132,23 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
                              related_name='utilisateurs_pole')
 
     # Niveau d'accès
-    access_level = models.CharField(max_length=20, choices=AccessLevel.choices, default=AccessLevel.CENTRE)
+    access_level = models.CharField(max_length=20,null=True, blank=True, choices=AccessLevel.choices, default=AccessLevel.CENTRE)
 
     # Définition des related_name pour éviter les conflits avec auth.User
     groups = models.ManyToManyField(
         "auth.Group",
         related_name="utilisateur_groups",
-        blank=True
+        null=True, blank=True,
     )
     user_permissions = models.ManyToManyField(
         "auth.Permission",
         related_name="utilisateur_permissions",
-        blank=True
+        null=True, blank=True,
     )
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True,null=True, blank=True,)
+    is_staff = models.BooleanField(default=False,null=True, blank=True,)
     date_joined = models.DateTimeField(default=timezone.now)
-    active_otp = models.BooleanField(default=True)
+    active_otp = models.BooleanField(default=True,null=True, blank=True,)
     ip = models.TextField(null=True, blank=True)
     ip_intrus = models.TextField(null=True, blank=True)
     code = models.TextField(null=True, blank=True)
