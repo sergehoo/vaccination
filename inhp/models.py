@@ -497,7 +497,7 @@ class FicheRetro(models.Model):
     sexe = models.TextField()
     situation_matrimoniale = models.TextField(null=True, blank=True)
     nombre_enfant = models.BigIntegerField(null=True, blank=True)
-    nationnalite = models.TextField()
+    nationnalite = models.TextField(default='Non defini')
     type_piece = models.TextField(null=True, blank=True)
     num_piece = models.TextField(null=True, blank=True)
     telephone1 = models.TextField()
