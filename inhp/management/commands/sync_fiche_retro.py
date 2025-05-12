@@ -23,10 +23,10 @@ LOCAL_DB_CONFIG = {
 }
 
 REMOTE_DB_CONFIG = {
-    'dbname': 'vaccination',
-    'user': 'postgres',
-    'password': 'weddingLIFE18',
-    'host': '147.93.84.26',
+    'dbname': 'uck',
+    'user': 'you',
+    'password': 'fuou',
+    'host': '000000',
     'port': '5434',
 }
 
