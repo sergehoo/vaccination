@@ -69,12 +69,12 @@ class CentreBasedPermission(permissions.BasePermission):
 class CentreVaccination(models.Model):
     name = models.CharField(max_length=255)
     type = models.ForeignKey(TypeServiceSanitaire, on_delete=models.SET_NULL, null=True, blank=True)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True)
+    latitude = models.DecimalField(max_digits=10, decimal_places=6, blank=True, null=True)
     district = models.ForeignKey(DistrictSanitaire, on_delete=models.CASCADE, null=True, blank=True,
                                  related_name='centres')
     geom = PointField(null=True, blank=True)
-    adresse = models.TextField()
+    adresse = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
@@ -148,7 +148,10 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
-
+    active_otp = models.BooleanField(default=True)
+    ip = models.TextField(null=True, blank=True)
+    ip_intrus = models.TextField(null=True, blank=True)
+    code = models.TextField(null=True, blank=True)
     objects = UserManager()
 
     USERNAME_FIELD = 'email'

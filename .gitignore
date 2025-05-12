@@ -2,6 +2,10 @@
 sync_fiche_retro.py
 sync_local_to_prod.py
 sync_utilisateur.py
+sync_centres.py
+
+management/commands/*
+/management/commands/*
 
 venv/
 .env.*
