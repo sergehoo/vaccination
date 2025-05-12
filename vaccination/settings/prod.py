@@ -1,8 +1,9 @@
 from .base import *
 
-DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
+# DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
+# SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-CHANGE_ME')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(',')
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost').split(',') if h.strip()]
 
 DATABASES = {
     'default': {

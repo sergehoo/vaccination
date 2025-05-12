@@ -37,7 +37,7 @@ if os.path.exists(env_file):
 SECRET_KEY = env('SECRET_KEY', default='change-me')
 DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost'])
+# ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost'])
 
 # CSRF_TRUSTED_ORIGINS = [
 #     'https://traceagri.com',
