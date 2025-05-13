@@ -5,6 +5,11 @@ sync_utilisateur.py
 sync_centres.py
 sync_regions_districts.py
 
+sync_patients.py
+sync_vaccin_lots.py
+sync_vaccine_exts.py
+sync_consultation.py
+
 management/commands/*
 /management/commands/*
 
