@@ -301,12 +301,12 @@ class Vaccin(models.Model):
 
 
 class LotVaccin(models.Model):
-    numero_lot = models.CharField(max_length=100, unique=True, db_index=True)
+    numero_lot = models.CharField(max_length=100, db_index=True)
     vaccin = models.ForeignKey(Vaccin, on_delete=models.CASCADE, related_name='lotsvaccin')
     date_fabrication = models.DateField(null=True, blank=True)
     date_expiration = models.DateField(null=True, blank=True)
-    quantite_initiale = models.PositiveIntegerField()
-    quantite_disponible = models.PositiveIntegerField()
+    quantite_initiale = models.PositiveIntegerField(null=True, blank=True)
+    quantite_disponible = models.PositiveIntegerField(null=True, blank=True)
     centre = models.ForeignKey(CentreVaccination, on_delete=models.CASCADE, related_name='lots_vaccins')
     recu = models.BooleanField(null=True, blank=True)
     is_for_all = models.BooleanField(default=False)

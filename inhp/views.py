@@ -24,16 +24,14 @@ from inhp.models import Patient, Vaccination, Maladie
 
 # Create your views here.
 
+class LandingView(TemplateView):
+    template_name = "publiq/landing.html"
+
 
 class HomePageView(LoginRequiredMixin, TemplateView):
     login_url = '/accounts/login/'
     # form_class = LoginForm
     template_name = "pages/home.html"
-
-
-class LandingView(TemplateView):
-
-    template_name = "publiq/landing.html"
 
 
 def patient_login_view(request):
@@ -165,3 +163,12 @@ def generate_pdf_certificat(request, maladie_id):
     }
 
     return generate_certificat_pdf_response(request, patient, maladie, vaccinations_data)
+
+
+#------------------------------------------------------For Bakend Part------------------------
+
+
+class DashboardView(LoginRequiredMixin, TemplateView):
+    login_url = '/accounts/login/'
+    # form_class = LoginForm
+    template_name = "backend/admin/dashboard.html"

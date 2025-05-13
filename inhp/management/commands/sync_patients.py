@@ -147,7 +147,7 @@ class Command(BaseCommand):
             ])
 
             count = 0
-            batch_size = 20
+            batch_size = 50
             logger.info(f"📤 Début du transfert de {local_table} vers {remote_table} par lots de {batch_size}...")
 
             for i in tqdm(range(0, len(rows), batch_size), desc="🔁 Synchronisation en cours"):
