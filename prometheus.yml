@@ -2,6 +2,6 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'django-app'
+  - job_name: 'Vaccination'
     static_configs:
-       - targets: ['vaccination-vaccinationweb-1:8000'] # si Django tourne en local sur l'hôte
+       - targets: ['vaccinationweb:8000'] # si Django tourne en local sur l'hôte
