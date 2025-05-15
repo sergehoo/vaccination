@@ -27,7 +27,7 @@ from inhp.views import HomePageView, patient_login_view, patient_dashboard, mes_
 
 urlpatterns = [
                   path('admin/', admin.site.urls),
-                  path("metrics/", exports.ExportToDjangoView.as_view()),
+                  path("metrics/", exports.ExportToDjangoView),
                   path('api-auth/', include('rest_framework.urls')),
                   path('accounts/', include('allauth.urls')),
                   path('', LandingView.as_view(), name='landing'),
