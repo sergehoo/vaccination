@@ -1,0 +1,218 @@
+{% load static %}
+<nav class="nav navbar navbar-expand-xl navbar-light iq-navbar pt-2 pb-2 px-2" id="boxid">
+    <div class="container-fluid navbar-inner">
+        <div class="row flex-grow-1">
+            <div class="col-lg-4 col-md-6 align-items-center d-flex">
+                <li class="nav-item dropdown search-width pt-2 pt-lg-0">
+                    <div class="form-group input-group mb-0 search-input">
+                        <input type="text" class="form-control" placeholder="Rechercher...">
+                        <span class="input-group-text">
+                                            <svg class="icon-20 text-primary" width="20" height="20" viewBox="0 0 24 24"
+                                                 fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="11.7669" cy="11.7666" r="8.98856" stroke="currentColor"
+                                                        stroke-width="1.5" stroke-linecap="round"
+                                                        stroke-linejoin="round"></circle>
+                                                <path d="M18.0186 18.4851L21.5426 22" stroke="currentColor"
+                                                      stroke-width="1.5" stroke-linecap="round"
+                                                      stroke-linejoin="round"></path>
+                                            </svg>
+                                        </span>
+                    </div>
+                </li>
+            </div>
+            
+            <div class="col-lg-8 col-md-6 d-flex justify-content-end align-items-center">
+                                <!-- Language Selector -->
+                                <li class="nav-item dropdown">
+                                    <a href="#" class="nav-link d-none d-xl-block" id="notification-drop" data-bs-toggle="dropdown">
+                                        <img src="{% static 'backend/assets/images/small/flag-fr.png' %}" alt="French" class="img-fluid me-1" style="height: 16px; width: 16px;" /> Français <i class="ri-arrow-down-s-line"></i>
+                                    </a>
+                                    <div class="p-0 sub-drop dropdown-menu dropdown-menu-end" aria-labelledby="notification-drop">
+                                        <div class="m-0 -none card">
+                                            <div class="p-0 card-body">
+                                                <a href="#" class="iq-sub-card">
+                                                    <div class="d-flex align-items-center">
+                                                        <img src="{% static 'backend/assets/images/small/flag-en.png' %}" alt="English" loading="lazy" />
+                                                        <div class="ms-3 flex-grow-1 text-start">
+                                                            <p class="mb-0">English</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                                <a href="#" class="iq-sub-card">
+                                                    <div class="d-flex align-items-center">
+                                                        <img src="{% static 'backend/assets/images/small/flag-ar.png' %}" alt="Arabic" loading="lazy" />
+                                                        <div class="ms-3 flex-grow-1 text-start">
+                                                            <p class="mb-0">العربية</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                
+                                <!-- Fullscreen -->
+                                <li class="nav-item iq-full-screen d-none d-xl-block" id="fullscreen-item">
+                                    <a href="#" class="nav-link" id="btnFullscreen">
+                                        <i class="ri-fullscreen-line normal-screen"></i>
+                                        <i class="ri-fullscreen-exit-line full-normal-screen d-none"></i>
+                                    </a>
+                                </li>
+                                
+                                <!-- Notifications -->
+                                <li class="nav-item dropdown">
+                                    <a href="#" class="nav-link d-none d-xl-block" id="notification-drop" data-bs-toggle="dropdown">
+                                        <i class="ri-notification-4-line"></i>
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            3
+                                        </span>
+                                    </a>
+                                    <div class="p-0 sub-drop dropdown-menu dropdown-menu-end" aria-labelledby="notification-drop">
+                                        <div class="m-0 -none card">
+                                            <div class="py-3 card-header d-flex justify-content-between bg-primary mb-0 rounded-top-3">
+                                                <div class="header-title w-100">
+                                                    <h5 class="mb-0 text-white">Notifications</h5>
+                                                </div>
+                                            </div>
+                                            <div class="p-0 card-body">
+                                                <a href="#" class="iq-sub-card">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="bg-primary-subtle px-3 py-2 rounded-1">
+                                                            <i class="ri-alarm-warning-fill text-primary"></i>
+                                                        </div>
+                                                        <div class="ms-3 flex-grow-1 text-start">
+                                                            <h6 class="mb-0">Nouveau centre ajouté</h6>
+                                                            <small class="float-end font-size-12">Il y a 2 heures</small>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                                <a href="#" class="iq-sub-card">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="bg-primary-subtle px-3 py-2 rounded-1">
+                                                            <i class="ri-virus-fill text-primary"></i>
+                                                        </div>
+                                                        <div class="ms-3 flex-grow-1 text-start">
+                                                            <h6 class="mb-0">Campagne de vaccination</h6>
+                                                            <small class="float-end font-size-12">Aujourd'hui</small>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                                <a href="#" class="iq-sub-card">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="bg-primary-subtle px-3 py-2 rounded-1">
+                                                            <i class="ri-file-warning-fill text-primary"></i>
+                                                        </div>
+                                                        <div class="ms-3 flex-grow-1 text-start">
+                                                            <h6 class="mb-0">Rapport mensuel prêt</h6>
+                                                            <small class="float-end font-size-12">Hier</small>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                
+                                <!-- Messages -->
+                                <li class="nav-item dropdown">
+                                    <a href="#" class="nav-link d-none d-xl-block" id="notification-drop" data-bs-toggle="dropdown">
+                                        <i class="ri-mail-open-line"></i>
+                                    </a>
+                                    <div class="p-0 sub-drop dropdown-menu dropdown-menu-end" aria-labelledby="notification-drop">
+                                        <div class="m-0 -none card">
+                                            <div class="py-3 card-header d-flex justify-content-between bg-primary mb-0 rounded-top-3">
+                                                <div class="header-title w-100">
+                                                    <h5 class="mb-0 text-white">Messages</h5>
+                                                </div>
+                                            </div>
+                                            <div class="p-0 card-body">
+                                                <a href="#" class="iq-sub-card">
+                                                    <div class="d-flex align-items-center">
+                                                        <img class="p-1 avatar-40" src="{% static 'backend/assets/images/user/01.jpg' %}" alt loading="lazy" />
+                                                        <div class="ms-3 flex-grow-1 text-start">
+                                                            <h6 class="mb-0">Ministère de la Santé</h6>
+                                                            <p class="mb-0">Nouvelle directive vaccinale</p>
+                                                            <small class="float-end font-size-12">Il y a 1 jour</small>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                                <a href="#" class="iq-sub-card">
+                                                    <div class="d-flex align-items-center">
+                                                        <img class="p-1 avatar-40" src="{% static 'backend/assets/images/user/02.jpg' %}" alt loading="lazy" />
+                                                        <div class="ms-3 flex-grow-1 text-start">
+                                                            <h6 class="mb-0">Centre Régional</h6>
+                                                            <p class="mb-0">Demande d'approvisionnement</p>
+                                                            <small class="float-end font-size-12">Il y a 2 jours</small>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                                
+                                <!-- Mobile Menu Toggle -->
+                                <li class="nav-item d-block d-xl-none">
+                                    <a class="wrapper-menu" data-toggle="sidebar" data-active="true">
+                                        <div class="main-circle"><i class="ri-more-fill"></i></div>
+                                    </a>
+                                </li>
+                                
+                                <!-- User Profile -->
+                                <li class="nav-item dropdown">
+                                    <a href="#" class="nav-link d-flex align-items-center" id="notification-drop" data-bs-toggle="dropdown">
+                                        <img src="{% static 'backend/assets/images/user/admin.png' %}" style="width: 50px; height: 50px;" class="img-fluid rounded" alt="user">
+                                        <div class="caption d-none d-lg-block">
+                                            <h6 class="mb-0 line-height">Admin Vaccination</h6>
+                                            <span class="font-size-12">Administrateur</span>
+                                        </div>
+                                    </a>
+                                    <div class="p-0 sub-drop dropdown-menu dropdown-menu-end" aria-labelledby="notification-drop">
+                                        <div class="m-0 -none card">
+                                            <div class="py-3 card-header d-flex justify-content-between bg-primary mb-0 rounded-top-3">
+                                                <div class="header-title">
+                                                    <h5 class="mb-0 text-white">Mon Compte</h5>
+                                                </div>
+                                            </div>
+                                            <div class="p-0 card-body">
+                                                <a href="#" class="iq-sub-card">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="bg-primary-subtle px-3 py-2 rounded-1">
+                                                            <i class="ri-file-user-line"></i>
+                                                        </div>
+                                                        <div class="ms-3 flex-grow-1 text-start">
+                                                            <h6 class="mb-0">Mon Profil</h6>
+                                                            <p class="mb-0">Informations personnelles</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                                <a href="#" class="iq-sub-card">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="bg-primary-subtle px-3 py-2 rounded-1">
+                                                            <i class="ri-settings-3-line"></i>
+                                                        </div>
+                                                        <div class="ms-3 flex-grow-1 text-start">
+                                                            <h6 class="mb-0">Paramètres</h6>
+                                                            <p class="mb-0">Préférences du compte</p>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                                <div class="iq-sub-card d-flex justify-content-center">
+                                                    <a href="#" class="btn btn-primary-subtle">
+                                                        Déconnexion
+                                                        <i class="ri-logout-box-line ms-2"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            </div>
+        </div>
+    </div>
+</nav>
+
+
+  
+            
+            

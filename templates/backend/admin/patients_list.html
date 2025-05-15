@@ -1,0 +1,348 @@
+{% extends 'layout/base.html' %}
+{% load humanize %}
+{% load static %}
+
+
+
+{% block content %}
+<main class="main-content content-page">
+    <div class="position-relative">
+        {% include 'backend/admin/layouts/navbarre.html' %}
+    </div>
+    <div class="content-inner container-fluid pb-0" id="page_layout">
+        <!-- En-tête amélioré avec statistiques -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card card-statistic bg-primary">
+                    <div class="card-body">
+                        <h5 class="card-title">Patients Actifs</h5>
+                        <h2 class="mb-0">{{ stats.active_patients|intcomma }}</h2>
+                        <div class="progress mt-2" style="height: 5px">
+                            <div class="progress-bar bg-white" style="width: {{ stats.active_percentage }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-statistic bg-info">
+                    <div class="card-body">
+                        <h5 class="card-title">Patients Inactifs</h5>
+                        <h2 class="mb-0">{{ stats.inactive_patients|intcomma }}</h2>
+                        <div class="progress mt-2" style="height: 5px">
+                            <div class="progress-bar bg-white" style="width: {{ stats.inactive_percentage }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-statistic bg-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Nouveaux (7j)</h5>
+                        <h2 class="mb-0">{{ stats.new_patients|intcomma }}</h2>
+                        <div class="progress mt-2" style="height: 5px">
+                            <div class="progress-bar bg-white" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card card-statistic bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Patients</h5>
+                        <h2 class="mb-0">{{ stats.total_patients|intcomma }}</h2>
+                        <div class="progress mt-2" style="height: 5px">
+                            <div class="progress-bar bg-white" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte principale avec fonctionnalités avancées -->
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="header-title">
+                            <h4 class="card-title">Liste des Patients</h4>
+                            <p class="mb-0">Gestion complète des dossiers patients</p>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <!-- Barre de recherche -->
+                            <form method="get" class="me-2">
+                                <div class="input-group">
+                                    <input type="text" name="q" class="form-control" placeholder="Rechercher..."
+                                           value="{{ request.GET.q }}" aria-label="Rechercher">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="ri-search-line"></i>
+                                    </button>
+                                </div>
+                            </form>
+                            <!-- Bouton d'ajout -->
+                            <a href="{% url 'patient-create' %}" class="btn btn-primary">
+                                <i class="ri-user-add-line"></i> Nouveau Patient
+                            </a>
+                            <!-- Filtres déroulants -->
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle" type="button" id="filterDropdown"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="ri-filter-line"></i> Filtres
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                                    <li><h6 class="dropdown-header">Statut</h6></li>
+                                    <li><a class="dropdown-item" href="?statut=actif">Actifs</a></li>
+                                    <li><a class="dropdown-item" href="?statut=inactif">Inactifs</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">Centre</h6></li>
+                                    {% for centre in centres %}
+                                    <li><a class="dropdown-item" href="?centre={{ centre.id }}">{{ centre.nom }}</a></li>
+                                    {% endfor %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="?">Réinitialiser</a></li>
+                                </ul>
+                            </div>
+                            <!-- Export des données -->
+                            <div class="dropdown">
+                                <button class="btn btn-success dropdown-toggle" type="button" id="exportDropdown"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="ri-download-line"></i> Exporter
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+{#                                    <li><a class="dropdown-item" href="{% url 'export-patients' %}?format=csv&{{ request.GET.urlencode }}">CSV</a></li>#}
+{#                                    <li><a class="dropdown-item" href="{% url 'export-patients' %}?format=excel&{{ request.GET.urlencode }}">Excel</a></li>#}
+{#                                    <li><a class="dropdown-item" href="{% url 'export-patients' %}?format=pdf&{{ request.GET.urlencode }}">PDF</a></li>#}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Alertes et messages -->
+                        {% if messages %}
+                        <div class="alert-container">
+                            {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Tableau amélioré -->
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="120">Code</th>
+                                        <th>Nom & Prénoms</th>
+                                        <th width="100">Âge</th>
+                                        <th width="80">Sexe</th>
+                                        <th width="120">Téléphone</th>
+                                        <th>Centre</th>
+                                        <th width="100">Statut</th>
+                                        <th width="150">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for patient in patients %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-primary">{{ patient.code_patient }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar me-2">
+                                                    <span class="avatar-initial rounded-circle bg-soft-primary text-primary">
+                                                        {{ patient.nom|first|upper }}{{ patient.prenoms|first|upper }}
+                                                    </span>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ patient.nom }} {{ patient.prenoms }}</h6>
+                                                    <small class="text-muted">{{ patient.email|default:"-" }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ patient.date_naissance|timesince }}</td>
+                                        <td>
+                                            {% if patient.sexe == 'M' %}
+                                                <i class="ri-men-line text-primary"></i>
+                                            {% else %}
+                                                <i class="ri-women-line text-danger"></i>
+                                            {% endif %}
+                                            {{ patient.get_sexe_display }}
+                                        </td>
+                                        <td>
+                                            <a href="tel:{{ patient.telephone1 }}">{{ patient.telephone1 }}</a>
+                                            {% if patient.telephone2 %}
+                                            <br><small class="text-muted">{{ patient.telephone2 }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if patient.centre %}
+                                            <span class="badge bg-soft-info text-info">
+                                                {{ patient.centre.nom }}
+                                            </span>
+                                            {% else %}
+                                            -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if patient.statut == 'actif' %}success{% else %}danger{% endif %}">
+                                                {{ patient.get_statut_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                <a href="{% url 'patient-detail' patient.pk %}"
+                                                   class="btn btn-sm btn-info"
+                                                   data-bs-toggle="tooltip"
+                                                   title="Voir détails">
+                                                    <i class="ri-eye-line"></i>
+                                                </a>
+                                                <a href="{% url 'patient-update' patient.pk %}"
+                                                   class="btn btn-sm btn-warning"
+                                                   data-bs-toggle="tooltip"
+                                                   title="Modifier">
+                                                    <i class="ri-pencil-line"></i>
+                                                </a>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-danger"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#deleteModal{{ patient.pk }}"
+                                                        data-bs-tooltip="tooltip"
+                                                        title="Supprimer">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Modal de confirmation de suppression -->
+                                    <div class="modal fade" id="deleteModal{{ patient.pk }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Confirmer la suppression</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Êtes-vous sûr de vouloir supprimer le patient <strong>{{ patient.nom }} {{ patient.prenoms }}</strong> ?</p>
+                                                    <p class="text-danger">Cette action est irréversible.</p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                    <form method="post" action="{% url 'patient-delete' patient.pk %}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-danger">Confirmer</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8" class="text-center py-4">
+                                            <div class="empty-state">
+                                                <img src="{% static 'images/empty.svg' %}" alt="Aucun résultat" width="150" class="mb-3">
+                                                <h5>Aucun patient trouvé</h5>
+                                                <p class="text-muted">Aucun patient ne correspond à vos critères de recherche.</p>
+                                                <a href="{% url 'patient-create' %}" class="btn btn-primary">
+                                                    <i class="ri-user-add-line"></i> Ajouter un patient
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination améliorée -->
+                       {% if is_paginated %}
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="text-muted">
+        Affichage de <b>{{ page_obj.start_index }}</b> à <b>{{ page_obj.end_index }}</b> sur <b>{{ paginator.count }}</b> patients
+    </div>
+
+    <nav aria-label="Navigation des pages">
+        <ul class="pagination pagination-separated mb-0">
+
+            {% with query_string=request.GET.urlencode|cut:'page='|cut:'&page=' %}
+                {# Lien vers la première page #}
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if query_string %}&{{ query_string }}{% endif %}" aria-label="Première">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" aria-label="Précédente">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {# Affichage des numéros de pages avec ellipse #}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if num == page_obj.number %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">{{ num }}</a>
+                        </li>
+                    {% elif num == 1 or num == paginator.num_pages or num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if query_string %}&{{ query_string }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {# Lien vers la dernière page #}
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" aria-label="Suivante">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ paginator.num_pages }}{% if query_string %}&{{ query_string }}{% endif %}" aria-label="Dernière">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            {% endwith %}
+
+        </ul>
+    </nav>
+</div>
+{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+// Initialisation des tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Gestion de la recherche avec délai
+    var searchInput = document.querySelector('input[name="q"]');
+    var searchTimer;
+
+    searchInput.addEventListener('keyup', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function() {
+            searchInput.form.submit();
+        }, 500);
+    });
+});
+</script>
+{% endblock %}

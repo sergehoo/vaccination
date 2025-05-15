@@ -1,0 +1,75 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% block content %}
+<main class="main-content content-page">
+    <div class="position-relative">
+        {% include 'backend/admin/layouts/navbarre.html' %}
+    </div>
+    <div class="content-inner container-fluid pb-0" id="page_layout">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <div class="header-title">
+                            <h4 class="card-title">
+                                {% if form.instance.pk %}Modifier{% else %}Enregistrer{% endif %} une Vaccination
+                            </h4>
+                        </div>
+                        <div>
+                            <a href="{% url 'vaccination_list' %}" class="btn btn-secondary">
+                                <i class="ri-arrow-go-back-line"></i> Retour
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.patient.id_for_label }}" class="form-label">Patient</label>
+                                        {{ form.patient }}
+                                        <div class="invalid-feedback">{{ form.patient.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.vaccin.id_for_label }}" class="form-label">Vaccin</label>
+                                        {{ form.vaccin }}
+                                        <div class="invalid-feedback">{{ form.vaccin.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.lot.id_for_label }}" class="form-label">Lot</label>
+                                        {{ form.lot }}
+                                        <div class="invalid-feedback">{{ form.lot.errors }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.centre.id_for_label }}" class="form-label">Centre</label>
+                                        {{ form.centre }}
+                                        <div class="invalid-feedback">{{ form.centre.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.date_vaccination.id_for_label }}" class="form-label">Date de Vaccination</label>
+                                        {{ form.date_vaccination }}
+                                        <div class="invalid-feedback">{{ form.date_vaccination.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.dose.id_for_label }}" class="form-label">Dose</label>
+                                        {{ form.dose }}
+                                        <div class="invalid-feedback">{{ form.dose.errors }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="ri-save-line"></i> Enregistrer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

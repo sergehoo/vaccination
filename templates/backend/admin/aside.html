@@ -1,0 +1,372 @@
+{% load static %}
+<aside class="sidebar sidebar-base sidebartab1" id="first-tour" data-toggle="main-sidebar" data-sidebar="responsive">
+    <div class="sidebar-header d-flex align-items-center justify-content-start position-relative">
+        <a href="" class="navbar-brand me-5 pt-3">
+            <!--Logo start-->
+            <div class="logo-main">
+                <img class="logo-normal img-fluid mb-3" src="{% static 'backend/assets/images/logo.png' %}" height="30"
+                     alt="logo">
+                <span class="ms-2 brand-name">K</span>
+            </div>
+            <!--logo End-->      </a>
+
+        <div class="ms-5 wrapper-menu d-flex d-none d-xl-block">
+            <div class="main-circle" role="button"><i class="ri-more-fill"></i></div>
+        </div>
+        <li class="nav-item d-block d-xl-none">
+            <a class="wrapper-menu" data-toggle="sidebar" data-active="true">
+                <div class="main-circle "><i class="ri-more-fill"></i></div>
+            </a>
+        </li>
+
+    </div>
+    <div class="sidebar-body pt-0 data-scrollbar">
+                <div class="sidebar-list">
+                    <!-- Sidebar Menu -->
+                    <ul class="navbar-nav iq-main-menu" id="sidebar-menu">
+                        <!-- Tableau de Bord -->
+                        <li class="nav-item static-item ms-2">
+                            <a class="nav-link static-item disabled text-start" href="#" tabindex="-1">
+                                <span class="default-icon">Tableau de Bord</span>
+                                <span class="mini-icon">-</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#">
+                                <i class="ri-dashboard-fill" data-bs-toggle="tooltip" title="Dashboard" data-bs-placement="right"></i>
+                                <span class="item-name">Tableau de Bord</span>
+                            </a>
+                        </li>
+                        
+                        <li><hr class="hr-horizontal"></li>
+                        
+                        <!-- Gestion des Vaccins -->
+                        <li class="nav-item static-item ms-2">
+                            <a class="nav-link static-item disabled text-start" href="#" tabindex="-1">
+                                <span class="default-icon">Gestion des Vaccins</span>
+                                <span class="mini-icon">-</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <div class="colors">
+                                <a class="nav-link" data-bs-toggle="collapse" href="#Vaccins" role="button" aria-expanded="false">
+                                    <i class="ri-syringe-fill" data-bs-toggle="tooltip" title="Vaccins" data-bs-placement="right"></i>
+                                    <span class="item-name">Vaccins</span>
+                                    <i class="right-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" class="icon-18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </i>
+                                </a>
+                                <ul class="sub-nav collapse" id="Vaccins" data-bs-parent="#sidebar-menu">
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-list-check"></i>
+                                            <span class="item-name">Liste des Vaccins</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-add-circle-fill"></i>
+                                            <span class="item-name">Ajouter un Vaccin</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-stock-fill"></i>
+                                            <span class="item-name">Stocks & Approvisionnement</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-calendar-todo-fill"></i>
+                                            <span class="item-name">Calendrier Vaccinal</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Centres de Vaccination -->
+                        <li class="nav-item">
+                            <div class="colors">
+                                <a class="nav-link" data-bs-toggle="collapse" href="#Centres" role="button" aria-expanded="false">
+                                    <i class="ri-hospital-fill" data-bs-toggle="tooltip" title="Centres" data-bs-placement="right"></i>
+                                    <span class="item-name">Centres</span>
+                                    <i class="right-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" class="icon-18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </i>
+                                </a>
+                                <ul class="sub-nav collapse" id="Centres" data-bs-parent="#sidebar-menu">
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-map-pin-2-fill"></i>
+                                            <span class="item-name">Carte des Centres</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-list-check"></i>
+                                            <span class="item-name">Liste des Centres</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-add-circle-fill"></i>
+                                            <span class="item-name">Ajouter un Centre</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-user-settings-fill"></i>
+                                            <span class="item-name">Gestion du Personnel</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Patients/Bénéficiaires -->
+                        <li class="nav-item">
+                            <div class="colors">
+                                <a class="nav-link" data-bs-toggle="collapse" href="#Patients" role="button" aria-expanded="false">
+                                    <i class="ri-user-fill" data-bs-toggle="tooltip" title="Patients" data-bs-placement="right"></i>
+                                    <span class="item-name">Bénéficiaires</span>
+                                    <i class="right-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" class="icon-18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </i>
+                                </a>
+                                <ul class="sub-nav collapse" id="Patients" data-bs-parent="#sidebar-menu">
+                                    <li class="">
+                                        <a class="nav-link" href="{% url 'patient-list' %}">
+                                            <i class="ri-team-fill"></i>
+                                            <span class="item-name">Liste des Bénéficiaires</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-user-add-fill"></i>
+                                            <span class="item-name">Enregistrement</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-history-fill"></i>
+                                            <span class="item-name">Historique Vaccinal</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-alarm-warning-fill"></i>
+                                            <span class="item-name">Rappels & Notifications</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-file-paper-2-fill"></i>
+                                            <span class="item-name">Certificats Vaccinaux</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Campagnes de Vaccination -->
+                        <li class="nav-item">
+                            <div class="colors">
+                                <a class="nav-link" data-bs-toggle="collapse" href="#Campagnes" role="button" aria-expanded="false">
+                                    <i class="ri-megaphone-fill" data-bs-toggle="tooltip" title="Campagnes" data-bs-placement="right"></i>
+                                    <span class="item-name">Campagnes</span>
+                                    <i class="right-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" class="icon-18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </i>
+                                </a>
+                                <ul class="sub-nav collapse" id="Campagnes" data-bs-parent="#sidebar-menu">
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-calendar-event-fill"></i>
+                                            <span class="item-name">Planification</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-bar-chart-2-fill"></i>
+                                            <span class="item-name">Suivi en Temps Réel</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-mail-send-fill"></i>
+                                            <span class="item-name">Communication</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-file-chart-fill"></i>
+                                            <span class="item-name">Rapports de Campagne</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Surveillance & Pharmacovigilance -->
+                        <li class="nav-item">
+                            <div class="colors">
+                                <a class="nav-link" data-bs-toggle="collapse" href="#Surveillance" role="button" aria-expanded="false">
+                                    <i class="ri-shield-cross-fill" data-bs-toggle="tooltip" title="Surveillance" data-bs-placement="right"></i>
+                                    <span class="item-name">Surveillance</span>
+                                    <i class="right-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" class="icon-18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </i>
+                                </a>
+                                <ul class="sub-nav collapse" id="Surveillance" data-bs-parent="#sidebar-menu">
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-alert-fill"></i>
+                                            <span class="item-name">Effets Indésirables</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-heart-pulse-fill"></i>
+                                            <span class="item-name">Suivi Post-Vaccinal</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-bug-fill"></i>
+                                            <span class="item-name">Gestion des Epidémies</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Statistiques & Rapports -->
+                        <li class="nav-item">
+                            <div class="colors">
+                                <a class="nav-link" data-bs-toggle="collapse" href="#Stats" role="button" aria-expanded="false">
+                                    <i class="ri-bar-chart-fill" data-bs-toggle="tooltip" title="Statistiques" data-bs-placement="right"></i>
+                                    <span class="item-name">Statistiques</span>
+                                    <i class="right-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" class="icon-18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </i>
+                                </a>
+                                <ul class="sub-nav collapse" id="Stats" data-bs-parent="#sidebar-menu">
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-dashboard-fill"></i>
+                                            <span class="item-name">Tableaux de Bord</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-file-chart-fill"></i>
+                                            <span class="item-name">Rapports Nationaux</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-map-2-fill"></i>
+                                            <span class="item-name">Cartographie</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-database-2-fill"></i>
+                                            <span class="item-name">Export de Données</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Système & Administration -->
+                        <li class="nav-item static-item ms-2">
+                            <a class="nav-link static-item disabled text-start" href="#" tabindex="-1">
+                                <span class="default-icon">Administration</span>
+                                <span class="mini-icon">-</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <div class="colors">
+                                <a class="nav-link" data-bs-toggle="collapse" href="#Admin" role="button" aria-expanded="false">
+                                    <i class="ri-settings-4-fill" data-bs-toggle="tooltip" title="Administration" data-bs-placement="right"></i>
+                                    <span class="item-name">Système</span>
+                                    <i class="right-icon">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" class="icon-18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </i>
+                                </a>
+                                <ul class="sub-nav collapse" id="Admin" data-bs-parent="#sidebar-menu">
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-user-settings-fill"></i>
+                                            <span class="item-name">Utilisateurs & Rôles</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-shield-keyhole-fill"></i>
+                                            <span class="item-name">Sécurité & Accès</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-database-2-fill"></i>
+                                            <span class="item-name">Sauvegarde</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-history-fill"></i>
+                                            <span class="item-name">Journal d'Activité</span>
+                                        </a>
+                                    </li>
+                                    <li class="">
+                                        <a class="nav-link" href="#">
+                                            <i class="ri-questionnaire-fill"></i>
+                                            <span class="item-name">Support Technique</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Communication -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="ri-customer-service-fill" data-bs-toggle="tooltip" title="Communication" data-bs-placement="right"></i>
+                                <span class="item-name">Communication</span>
+                            </a>
+                        </li>
+                        
+                        <!-- Documentation -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="ri-book-2-fill" data-bs-toggle="tooltip" title="Documentation" data-bs-placement="right"></i>
+                                <span class="item-name">Documentation</span>
+                            </a>
+                        </li>
+                        
+                        <li><hr class="hr-horizontal"></li>
+                    </ul>
+                </div>
+            </div>
+    <div class="sidebar-footer"></div>
+</aside>
+
+
+ 

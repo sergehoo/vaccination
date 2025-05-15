@@ -1,0 +1,97 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% block content %}
+<main class="main-content content-page">
+    <div class="position-relative">
+        {% include 'backend/admin/layouts/navbarre.html' %}
+    </div>
+    <div class="content-inner container-fluid pb-0" id="page_layout">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <div class="header-title">
+                            <h4 class="card-title">Liste des MAPIs</h4>
+                        </div>
+                        <div>
+                            <a href="{% url 'mapi_create' %}" class="btn btn-primary">
+                                <i class="ri-add-line"></i> Nouveau MAPI
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Patient</th>
+                                        <th>Centre</th>
+                                        <th>Vaccination</th>
+                                        <th>Symptômes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for mapi in mapis %}
+                                    <tr>
+                                        <td>{{ mapi.date|date:"d/m/Y H:i"|default:"-" }}</td>
+                                        <td>{{ mapi.patient.nom }} {{ mapi.patient.prenoms }}</td>
+                                        <td>{{ mapi.centre.nom }}</td>
+                                        <td>
+                                            {{ mapi.vaccination.vaccin.nom }} (Dose {{ mapi.vaccination.dose }})
+                                        </td>
+                                        <td>{{ mapi.symptome|truncatechars:50|default:"-" }}</td>
+                                        <td>
+                                            <div class="d-flex gap-2">
+                                                <a href="{% url 'mapi_detail' mapi.pk %}" class="btn btn-sm btn-info">
+                                                    <i class="ri-eye-line"></i>
+                                                </a>
+                                                <a href="{% url 'mapi_update' mapi.pk %}" class="btn btn-sm btn-warning">
+                                                    <i class="ri-pencil-line"></i>
+                                                </a>
+                                                <form method="post" action="{% url 'mapi_delete' mapi.pk %}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-danger">
+                                                        <i class="ri-delete-bin-line"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">Aucun MAPI enregistré</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if is_paginated %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Précédent</a>
+                                </li>
+                                {% endif %}
+                                {% for num in page_obj.paginator.page_range %}
+                                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                                {% endfor %}
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Suivant</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,163 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% block content %}
+<main class="main-content content-page">
+    <div class="position-relative">
+        {% include 'backend/admin/layouts/navbarre.html' %}
+    </div>
+    <div class="content-inner container-fluid pb-0" id="page_layout">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <div class="header-title">
+                            <h4 class="card-title">
+                                {% if form.instance.pk %}Modifier{% else %}Créer{% endif %} un Patient
+                            </h4>
+                        </div>
+                        <div>
+                            <a href="{% url 'patient_list' %}" class="btn btn-secondary">
+                                <i class="ri-arrow-go-back-line"></i> Retour
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.nom.id_for_label }}" class="form-label">Nom</label>
+                                        {{ form.nom }}
+                                        <div class="invalid-feedback">{{ form.nom.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.prenoms.id_for_label }}" class="form-label">Prénoms</label>
+                                        {{ form.prenoms }}
+                                        <div class="invalid-feedback">{{ form.prenoms.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.date_naissance.id_for_label }}" class="form-label">Date de Naissance</label>
+                                        {{ form.date_naissance }}
+                                        <div class="invalid-feedback">{{ form.date_naissance.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.sexe.id_for_label }}" class="form-label">Sexe</label>
+                                        {{ form.sexe }}
+                                        <div class="invalid-feedback">{{ form.sexe.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.situation_matrimoniale.id_for_label }}" class="form-label">Situation Matrimoniale</label>
+                                        {{ form.situation_matrimoniale }}
+                                        <div class="invalid-feedback">{{ form.situation_matrimoniale.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.nombre_enfant.id_for_label }}" class="form-label">Nombre d'Enfants</label>
+                                        {{ form.nombre_enfant }}
+                                        <div class="invalid-feedback">{{ form.nombre_enfant.errors }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.nationalite.id_for_label }}" class="form-label">Nationalité</label>
+                                        {{ form.nationalite }}
+                                        <div class="invalid-feedback">{{ form.nationalite.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.type_piece.id_for_label }}" class="form-label">Type de Pièce</label>
+                                        {{ form.type_piece }}
+                                        <div class="invalid-feedback">{{ form.type_piece.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.num_piece.id_for_label }}" class="form-label">Numéro de Pièce</label>
+                                        {{ form.num_piece }}
+                                        <div class="invalid-feedback">{{ form.num_piece.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.telephone1.id_for_label }}" class="form-label">Téléphone 1</label>
+                                        {{ form.telephone1 }}
+                                        <div class="invalid-feedback">{{ form.telephone1.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.telephone2.id_for_label }}" class="form-label">Téléphone 2</label>
+                                        {{ form.telephone2 }}
+                                        <div class="invalid-feedback">{{ form.telephone2.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                                        {{ form.email }}
+                                        <div class="invalid-feedback">{{ form.email.errors }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.commune.id_for_label }}" class="form-label">Commune</label>
+                                        {{ form.commune }}
+                                        <div class="invalid-feedback">{{ form.commune.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.quartier.id_for_label }}" class="form-label">Quartier</label>
+                                        {{ form.quartier }}
+                                        <div class="invalid-feedback">{{ form.quartier.errors }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.niveau_instruction.id_for_label }}" class="form-label">Niveau d'Instruction</label>
+                                        {{ form.niveau_instruction }}
+                                        <div class="invalid-feedback">{{ form.niveau_instruction.errors }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="{{ form.profession.id_for_label }}" class="form-label">Profession</label>
+                                        {{ form.profession }}
+                                        <div class="invalid-feedback">{{ form.profession.errors }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.centre.id_for_label }}" class="form-label">Centre d'Enregistrement</label>
+                                        {{ form.centre }}
+                                        <div class="invalid-feedback">{{ form.centre.errors }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.centre_actuel.id_for_label }}" class="form-label">Centre Actuel</label>
+                                        {{ form.centre_actuel }}
+                                        <div class="invalid-feedback">{{ form.centre_actuel.errors }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3 form-check">
+                                        {{ form.consentement_parental }}
+                                        <label class="form-check-label" for="{{ form.consentement_parental.id_for_label }}">Consentement Parental</label>
+                                        <div class="invalid-feedback">{{ form.consentement_parental.errors }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.statut.id_for_label }}" class="form-label">Statut</label>
+                                        {{ form.statut }}
+                                        <div class="invalid-feedback">{{ form.statut.errors }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="ri-save-line"></i> Enregistrer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

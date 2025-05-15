@@ -1,0 +1,111 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% block content %}
+<main class="main-content content-page">
+    <div class="position-relative">
+        {% include 'backend/admin/layouts/navbarre.html' %}
+    </div>
+    <div class="content-inner container-fluid pb-0" id="page_layout">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <div class="header-title">
+                            <h4 class="card-title">Détails du Patient</h4>
+                        </div>
+                        <div>
+                            <a href="{% url 'patient_update' patient.pk %}" class="btn btn-warning">
+                                <i class="ri-pencil-line"></i> Modifier
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>Informations Personnelles</h6>
+                                    <hr>
+                                    <p><strong>Code Patient:</strong> {{ patient.code_patient }}</p>
+                                    <p><strong>Nom:</strong> {{ patient.nom }}</p>
+                                    <p><strong>Prénoms:</strong> {{ patient.prenoms }}</p>
+                                    <p><strong>Date de Naissance:</strong> {{ patient.date_naissance|date:"d/m/Y" }}</p>
+                                    <p><strong>Sexe:</strong> {{ patient.get_sexe_display }}</p>
+                                    <p><strong>Situation Matrimoniale:</strong> {{ patient.situation_matrimoniale|default:"-" }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>Coordonnées</h6>
+                                    <hr>
+                                    <p><strong>Téléphone 1:</strong> {{ patient.telephone1|default:"-" }}</p>
+                                    <p><strong>Téléphone 2:</strong> {{ patient.telephone2|default:"-" }}</p>
+                                    <p><strong>Email:</strong> {{ patient.email|default:"-" }}</p>
+                                    <p><strong>Commune:</strong> {{ patient.commune }}</p>
+                                    <p><strong>Quartier:</strong> {{ patient.quartier }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>Informations Administratives</h6>
+                                    <hr>
+                                    <p><strong>Type de Pièce:</strong> {{ patient.type_piece }}</p>
+                                    <p><strong>Numéro de Pièce:</strong> {{ patient.num_piece|default:"-" }}</p>
+                                    <p><strong>Nationalité:</strong> {{ patient.nationalite }}</p>
+                                    <p><strong>Profession:</strong> {{ patient.profession|default:"-" }}</p>
+                                    <p><strong>Niveau d'Instruction:</strong> {{ patient.niveau_instruction|default:"-" }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>Informations Vaccinales</h6>
+                                    <hr>
+                                    <p><strong>Centre d'Enregistrement:</strong> {{ patient.centre|default:"-" }}</p>
+                                    <p><strong>Centre Actuel:</strong> {{ patient.centre_actuel|default:"-" }}</p>
+                                    <p><strong>Statut:</strong> 
+                                        <span class="badge bg-{% if patient.statut == 'actif' %}success{% else %}danger{% endif %}">
+                                            {{ patient.get_statut_display }}
+                                        </span>
+                                    </p>
+                                    <p><strong>Date d'Enregistrement:</strong> {{ patient.created_at|date:"d/m/Y H:i" }}</p>
+                                    <p><strong>Enregistré par:</strong> {{ patient.created_by|default:"-" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Historique Vaccinal</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if patient.historique_vaccinations.all %}
+                        <ul class="timeline">
+                            {% for vaccination in patient.historique_vaccinations.all %}
+                            <li>
+                                <div class="timeline-dots border-primary"></div>
+                                <h6 class="float-start mb-1 mt-2">{{ vaccination.vaccin.nom }} - Dose {{ vaccination.dose }}</h6>
+                                <small class="float-end mt-1 mt-2">{{ vaccination.date_vaccination|date:"d/m/Y" }}</small>
+                                <div class="d-inline-block w-100">
+                                    <p>Centre: {{ vaccination.centre.nom }}</p>
+                                    <p>Lot: {{ vaccination.lot.numero_lot|default:"-" }}</p>
+                                    {% if vaccination.date_rappel %}
+                                    <p>Rappel prévu le: {{ vaccination.date_rappel|date:"d/m/Y" }}</p>
+                                    {% endif %}
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="alert alert-info">Aucun historique vaccinal disponible</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

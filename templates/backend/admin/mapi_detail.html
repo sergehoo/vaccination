@@ -1,0 +1,105 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% block content %}
+<main class="main-content content-page">
+    <div class="position-relative">
+        {% include 'backend/admin/layouts/navbarre.html' %}
+    </div>
+    <div class="content-inner container-fluid pb-0" id="page_layout">
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <div class="header-title">
+                            <h4 class="card-title">Détails du MAPI</h4>
+                        </div>
+                        <div>
+                            <a href="{% url 'mapi_update' mapi.pk %}" class="btn btn-warning">
+                                <i class="ri-pencil-line"></i> Modifier
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>Informations de Base</h6>
+                                    <hr>
+                                    <p><strong>Date:</strong> {{ mapi.date|date:"d/m/Y H:i"|default:"-" }}</p>
+                                    <p><strong>Créé le:</strong> {{ mapi.created_at|date:"d/m/Y H:i" }}</p>
+                                    <p><strong>Créé par:</strong> {{ mapi.utilisateur|default:"-" }}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <h6>Patient</h6>
+                                    <hr>
+                                    <p><strong>Nom:</strong> {{ mapi.patient.nom }} {{ mapi.patient.prenoms }}</p>
+                                    <p><strong>Code Patient:</strong> {{ mapi.patient.code_patient }}</p>
+                                    <p><strong>Téléphone:</strong> {{ mapi.patient.telephone1|default:"-" }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6>Vaccination Associée</h6>
+                                    <hr>
+                                    <p><strong>Vaccin:</strong> {{ mapi.vaccination.vaccin.nom }}</p>
+                                    <p><strong>Dose:</strong> {{ mapi.vaccination.dose }}</p>
+                                    <p><strong>Date Vaccination:</strong> {{ mapi.vaccination.date_vaccination|date:"d/m/Y" }}</p>
+                                    <p><strong>Centre:</strong> {{ mapi.vaccination.centre.nom }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <h6>Symptômes</h6>
+                                    <hr>
+                                    <div class="card bg-light p-3">
+                                        {{ mapi.symptome|linebreaks|default:"Aucun symptôme rapporté" }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="mb-3">
+                                    <h6>Commentaires</h6>
+                                    <hr>
+                                    <div class="card bg-light p-3">
+                                        {{ mapi.commentaire|linebreaks|default:"Aucun commentaire" }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Actions</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'patient_detail' mapi.patient.pk %}" class="btn btn-info">
+                                <i class="ri-user-line"></i> Voir le Patient
+                            </a>
+                            <a href="{% url 'vaccination_detail' mapi.vaccination.pk %}" class="btn btn-primary">
+                                <i class="ri-vaccine-line"></i> Voir la Vaccination
+                            </a>
+                            <a href="{% url 'mapi_update' mapi.pk %}" class="btn btn-warning">
+                                <i class="ri-pencil-line"></i> Modifier
+                            </a>
+                            <form method="post" action="{% url 'mapi_delete' mapi.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="ri-delete-bin-line"></i> Supprimer
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

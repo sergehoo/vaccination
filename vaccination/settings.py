@@ -13,6 +13,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -58,13 +59,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'django.contrib.gis',
     'import_export',
-
     "inhp",
     'rest_framework',
     'allauth',
     'allauth.account',
+
 ]
 
 MIDDLEWARE = [
@@ -181,10 +183,8 @@ GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH', '/opt/homebrew/opt/geos/lib/l
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
-
 
 
 # Default primary key field type

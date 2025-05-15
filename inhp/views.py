@@ -8,18 +8,18 @@ import qrcode
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string, get_template
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
 from weasyprint import HTML
 from xhtml2pdf import pisa
 
 from inhp.backends import PatientAuthBackend
-from inhp.models import Patient, Vaccination, Maladie
+from inhp.models import Patient, Vaccination, Maladie, Mapi, VaccineExt
 
 
 # Create your views here.
@@ -172,3 +172,216 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     login_url = '/accounts/login/'
     # form_class = LoginForm
     template_name = "backend/admin/dashboard.html"
+
+
+#----------------============================== Patiens ========================== -----------------------------------
+class PatientListView(LoginRequiredMixin, ListView):
+    model = Patient
+    template_name = 'backend/admin/patients_list.html'
+    context_object_name = 'patients'
+    paginate_by = 20
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(deleted_at__isnull=True)
+        # Filtrage supplémentaire si besoin
+        return queryset
+
+
+class PatientDetailView(LoginRequiredMixin, DetailView):
+    model = Patient
+    template_name = 'patient/detail.html'
+    context_object_name = 'patient'
+    slug_field = 'code_patient'
+    slug_url_kwarg = 'code_patient'
+
+
+class PatientCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = Patient
+    template_name = 'patient/form.html'
+    fields = [
+        'nom', 'prenoms', 'date_naissance', 'sexe',
+        'email', 'telephone1', 'telephone2',
+        'situation_matrimoniale', 'nombre_enfant',
+        'nationalite', 'type_piece', 'num_piece',
+        'commune', 'quartier', 'niveau_instruction',
+        'profession', 'consentement_parental',
+        'centre', 'centre_actuel'
+    ]
+    permission_required = 'patients.add_patient'
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('patient-detail', kwargs={'code_patient': self.object.code_patient})
+
+
+class PatientUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = Patient
+    template_name = 'patient/form.html'
+    fields = [
+        'nom', 'prenoms', 'date_naissance', 'sexe',
+        'email', 'telephone1', 'telephone2',
+        'situation_matrimoniale', 'nombre_enfant',
+        'nationalite', 'type_piece', 'num_piece',
+        'commune', 'quartier', 'niveau_instruction',
+        'profession', 'consentement_parental',
+        'statut', 'centre', 'centre_actuel'
+    ]
+    permission_required = 'patients.change_patient'
+    slug_field = 'code_patient'
+    slug_url_kwarg = 'code_patient'
+
+    def get_success_url(self):
+        return reverse_lazy('patient-detail', kwargs={'code_patient': self.object.code_patient})
+
+
+class PatientDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = Patient
+    template_name = 'patient/confirm_delete.html'
+    permission_required = 'patients.delete_patient'
+    slug_field = 'code_patient'
+    slug_url_kwarg = 'code_patient'
+    success_url = reverse_lazy('patient-list')
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.deleted_at = timezone.now()
+        self.object.is_active = False
+        self.object.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+#----------------============================== Mapi  ========================== -----------------------------------
+class MapiListView(LoginRequiredMixin, ListView):
+    model = Mapi
+    template_name = 'mapi/list.html'
+    context_object_name = 'mapis'
+    paginate_by = 20
+    ordering = ['-date']
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(deleted_at__isnull=True)
+        # Filtrage par patient si besoin
+        if 'patient_id' in self.kwargs:
+            queryset = queryset.filter(patient__code_patient=self.kwargs['patient_id'])
+        return queryset
+
+
+class MapiDetailView(LoginRequiredMixin, DetailView):
+    model = Mapi
+    template_name = 'mapi/detail.html'
+    context_object_name = 'mapi'
+
+
+class MapiCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = Mapi
+    template_name = 'mapi/form.html'
+    fields = ['symptome', 'commentaire', 'date', 'patient', 'centre', 'vaccination']
+    permission_required = 'patients.add_mapi'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if 'patient_id' in self.kwargs:
+            initial['patient'] = Patient.objects.get(code_patient=self.kwargs['patient_id'])
+        return initial
+
+    def form_valid(self, form):
+        form.instance.utilisateur = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('mapi-detail', kwargs={'pk': self.object.pk})
+
+
+class MapiUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = Mapi
+    template_name = 'mapi/form.html'
+    fields = ['symptome', 'commentaire', 'date', 'patient', 'centre', 'vaccination']
+    permission_required = 'patients.change_mapi'
+
+    def get_success_url(self):
+        return reverse_lazy('mapi-detail', kwargs={'pk': self.object.pk})
+
+
+class MapiDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = Mapi
+    template_name = 'mapi/confirm_delete.html'
+    permission_required = 'patients.delete_mapi'
+    success_url = reverse_lazy('mapi-list')
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.deleted_at = timezone.now()
+        self.object.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+#----------------============================== Vaccin exterieur  ========================== -----------------------------------
+
+
+class VaccineExtListView(LoginRequiredMixin, ListView):
+    model = VaccineExt
+    template_name = 'vaccine_ext/list.html'
+    context_object_name = 'vaccine_exts'
+    paginate_by = 20
+    ordering = ['-date']
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(deleted_at__isnull=True)
+        if 'patient_id' in self.kwargs:
+            queryset = queryset.filter(patient__code_patient=self.kwargs['patient_id'])
+        return queryset
+
+
+class VaccineExtDetailView(LoginRequiredMixin, DetailView):
+    model = VaccineExt
+    template_name = 'vaccine_ext/detail.html'
+    context_object_name = 'vaccine_ext'
+
+
+class VaccineExtCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+    model = VaccineExt
+    template_name = 'vaccine_ext/form.html'
+    fields = ['pays', 'ville', 'numero_dose', 'lot', 'patient', 'vaccin', 'date']
+    permission_required = 'patients.add_vaccineext'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if 'patient_id' in self.kwargs:
+            patient = Patient.objects.get(code_patient=self.kwargs['patient_id'])
+            initial['patient'] = patient
+            initial['code_patient'] = patient.code_patient
+        return initial
+
+    def form_valid(self, form):
+        form.instance.utilisateur = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('vaccine-ext-detail', kwargs={'pk': self.object.pk})
+
+
+class VaccineExtUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+    model = VaccineExt
+    template_name = 'vaccine_ext/form.html'
+    fields = ['pays', 'ville', 'numero_dose', 'lot', 'patient', 'vaccin', 'date']
+    permission_required = 'patients.change_vaccineext'
+
+    def get_success_url(self):
+        return reverse_lazy('vaccine-ext-detail', kwargs={'pk': self.object.pk})
+
+
+class VaccineExtDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    model = VaccineExt
+    template_name = 'vaccine_ext/confirm_delete.html'
+    permission_required = 'patients.delete_vaccineext'
+    success_url = reverse_lazy('vaccine-ext-list')
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.deleted_at = timezone.now()
+        self.object.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+#----------------============================== Vaccin exterieur  ========================== -----------------------------------
