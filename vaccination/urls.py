@@ -28,7 +28,7 @@ from inhp.views import HomePageView, patient_login_view, patient_dashboard, mes_
 urlpatterns = [
                   path('admin/', admin.site.urls),
 
-                  path("metrics/", include("django_prometheus.urls")),
+                  path('', include("django_prometheus.urls")),
 
                   path('api-auth/', include('rest_framework.urls')),
                   path('accounts/', include('allauth.urls')),
