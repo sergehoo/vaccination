@@ -80,6 +80,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "allauth.account.middleware.AccountMiddleware",
+    'inhp.middleware.PrometheusIPTrackingMiddleware',
     'django_prometheus.middleware.PrometheusAfterMiddleware',
 
 ]
