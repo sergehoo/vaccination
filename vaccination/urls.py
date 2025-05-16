@@ -19,7 +19,6 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 from django_prometheus import exports
-from django_prometheus.views import ExportToDjangoView
 
 from inhp.views import HomePageView, patient_login_view, patient_dashboard, mes_vaccins, generate_pdf_certificat, \
     verifier_certificat, LandingView, DashboardView, PatientListView, PatientCreateView, PatientDetailView, \
@@ -29,7 +28,7 @@ from inhp.views import HomePageView, patient_login_view, patient_dashboard, mes_
 urlpatterns = [
                   path('admin/', admin.site.urls),
 
-                  path("metrics/", ExportToDjangoView.as_view()),
+                  path("metrics/", include("django_prometheus.urls")),
 
                   path('api-auth/', include('rest_framework.urls')),
                   path('accounts/', include('allauth.urls')),
