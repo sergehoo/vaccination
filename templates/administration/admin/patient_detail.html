@@ -1,0 +1,562 @@
+{% extends 'layout/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load custom_filters %}
+
+{% block content %}
+<main class="main-content content-page">
+    <div class="position-relative">
+        {% include 'administration/admin/layouts/navbarre.html' %}
+    </div>
+
+    <div class="content-inner container-fluid pb-0" id="page_layout">
+        <!-- Header avec infos patient -->
+        <div class="row mb-4">
+            <div class="col-lg-12">
+                <div class="card patient-profile-header">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <div class="avatar avatar-xl me-4">
+                                <span class="avatar-initial rounded-circle bg-soft-primary text-primary">
+                                    {{ patient.nom|first|upper }}{{ patient.prenoms|first|upper }}
+                                </span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start flex-wrap">
+                                    <div>
+                                        <h2 class="mb-1">{{ patient.nom }} {{ patient.prenoms }}</h2>
+                                        <div class="d-flex flex-wrap gap-2 mb-2">
+                                            <span class="badge bg-primary">{{ patient.code_patient }}</span>
+                                            <span class="badge bg-{% if patient.statut == 'actif' %}success{% else %}danger{% endif %}">
+                                                {{ patient.get_statut_display }}
+                                            </span>
+                                            <span class="badge bg-info">{{ patient.get_sexe_display }}</span>
+                                            <span class="badge bg-secondary">{{ patient.age }} ans</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <a href="{% url 'patient-update' patient.pk %}" class="btn btn-warning">
+                                            <i class="ri-pencil-line"></i> Modifier
+                                        </a>
+                                        <a href="{% url 'patient-list' %}" class="btn btn-secondary">
+                                            <i class="ri-arrow-left-line"></i> Retour
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div class="row mt-3">
+                                    <div class="col-md-4">
+                                        <p class="mb-1"><i class="ri-phone-line me-2"></i> {{ patient.telephone1|default:"-" }}</p>
+                                        {% if patient.telephone2 %}
+                                        <p class="mb-1"><i class="ri-phone-line me-2"></i> {{ patient.telephone2 }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p class="mb-1"><i class="ri-mail-line me-2"></i> {{ patient.email|default:"-" }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p class="mb-1"><i class="ri-map-pin-line me-2"></i> {{ patient.commune }}, {{ patient.quartier }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Colonne principale -->
+            <div class="col-lg-8">
+                <!-- Onglets -->
+                <div class="card">
+                    <div class="card-header border-0">
+                        <ul class="nav nav-tabs nav-tabs-bottom" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link active" data-bs-toggle="tab" href="#informations" role="tab">Informations</a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" data-bs-toggle="tab" href="#vaccinations" role="tab">Vaccinations</a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" data-bs-toggle="tab" href="#consultations" role="tab">Consultations</a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" data-bs-toggle="tab" href="#effets-secondaires" role="tab">Effets Secondaires</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="tab-content pt-0">
+                            <!-- Onglet Informations -->
+                            <div class="tab-pane fade show active" id="informations" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card card-info mb-4">
+                                            <div class="card-header">
+                                                <h5 class="card-title">Identité</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <dl class="row mb-0">
+                                                    <dt class="col-sm-5">Date de Naissance</dt>
+                                                    <dd class="col-sm-7">{{ patient.date_naissance|date:"d/m/Y" }} ({{ patient.date_naissance|age}} ans)</dd>
+
+                                                    <dt class="col-sm-5">Situation Matrimoniale</dt>
+                                                    <dd class="col-sm-7">{{ patient.situation_matrimoniale|default:"-" }}</dd>
+
+                                                    <dt class="col-sm-5">Nationalité</dt>
+                                                    <dd class="col-sm-7">{{ patient.nationalite }}</dd>
+
+                                                    <dt class="col-sm-5">Type de Pièce</dt>
+                                                    <dd class="col-sm-7">{{ patient.type_piece }}</dd>
+
+                                                    <dt class="col-sm-5">N° Pièce</dt>
+                                                    <dd class="col-sm-7">{{ patient.num_piece|default:"-" }}</dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="card card-info mb-4">
+                                            <div class="card-header">
+                                                <h5 class="card-title">Socio-professionnel</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <dl class="row mb-0">
+                                                    <dt class="col-sm-5">Profession</dt>
+                                                    <dd class="col-sm-7">{{ patient.profession|default:"-" }}</dd>
+
+                                                    <dt class="col-sm-5">Niveau d'Instruction</dt>
+                                                    <dd class="col-sm-7">{{ patient.niveau_instruction|default:"-" }}</dd>
+
+                                                    <dt class="col-sm-5">Consentement Parental</dt>
+                                                    <dd class="col-sm-7">
+                                                        {% if patient.consentement_parental %}
+                                                            <span class="badge bg-success">Oui</span>
+                                                        {% else %}
+                                                            <span class="badge bg-danger">Non</span>
+                                                        {% endif %}
+                                                    </dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card card-info">
+                                    <div class="card-header">
+                                        <h5 class="card-title">Historique Administratif</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <dl class="row mb-0">
+                                                    <dt class="col-sm-5">Centre d'Enregistrement</dt>
+                                                    <dd class="col-sm-7">{{ patient.centre.nom|default:"-" }}</dd>
+
+                                                    <dt class="col-sm-5">Centre Actuel</dt>
+                                                    <dd class="col-sm-7">{{ patient.centre_actuel.nom|default:"-" }}</dd>
+                                                </dl>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <dl class="row mb-0">
+                                                    <dt class="col-sm-5">Date d'Enregistrement</dt>
+                                                    <dd class="col-sm-7">{{ patient.created_at|date:"d/m/Y H:i" }}</dd>
+
+                                                    <dt class="col-sm-5">Enregistré par</dt>
+                                                    <dd class="col-sm-7">{{ patient.created_by.get_full_name|default:"-" }}</dd>
+
+                                                    <dt class="col-sm-5">Dernière Mise à Jour</dt>
+                                                    <dd class="col-sm-7">{{ patient.updated_at|date:"d/m/Y H:i" }}</dd>
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Onglet Vaccinations -->
+                            <div class="tab-pane fade" id="vaccinations" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5>Historique Vaccinal</h5>
+                                    <a href="" class="btn btn-primary btn-sm">
+                                        <i class="ri-add-line"></i> Nouvelle Vaccination
+                                    </a>
+                                </div>
+
+                                {% if patient.historique_vaccinations.all %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Vaccin</th>
+                                                <th>Dose</th>
+                                                <th>Lot</th>
+                                                <th>Centre</th>
+                                                <th>Rappel</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for vaccin in patient.historique_vaccinations.all %}
+                                            <tr>
+                                                <td>{{ vaccin.date_vaccination|date:"d/m/Y" }}</td>
+                                                <td>{{ vaccin.vaccin.nom }}</td>
+                                                <td>{{ vaccin.dose }}</td>
+                                                <td>{{ vaccin.lot.numero_lot|default:"-" }}</td>
+                                                <td>{{ vaccin.centre.nom }}</td>
+                                                <td>
+                                                    {% if vaccin.date_rappel %}
+                                                        {% if vaccin.date_rappel < today %}
+                                                        <span class="badge bg-danger">{{ vaccin.date_rappel|date:"d/m/Y" }}</span>
+                                                        {% else %}
+                                                        <span class="badge bg-success">{{ vaccin.date_rappel|date:"d/m/Y" }}</span>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">Non applicable</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <div class="d-flex gap-1">
+                                                        <a href="{% url 'vaccination-update' vaccin.pk %}" class="btn btn-sm btn-warning" title="Modifier">
+                                                            <i class="ri-pencil-line"></i>
+                                                        </a>
+                                                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+                                                                data-bs-target="#deleteVaccinModal{{ vaccin.pk }}" title="Supprimer">
+                                                            <i class="ri-delete-bin-line"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+
+                                            <!-- Modal de suppression vaccination -->
+                                            <div class="modal fade" id="deleteVaccinModal{{ vaccin.pk }}" tabindex="-1" role="dialog" aria-hidden="true">
+                                                <div class="modal-dialog" role="document">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Confirmer la suppression</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>Êtes-vous sûr de vouloir supprimer cette vaccination ?</p>
+                                                            <p class="text-danger"><strong>Action irréversible.</strong></p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                                            <form method="post" action="{% url 'vaccination-delete' vaccin.pk %}">
+                                                                {% csrf_token %}
+                                                                <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-info">Aucun historique vaccinal disponible</div>
+                                {% endif %}
+
+                                <!-- Vaccins externes -->
+                                <div class="mt-4">
+                                    <h5 class="mb-3">Vaccinations Externes</h5>
+                                    {% if patient.vaccine_exts.all %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Vaccin</th>
+                                                    <th>Dose</th>
+                                                    <th>Pays</th>
+                                                    <th>Ville</th>
+                                                    <th>Lot</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for ext in patient.vaccine_exts.all %}
+                                                <tr>
+                                                    <td>{{ ext.date|date:"d/m/Y"|default:"-" }}</td>
+                                                    <td>{{ ext.vaccin.nom }}</td>
+                                                    <td>{{ ext.numero_dose }}</td>
+                                                    <td>{{ ext.pays|default:"-" }}</td>
+                                                    <td>{{ ext.ville|default:"-" }}</td>
+                                                    <td>{{ ext.lot|default:"-" }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-info">Aucune vaccination externe enregistrée</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Onglet Consultations -->
+                            <div class="tab-pane fade" id="consultations" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5>Historique des Consultations</h5>
+                                    <a href="" class="btn btn-primary btn-sm">
+                                        <i class="ri-add-line"></i> Nouvelle Consultation
+                                    </a>
+                                </div>
+
+                                {% if patient.consultation_set.all %}
+                                <div class="accordion" id="consultationsAccordion">
+                                    {% for consult in patient.consultation_set.all %}
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading{{ consult.id }}">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                                    data-bs-target="#collapse{{ consult.id }}" aria-expanded="false"
+                                                    aria-controls="collapse{{ consult.id }}">
+                                                Consultation du {{ consult.created_at|date:"d/m/Y" }}
+                                                <span class="badge bg-info ms-2">{{ consult.centre.nom }}</span>
+                                            </button>
+                                        </h2>
+                                        <div id="collapse{{ consult.id }}" class="accordion-collapse collapse"
+                                             aria-labelledby="heading{{ consult.id }}" data-bs-parent="#consultationsAccordion">
+                                            <div class="accordion-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <h6>Détails</h6>
+                                                        <dl class="row">
+                                                            <dt class="col-sm-4">Date</dt>
+                                                            <dd class="col-sm-8">{{ consult.created_at|date:"d/m/Y H:i" }}</dd>
+
+                                                            <dt class="col-sm-4">Centre</dt>
+                                                            <dd class="col-sm-8">{{ consult.centre.nom }}</dd>
+
+                                                            <dt class="col-sm-4">Effectuée par</dt>
+                                                            <dd class="col-sm-8">{{ consult.utilisateur.get_full_name }}</dd>
+                                                        </dl>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <h6>Données Cliniques</h6>
+                                                        {% if consult.consultation %}
+                                                            <pre>{{ consult.consultation|pprint }}</pre>
+                                                        {% else %}
+                                                            <p class="text-muted">Aucune donnée clinique enregistrée</p>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <div class="alert alert-info">Aucune consultation enregistrée</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Onglet Effets Secondaires -->
+                            <div class="tab-pane fade" id="effets-secondaires" role="tabpanel">
+                                <h5 class="mb-3">Effets Secondaires Signalés</h5>
+
+                                {% if patient.mapi_set.all %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Symptômes</th>
+                                                <th>Vaccin</th>
+                                                <th>Dose</th>
+                                                <th>Centre</th>
+                                                <th>Commentaire</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for mapi in patient.mapi_set.all %}
+                                            <tr>
+                                                <td>{{ mapi.date|date:"d/m/Y" }}</td>
+                                                <td>{{ mapi.symptome|truncatechars:50 }}</td>
+                                                <td>{{ mapi.accination.vaccin.nom }}</td>
+                                                <td>{{ mapi.accination.dose }}</td>
+                                                <td>{{ mapi.centre.nom }}</td>
+                                                <td>{{ mapi.commentaire|truncatechars:50|default:"-" }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-info">Aucun effet secondaire signalé</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonne latérale -->
+            <div class="col-lg-4">
+                <!-- Carte Rappels Vaccinaux -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">Rappels à Venir</h5>
+                    </div>
+                    <div class="card-body">
+                        {% with rappels=patient.get_prochains_rappels %}
+                            {% if rappels %}
+                            <ul class="list-group list-group-flush">
+                                {% for rappel in rappels %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ rappel.vaccin.nom }} - Dose {{ rappel.dose }}</h6>
+                                        <small class="text-muted">Vacciné le {{ rappel.date_vaccination|date:"d/m/Y" }}</small>
+                                    </div>
+                                    <span class="badge bg-{% if rappel.date_rappel < today %}danger{% else %}warning{% endif %}">
+                                        {{ rappel.date_rappel|date:"d/m/Y" }}
+                                    </span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <div class="alert alert-success">Aucun rappel vaccinal à venir</div>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+
+                <!-- Carte Statut Vaccinal -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">Couverture Vaccinale</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <div class="chart-circle" data-percent="{{ patient.get_couverture_vaccinale }}" data-color="primary">
+                                <span>{{ patient.get_couverture_vaccinale }}%</span>
+                            </div>
+                        </div>
+
+                        <div class="progress-stacked mb-3">
+                            {% for vaccin in vaccins_obligatoires %}
+                            <div class="progress" style="height: 10px;"
+                                 data-bs-toggle="tooltip"
+                                 title="{{ vaccin.nom }} - {{ patient.get_statut_vaccin|get_item:vaccin.id }}">
+                                <div class="progress-bar bg-{% if patient.get_statut_vaccin|get_item:vaccin.id == 'Complet' %}success{% else %}warning{% endif %}"
+                                     role="progressbar"
+                                     style="width: 100%">
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                            {% for vaccin in vaccins_obligatoires %}
+                            <span class="badge bg-{% if patient.get_statut_vaccin|get_item:vaccin.id == 'Complet' %}success{% else %}warning{% endif %}">
+                                {{ vaccin.nom|slice:":3" }}: {{ patient.get_statut_vaccin|get_item:vaccin.id }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Carte Actions Rapides -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title">Actions Rapides</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="" class="btn btn-primary">
+                                <i class="ri-syringe-line"></i> Nouvelle Vaccination
+                            </a>
+                            <a href="" class="btn btn-info">
+                                <i class="ri-stethoscope-line"></i> Nouvelle Consultation
+                            </a>
+                            <a href="{% url 'mapi-create' %}" class="btn btn-warning">
+                                <i class="ri-alert-line"></i> Signaler Effet Secondaire
+                            </a>
+                            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generateQrModal">
+                                <i class="ri-qr-code-line"></i> Générer QR Code
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Carte Documents -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Documents Associés</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="ri-file-text-line"></i> Carnet Vaccinal
+                            </a>
+                            <a href="#" class="btn btn-outline-secondary">
+                                <i class="ri-history-line"></i> Historique Complet
+                            </a>
+                            <a href="#" class="btn btn-outline-info">
+                                <i class="ri-contacts-book-line"></i> Fiche Contact
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal QR Code -->
+    <div class="modal fade" id="generateQrModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">QR Code Patient</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="patientQrCode" class="mb-3"></div>
+                    <p>Code: <strong>{{ patient.code_patient }}</strong></p>
+                    <p>Scannez ce code pour accéder rapidement au dossier</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn btn-primary" id="downloadQrBtn">
+                        <i class="ri-download-line"></i> Télécharger
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script src="{% static 'vendor/qrcodejs/qrcode.min.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Génération du QR Code
+    const qrCode = new QRCode(document.getElementById("patientQrCode"), {
+        text: "{{ patient.code_patient }}",
+        width: 200,
+        height: 200,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    // Téléchargement du QR Code
+    document.getElementById('downloadQrBtn').addEventListener('click', function() {
+        const canvas = document.querySelector('#patientQrCode canvas');
+        const link = document.createElement('a');
+        link.download = 'qr-code-{{ patient.code_patient }}.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+    });
+
+    // Initialisation des tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
+});
+</script>
+{% endblock %}

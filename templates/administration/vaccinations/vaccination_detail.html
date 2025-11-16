@@ -1,0 +1,528 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}Détail Vaccination – {{ vaccination.patient.nom }} {{ vaccination.patient.prenoms }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    
+    {# ===== EN-TÊTE ===== #}
+    <div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 gradient-vaccination from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft">
+        <div class="relative px-6 py-6">
+            <!-- Navigation -->
+            <div class="flex items-center justify-between mb-6 no-print">
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'vaccination_list' %}" 
+                       class="inline-flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white/10 border border-white/20 text-[11px] hover:bg-white/15 transition">
+                        <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                        Retour à la liste
+                    </a>
+                    <span class="text-[10px] uppercase tracking-wider text-slate-300">
+                        Détail de vaccination
+                    </span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <a href="{#% url 'admin:vaccinations_vaccination_change' vaccination.id %#}" 
+                       target="_blank"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/10 border border-white/20 text-[11px] hover:bg-white/15 transition">
+                        <i class="fa-solid fa-pencil text-[10px]"></i>
+                        Modifier
+                    </a>
+                    <button onclick="window.print()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/10 border border-white/20 text-[11px] hover:bg-white/15 transition">
+                        <i class="fa-solid fa-print text-[10px]"></i>
+                        Imprimer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Informations principales -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Patient -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center">
+                            <i class="fa-solid fa-user text-emerald-300"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-semibold">
+                                {{ vaccination.patient.nom }} {{ vaccination.patient.prenoms }}
+                            </h1>
+                            <p class="text-[12px] text-slate-300">
+                                {{ vaccination.patient.code_patient }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-1 text-[12px]">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-venus-mars text-slate-400 w-4"></i>
+                            <span>{{ vaccination.patient.get_sexe_display }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-cake-candles text-slate-400 w-4"></i>
+                            <span>{{ vaccination.patient.date_naissance|date:"d/m/Y" }} ({{ vaccination.patient.age }} ans)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-phone text-slate-400 w-4"></i>
+                            <span>{{ vaccination.patient.telephone1|default:"Non renseigné" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vaccination -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center">
+                            <i class="fa-solid fa-syringe text-blue-300"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold">{{ vaccination.vaccin.nom }}</h2>
+                            <p class="text-[12px] text-slate-300">
+                                Dose {{ vaccination.dose }} sur {{ vaccination.vaccin.doses_requises }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-1 text-[12px]">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-day text-slate-400 w-4"></i>
+                            <span>Vacciné le {{ vaccination.date_vaccination|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-industry text-slate-400 w-4"></i>
+                            <span>{{ vaccination.vaccin.fabricant|default:"Fabricant non spécifié" }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-vial text-slate-400 w-4"></i>
+                            <span>Lot: {{ vaccination.lot.numero_lot|default:"Non spécifié" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Centre et statut -->
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-purple-500/20 border border-purple-400/30 flex items-center justify-center">
+                            <i class="fa-solid fa-hospital text-purple-300"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold">{{ vaccination.centre.name }}</h3>
+                            <p class="text-[12px] text-slate-300">
+                                {{ vaccination.centre.region|default:"Région non spécifiée" }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-1 text-[12px]">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-user-md text-slate-400 w-4"></i>
+                            <span>Enregistré par {{ vaccination.created_by.get_full_name|default:vaccination.created_by }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-clock text-slate-400 w-4"></i>
+                            <span>Le {{ vaccination.created_at|date:"d/m/Y à H:i" }}</span>
+                        </div>
+                        {% if stats.prochain_rappel %}
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-bell text-amber-400 w-4"></i>
+                            <span class="text-amber-300">Rappel prévu le {{ stats.prochain_rappel|date:"d/m/Y" }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ===== INFORMATIONS DÉTAILLÉES ===== #}
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        
+        {# === COLONNE GAUCHE === #}
+        <div class="xl:col-span-2 space-y-6">
+            
+            {# --- Informations sur le vaccin --- #}
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-5">
+                <h3 class="text-sm font-semibold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-vial-circle-check text-blue-500"></i>
+                    Informations du vaccin
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Maladie cible</label>
+                            <p class="text-sm font-medium">{{ vaccination.vaccin.maladie.nom }}</p>
+                            {% if vaccination.vaccin.maladie.description %}
+                            <p class="text-[12px] text-slate-600 dark:text-slate-300 mt-1">
+                                {{ vaccination.vaccin.maladie.description }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Type de vaccin</label>
+                            <p class="text-sm">{{ vaccination.vaccin.get_type_vaccin_display }}</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Pays d'origine</label>
+                            <p class="text-sm">{{ vaccination.vaccin.pays_origine|default:"Non spécifié" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Schéma vaccinal</label>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px]">
+                                    {{ vaccination.dose }}/{{ vaccination.vaccin.doses_requises }} doses
+                                </span>
+                                {% if vaccination.vaccin.intervalle_doses %}
+                                <span class="text-[11px] text-slate-500">
+                                    Intervalle: {{ vaccination.vaccin.intervalle_doses }} jours
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Durée d'immunité</label>
+                            <p class="text-sm">
+                                {% if vaccination.vaccin.duree_immunite %}
+                                    {{ vaccination.vaccin.duree_immunite }} mois
+                                {% else %}
+                                    Non spécifiée
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Statut d'approbation</label>
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] {% if vaccination.vaccin.statut_approbation %}bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300{% else %}bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300{% endif %}">
+                                <i class="fa-solid fa-{% if vaccination.vaccin.statut_approbation %}check{% else %}clock{% endif %} text-[8px]"></i>
+                                {% if vaccination.vaccin.statut_approbation %}
+                                    Approuvé
+                                {% else %}
+                                    En attente
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# --- Informations sur le lot --- #}
+            {% if vaccination.lot %}
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-5">
+                <h3 class="text-sm font-semibold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-boxes-stacked text-purple-500"></i>
+                    Informations du lot
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Numéro de lot</label>
+                            <p class="text-sm font-mono">{{ vaccination.lot.numero_lot }}</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Date de fabrication</label>
+                            <p class="text-sm">
+                                {% if vaccination.lot.date_fabrication %}
+                                    {{ vaccination.lot.date_fabrication|date:"d/m/Y" }}
+                                {% else %}
+                                    Non spécifiée
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Date d'expiration</label>
+                            <p class="text-sm {% if vaccination.lot.date_expiration and vaccination.lot.date_expiration < today %}text-rose-600 dark:text-rose-400{% endif %}">
+                                {% if vaccination.lot.date_expiration %}
+                                    {{ vaccination.lot.date_expiration|date:"d/m/Y" }}
+                                    {% if vaccination.lot.date_expiration < today %}
+                                    <span class="text-[10px] bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 px-1 rounded">Expiré</span>
+                                    {% endif %}
+                                {% else %}
+                                    Non spécifiée
+                                {% endif %}
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Stock disponible</label>
+                            <div class="flex items-center gap-2">
+                                <p class="text-sm">
+                                    {{ vaccination.lot.quantite_disponible|default:0 }} / {{ vaccination.lot.quantite_initiale|default:0 }}
+                                </p>
+                                {% if vaccination.lot.quantite_disponible and vaccination.lot.quantite_initiale %}
+                                    {% widthratio vaccination.lot.quantite_disponible vaccination.lot.quantite_initiale 100 as pourcentage %}
+                                    <div class="w-16 bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                                        <div class="h-2 rounded-full bg-green-500" style="width: {{ pourcentage }}%"></div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {# --- Historique des doses pour ce vaccin --- #}
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-5">
+                <h3 class="text-sm font-semibold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-history text-green-500"></i>
+                    Historique des doses - {{ vaccination.vaccin.nom }}
+                </h3>
+                
+                <div class="space-y-3">
+                    {% for vacc in historique_vaccins %}
+                    <div class="flex items-center justify-between p-3 rounded-2xl border {% if vacc.id == vaccination.id %}border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20{% else %}border-slate-200 dark:border-slate-700{% endif %}">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-xl {% if vacc.id == vaccination.id %}bg-blue-500 text-white{% else %}bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300{% endif %} flex items-center justify-center text-sm">
+                                {{ vacc.dose }}
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium">Dose {{ vacc.dose }}</p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    {{ vacc.date_vaccination|date:"d/m/Y" }} • {{ vacc.centre.name }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-2">
+                            {% if vacc.lot %}
+                            <span class="text-[10px] px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                Lot: {{ vacc.lot.numero_lot }}
+                            </span>
+                            {% endif %}
+                            
+                            {% if vacc.id == vaccination.id %}
+                            <span class="text-[10px] px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                                Actuelle
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if stats.doses_restantes > 0 %}
+                    <div class="p-3 rounded-2xl border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/30">
+                        <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                            <div class="w-8 h-8 rounded-xl border border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center text-sm">
+                                {{ vaccination.dose|add:1 }}
+                            </div>
+                            <div>
+                                <p class="text-sm">Dose {{ vaccination.dose|add:1 }} à prévoir</p>
+                                <p class="text-[11px]">
+                                    {% if stats.prochain_rappel %}
+                                    Rappel recommandé le {{ stats.prochain_rappel|date:"d/m/Y" }}
+                                    {% else %}
+                                    Date de rappel à déterminer
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# --- Effets secondaires (MAPIs) --- #}
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-5">
+                <h3 class="text-sm font-semibold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                    Effets secondaires déclarés
+                </h3>
+                
+                {% if effets_secondaires %}
+                <div class="space-y-3">
+                    {% for mapi in effets_secondaires %}
+                    <div class="p-3 rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
+                        <div class="flex items-start justify-between mb-2">
+                            <div>
+                                <p class="text-sm font-medium text-amber-700 dark:text-amber-300">
+                                    {{ mapi.symptome|default:"Symptôme non spécifié" }}
+                                </p>
+                                <p class="text-[11px] text-amber-600 dark:text-amber-400">
+                                    Déclaré le {{ mapi.date|date:"d/m/Y à H:i" }}
+                                </p>
+                            </div>
+                            <span class="text-[10px] px-2 py-1 rounded-full bg-amber-100 dark:bg-amber-800 text-amber-700 dark:text-amber-300">
+                                {{ mapi.utilisateur.get_full_name|default:mapi.utilisateur.username }}
+                            </span>
+                        </div>
+                        
+                        {% if mapi.commentaire %}
+                        <p class="text-[12px] text-amber-600 dark:text-amber-400 mt-2">
+                            {{ mapi.commentaire }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-6 text-slate-400 dark:text-slate-500">
+                    <i class="fa-solid fa-circle-check text-2xl mb-2 opacity-50"></i>
+                    <p class="text-sm">Aucun effet secondaire déclaré pour cette vaccination</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {# === COLONNE DROITE === #}
+        <div class="space-y-6">
+            
+            {# --- Statistiques rapides --- #}
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-5">
+                <h3 class="text-sm font-semibold mb-4">Aperçu</h3>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[12px] text-slate-500 dark:text-slate-400">Jours écoulés</span>
+                        <span class="text-sm font-medium">{{ stats.jours_ecoules }} jours</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-[12px] text-slate-500 dark:text-slate-400">Doses restantes</span>
+                        <span class="text-sm font-medium">{{ stats.doses_restantes }}/{{ vaccination.vaccin.doses_requises }}</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-[12px] text-slate-500 dark:text-slate-400">Ce vaccin dans ce centre</span>
+                        <span class="text-sm font-medium">{{ stats.total_vaccin_centre }} administrations</span>
+                    </div>
+                    
+                    {% if vaccination.date_rappel %}
+                    <div class="pt-3 border-t border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[12px] text-slate-500 dark:text-slate-400">Prochain rappel</span>
+                            <span class="text-sm font-medium {% if vaccination.date_rappel < today %}text-rose-600 dark:text-rose-400{% else %}text-green-600 dark:text-green-400{% endif %}">
+                                {{ vaccination.date_rappel|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                        {% if vaccination.date_rappel < today %}
+                        <p class="text-[10px] text-rose-600 dark:text-rose-400">Rappel en retard</p>
+                        {% elif vaccination.date_rappel == today %}
+                        <p class="text-[10px] text-amber-600 dark:text-amber-400">Rappel aujourd'hui</p>
+                        {% else %}
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400">
+                            Dans {{ vaccination.date_rappel|timeuntil:today }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# --- Autres vaccinations du patient --- #}
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-5">
+                <h3 class="text-sm font-semibold mb-4">Autres vaccinations du patient</h3>
+                
+                <div class="space-y-2">
+                    {% for vacc in toutes_vaccinations %}
+                    {% if vacc.id != vaccination.id %}
+                    <div class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-[12px] font-medium">{{ vacc.vaccin.nom }}</p>
+                                <p class="text-[10px] text-slate-500 dark:text-slate-400">
+                                    Dose {{ vacc.dose }} • {{ vacc.date_vaccination|date:"d/m/Y" }}
+                                </p>
+                            </div>
+                            <a href="{% url 'vaccination_detail' vacc.id %}"
+                               class="text-[10px] px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">
+                                Voir
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% empty %}
+                    <p class="text-[12px] text-slate-500 dark:text-slate-400 text-center py-2">
+                        Aucune autre vaccination
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {# --- Consultations pour cette maladie --- #}
+            {% if consultations %}
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-5">
+                <h3 class="text-sm font-semibold mb-4">
+                    Consultations {{ vaccination.vaccin.maladie.nom }}
+                </h3>
+                
+                <div class="space-y-2">
+                    {% for consultation in consultations %}
+                    <div class="p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-[11px] font-medium">
+                                {{ consultation.created_at|date:"d/m/Y" }}
+                            </span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                {{ consultation.utilisateur.get_full_name|default:consultation.utilisateur.username }}
+                            </span>
+                        </div>
+                        {% if consultation.centre %}
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400">
+                            {{ consultation.centre.name }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# --- Actions rapides --- #}
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-5 no-print">
+                <h3 class="text-sm font-semibold mb-4">Actions</h3>
+                
+                <div class="space-y-2">
+                    <a href="{% url 'detail_patient' vaccination.patient.pk %}"
+                       class="w-full flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[12px] hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                        <i class="fa-solid fa-user-injured text-[11px]"></i>
+                        Voir le dossier patient complet
+                    </a>
+                    
+                    <a href="{% url 'vaccination_list' %}?patient={{ vaccination.patient.code_patient }}"
+                       class="w-full flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[12px] hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                        <i class="fa-solid fa-syringe text-[11px]"></i>
+                        Toutes ses vaccinations
+                    </a>
+                    
+                    {% if stats.doses_restantes > 0 %}
+                    <button class="w-full flex items-center gap-2 px-3 py-2 rounded-2xl bg-blue-500 text-white text-[12px] hover:bg-blue-600 transition">
+                        <i class="fa-solid fa-plus text-[11px]"></i>
+                        Programmer la dose {{ vaccination.dose|add:1 }}
+                    </button>
+                    {% endif %}
+                
+                <a href="{% url 'vaccination_certificat_pdf' vaccination.id %}"
+   class="w-full flex items-center gap-2 px-3 py-2 rounded-2xl bg-emerald-500 text-white text-[12px] hover:bg-emerald-600 transition no-print">
+    <i class="fa-solid fa-file-pdf text-[11px]"></i>
+    Télécharger le certificat (PDF)
+</a>
+                    
+                   
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .no-print { display: none !important; }
+    body { background: white !important; }
+    .bg-gradient-to-r { background: white !important; color: black !important; }
+    .border { border-color: #000 !important; }
+}
+</style>
+{% endblock %}

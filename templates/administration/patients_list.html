@@ -1,0 +1,250 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}Patients – Plateforme Vaccination CI{% endblock %}
+
+{% block hero_title %}Gestion des patients{% endblock %}
+{% block hero_subtitle %}
+Visualisez, filtrez et suivez les patients inscrits dans la plateforme de vaccination.
+{% endblock %}
+{% block hero_card_title %}Patients actifs{% endblock %}
+{% block hero_card_value %}{{ active_patients|default:0 }} / {{ total_patients|default:0 }}{% endblock %}
+{% block hero_card_label %}{{ stats.active_percentage|floatformat:1 }}% de patients actifs{% endblock %}
+
+{% block content %}
+{% block hero %}
+<div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft">
+
+    <!-- Aura décorative à droite -->
+    <div class="absolute inset-y-0 right-0 hidden md:flex items-center pr-6 pointer-events-none">
+        <div class="relative w-40 h-40 rounded-full bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-center">
+            <div class="w-24 h-24 rounded-full bg-slate-900/80 flex items-center justify-center border border-white/10">
+                <i class="fa-solid fa-users text-2xl text-emerald-300"></i>
+            </div>
+            <div class="absolute -bottom-2 -left-4 px-3 py-1.5 rounded-2xl bg-white/10 border border-white/20 text-[10px] backdrop-blur">
+                {{ total_patients|default:0 }} patients enregistrés
+            </div>
+            <div class="absolute -top-2 -right-2 px-3 py-1.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 text-[10px] flex items-center gap-1">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                {{ new_patients|default:0 }} nouveaux / 7 jours
+            </div>
+        </div>
+    </div>
+
+    <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <!-- Texte principal -->
+        <div class="space-y-2 max-w-xl">
+            <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90">
+                Côte d’Ivoire · Programme Élargi de Vaccination
+            </p>
+            <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
+                <span>Gestion des patients</span>
+                <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">
+                    <i class="fa-solid fa-check-circle text-[9px]"></i>
+                    Données nominatives sécurisées
+                </span>
+            </h1>
+            <p class="text-[12px] text-slate-300">
+                Visualisez, filtrez et suivez le parcours vaccinal de chaque patient : identité,
+                centre de rattachement, statut, contacts et historique des vaccinations.
+            </p>
+
+            <!-- Tags de contexte -->
+            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
+                    <i class="fa-solid fa-id-card-clip text-[9px]"></i>
+                    Identifiant unique patient
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">
+                    <i class="fa-solid fa-shield-virus text-[9px]"></i>
+                    Suivi vaccinal complet
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/40">
+                    <i class="fa-solid fa-location-dot text-[9px]"></i>
+                    Centres et régions sanitaires
+                </span>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="flex flex-wrap gap-2 pt-1">
+                <a href="{#% url 'patient_add' %#}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white text-slate-900 text-[11px] shadow-soft hover:scale-[1.01] transition">
+                    <i class="fa-solid fa-user-plus text-[10px]"></i>
+                    <span>Ajouter un patient</span>
+                </a>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/5 border border-white/15 text-[11px]">
+                    <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+                    <span>Recherche par nom, téléphone ou centre</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Carte chiffres patients -->
+        <div class="rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-[11px] min-w-[220px] space-y-2">
+            <div class="flex items-center justify-between gap-2">
+                <p class="text-slate-200/90 font-medium">
+                    Patients actifs
+                </p>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">
+                    Synchro · OK
+                </span>
+            </div>
+            <div class="flex gap-3 items-end">
+                <div>
+                    <p class="text-lg font-semibold">
+                        {{ active_patients|default:0 }} / {{ total_patients|default:0 }}
+                    </p>
+                    <p class="text-[10px] text-slate-300">
+                        {{ stats.active_percentage|floatformat:1 }}% de patients actifs
+                    </p>
+                    <p class="text-[10px] text-slate-400">
+                        {{ inactive_patients|default:0 }} dossiers inactifs à reviser
+                    </p>
+                </div>
+                <div class="flex-1 h-10 relative">
+                    <div class="absolute inset-0 rounded-xl bg-gradient-to-tr from-emerald-500/40 via-sky-500/30 to-amber-400/40 opacity-60 blur-[10px]"></div>
+                    <div class="absolute inset-0 border border-dashed border-slate-500/40 rounded-xl"></div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between text-[10px] text-slate-300">
+                <span>
+                    Dernière mise à jour : 13/11/2025 · 10:32
+                </span>
+                <span class="flex items-center gap-1">
+                    <i class="fa-solid fa-circle text-[5px] text-emerald-400 animate-pulse"></i>
+                    liste actualisée
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock hero %}
+<!-- Stats rapides -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-1 shadow-soft/40">
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-[0.16em]">Total patients</p>
+        <p class="text-2xl font-semibold">{{ total_patients|default:0 }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">Tous statuts confondus</p>
+    </div>
+
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-emerald-200/60 dark:border-emerald-800/80 rounded-3xl p-4 space-y-1">
+        <p class="text-[11px] text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.16em]">Patients actifs</p>
+        <p class="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{{ active_patients|default:0 }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            {{ stats.active_percentage|floatformat:1 }}% du total
+        </p>
+    </div>
+
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-1">
+        <p class="text-[11px] text-rose-600 dark:text-rose-400 uppercase tracking-[0.16em]">Patients inactifs</p>
+        <p class="text-2xl font-semibold text-rose-600 dark:text-rose-400">{{ inactive_patients|default:0 }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            {{ stats.inactive_percentage|floatformat:1 }}% du total
+        </p>
+    </div>
+
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-sky-200/60 dark:border-sky-800/80 rounded-3xl p-4 space-y-1">
+        <p class="text-[11px] text-sky-600 dark:text-sky-400 uppercase tracking-[0.16em]">Nouveaux (7 jours)</p>
+        <p class="text-2xl font-semibold text-sky-600 dark:text-sky-400">{{ new_patients|default:0 }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            Ajouts récents
+        </p>
+    </div>
+</div>
+
+<!-- Barre d'actions + filtres -->
+<div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 mb-5">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <!-- Titre + bouton -->
+        <div class="space-y-1">
+            <h2 class="text-sm font-semibold">Liste des patients</h2>
+            <p class="text-[12px] text-slate-500 dark:text-slate-400">
+                Recherchez par nom, prénom, téléphone ou filtrez par statut / centre.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-2 justify-end">
+            <a href="{#% url 'patient_add' %#}"
+               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-ivoireBlue text-white text-xs shadow-sm hover:scale-[1.01] transition">
+                <i class="fa-solid fa-user-plus text-[11px]"></i>
+                <span>Ajouter un patient</span>
+            </a>
+            <a href="#"
+               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                <i class="fa-solid fa-download text-[11px]"></i>
+                <span>Exporter la liste</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulaire de filtres -->
+    <form method="get" class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+        <!-- Recherche -->
+        <div>
+            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+                Recherche
+            </label>
+            <div class="flex items-center px-2.5 py-1.5 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70">
+                <i class="fa-solid fa-magnifying-glass text-[11px] text-slate-400 mr-2"></i>
+                <input type="text"
+                       name="q"
+                       value="{{ request.GET.q }}"
+                       placeholder="Nom, prénom, téléphone..."
+                       class="w-full bg-transparent border-none focus:outline-none text-[12px] placeholder:text-slate-400 dark:placeholder:text-slate-500">
+            </div>
+        </div>
+
+        <!-- Statut -->
+        <div>
+            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+                Statut
+            </label>
+            <select name="statut"
+                    class="w-full rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50">
+                <option value="">Tous les statuts</option>
+                <option value="actif" {% if request.GET.statut == 'actif' %}selected{% endif %}>Actif</option>
+                <option value="inactif" {% if request.GET.statut == 'inactif' %}selected{% endif %}>Inactif</option>
+            </select>
+        </div>
+
+        <!-- Centre -->
+        <div>
+            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+                Centre
+            </label>
+            <select name="centre"
+                    class="w-full rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50">
+                <option value="">Tous les centres</option>
+                {% if centres %}
+                    {% for centre in centres %}
+                        <option value="{{ centre.id }}"
+                                {% if request.GET.centre == centre.id|stringformat:"s" %}selected{% endif %}>
+                            {{ centre.nom }}
+                        </option>
+                    {% endfor %}
+                {% endif %}
+            </select>
+        </div>
+
+        <!-- Boutons -->
+        <div class="flex items-end gap-2">
+            <button type="submit"
+                    class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs">
+                <i class="fa-solid fa-filter text-[11px]"></i>
+                <span>Filtrer</span>
+            </button>
+            <a href="{% url 'patient_list' %}"
+               class="inline-flex items-center justify-center px-3 py-2 rounded-2xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 text-[11px]">
+                Réinitialiser
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Tableau des patients -->
+<div id="patients-table"
+     class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5">
+    {% include "administration/partials/patients_table_partial.html" %}
+</div>
+
+{% endblock %}

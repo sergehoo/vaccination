@@ -1,0 +1,1445 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Carnet de vaccination – {{ patient.code_patient }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+
+        body {
+            font-family: "DejaVu Sans", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11px;
+            color: #1f2933;
+            background-color: #ffffff;
+            line-height: 1.4;
+        }
+
+        /* ========= FILIGRANE ========= */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 60px;
+            color: rgba(15, 118, 110, 0.06);
+            z-index: -1;
+            font-weight: bold;
+            letter-spacing: 0.2em;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+
+        /* ========= HEADER (compact) ========= */
+        .header {
+            margin-bottom: 6px;
+        }
+
+        .header-top {
+            width: 100%;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+        }
+
+        .header-row {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-cell {
+            vertical-align: middle;
+        }
+
+        .header-cell-left,
+        .header-cell-right {
+            width: 22%;
+            text-align: center;
+        }
+
+        .header-cell-center {
+            width: 56%;
+            text-align: center;
+            padding: 0 4px;
+        }
+
+        .header-logo {
+            max-height: 100px;
+            max-width: 150px;
+        }
+
+        .logo-inhp {
+            width: 140px !important;
+            height: auto !important;
+            max-height: 65px !important;
+            object-fit: contain;
+            display: block;
+            margin: 3px auto 0;
+        }
+
+        .republique {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+            color: #1a365d;
+            margin-bottom: 1px;
+        }
+
+        .devise {
+            font-style: italic;
+            font-size: 9px;
+            color: #4a5568;
+            margin-bottom: 2px;
+        }
+
+        .ministere {
+            font-weight: 600;
+            font-size: 10px;
+            color: #2d3748;
+            line-height: 1.2;
+        }
+
+        .header-bar {
+            height: 3px;
+            width: 100%;
+            background: linear-gradient(to right, #f97316, #fbbf24, #16a34a);
+            border-radius: 2px;
+        }
+
+        /* ========= TITRE + PATIENT (compact) ========= */
+        .title-block {
+            margin: 6px 0 4px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid #dbeafe;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e0f2fe 100%);
+        }
+
+        .title-row {
+            display: table;
+            width: 100%;
+        }
+
+        .title-left,
+        .title-right {
+            display: table-cell;
+            vertical-align: middle;
+        }
+
+        .title-left {
+            width: 65%;
+        }
+
+        .title-right {
+            width: 35%;
+            text-align: right;
+        }
+
+        .title-block h1 {
+            margin: 0;
+            font-size: 17px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #0f766e;
+        }
+
+        .patient-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #111827;
+            margin-top: 2px;
+        }
+
+        .print-date {
+            font-size: 9px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .patient-id {
+            display: inline-block;
+            margin-left: 4px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background-color: #0f766e;
+            color: #ffffff;
+            font-size: 8.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+        }
+
+        /* ========= STATUT VACCINAL – TRÈS COMPACT ========= */
+        .vaccination-status-line {
+            margin: 4px 0 6px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            font-size: 9.5px;
+            color: #4b5563;
+        }
+
+        .vaccination-status-line span {
+            margin-right: 12px;
+        }
+
+        .vaccination-status-line strong {
+            color: #111827;
+        }
+
+        /* ========= SECTIONS ========= */
+        .section {
+            margin-bottom: 6px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .section-header {
+            padding: 5px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .section-header.green {
+            background: linear-gradient(to right, #22c55e, #15803d);
+        }
+
+        .section-header.blue {
+            background: linear-gradient(to right, #2563eb, #1d4ed8);
+        }
+
+        .section-header.orange {
+            background: linear-gradient(to right, #f97316, #c2410c);
+        }
+
+        .section-icon {
+            font-size: 12px;
+        }
+
+        .section-content {
+            padding: 7px 8px;
+            background-color: #f8fafc;
+        }
+
+        /* ========= INFORMATIONS PATIENT ========= */
+        .patient-info-grid {
+            display: table;
+            width: 100%;
+        }
+
+        .info-row {
+            display: table-row;
+        }
+
+        .info-item {
+            display: table-cell;
+            width: 50%;
+            padding: 3px 3px 3px 0;
+        }
+
+        .info-label {
+            font-weight: 600;
+            font-size: 9px;
+            color: #4b5563;
+            margin-bottom: 1px;
+        }
+
+        .info-value {
+            font-size: 10px;
+            color: #111827;
+            padding: 3px 6px;
+            background-color: #ffffff;
+            border-radius: 3px;
+            border: 1px solid #e5e7eb;
+        }
+
+        /* ========= TABLES ========= */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9.5px;
+        }
+
+        .data-table th {
+            background-color: #edf2f7;
+            color: #1f2933;
+            font-weight: 600;
+            text-align: left;
+            padding: 4px 5px;
+            border-bottom: 2px solid #cbd5e0;
+        }
+
+        .data-table td {
+            padding: 3px 5px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: #f9fafb;
+        }
+
+        .vaccine-type {
+            display: inline-block;
+            margin-top: 1px;
+            padding: 1px 5px;
+            border-radius: 999px;
+            font-size: 8px;
+            font-weight: 600;
+            background-color: #bfdbfe;
+            color: #1d4ed8;
+        }
+
+        .vaccine-type-live {
+            background-color: #fecaca;
+            color: #b91c1c;
+        }
+
+        .vaccine-type-inactivated {
+            background-color: #bbf7d0;
+            color: #166534;
+        }
+
+        .dose-info {
+            display: table;
+            width: 100%;
+        }
+
+        .dose-text {
+            display: table-cell;
+            width: 60%;
+        }
+
+        .dose-progress {
+            display: table-cell;
+            width: 40%;
+            padding-left: 3px;
+            vertical-align: middle;
+        }
+
+        .dose-bar {
+            width: 100%;
+            height: 4px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .dose-bar-fill {
+            height: 4px;
+            background-color: #22c55e;
+        }
+
+        .text-muted {
+            color: #9ca3af;
+        }
+
+        /* ========= FOOTER & SIGNATURE ========= */
+        .footer {
+            margin-top: 10px;
+            padding: 8px 9px;
+            border-radius: 6px;
+            background-color: #f9fafb;
+            border: 1px dashed #cbd5e0;
+            font-size: 9.5px;
+            color: #4b5563;
+        }
+
+        .signature-block {
+            margin-top: 14px;
+            display: table;
+            width: 100%;
+        }
+
+        .signature-text,
+        .signature-qr {
+            display: table-cell;
+            vertical-align: bottom;
+        }
+
+        .signature-text {
+            width: 65%;
+        }
+
+        .signature-line {
+            margin-top: 24px;
+            padding-top: 3px;
+            border-top: 1px solid #6b7280;
+            width: 210px;
+        }
+
+        .signature-name {
+            font-weight: 700;
+            font-size: 10px;
+            color: #111827;
+        }
+
+        .signature-title {
+            font-size: 9px;
+            color: #6b7280;
+        }
+
+        .signature-date {
+            font-size: 9px;
+            color: #4b5563;
+        }
+
+        .signature-qr {
+            text-align: right;
+        }
+
+        .qr-code {
+            display: inline-block;
+            text-align: center;
+        }
+
+        .qr-code img {
+            width: 75px;
+            height: 75px;
+            border: 1px solid #e2e8f0;
+            padding: 3px;
+            border-radius: 6px;
+            background-color: #ffffff;
+        }
+
+        .qr-label {
+            margin-top: 2px;
+            font-size: 8.5px;
+            color: #6b7280;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="watermark">INHP-CI-INHP-CI</div>
+
+<!-- ========= EN-TÊTE ========= -->
+<div class="header">
+    <div class="header-top">
+        <table class="header-row">
+            <tr>
+                <td class="header-cell header-cell-left">
+                    <img src="{% static 'images/images.jpeg' %}" class="header-logo" alt="Logo CI">
+                </td>
+                <td class="header-cell header-cell-center">
+                    <div class="republique">République de Côte d'Ivoire</div>
+                    <div class="devise">Union - Discipline - Travail</div>
+                    <div class="ministere">Ministère de la Santé, de l'Hygiène Publique</div>
+                    <div class="ministere">et de la Couverture Maladie Universelle</div>
+                    <img src="{% static 'images/logo_inhp.png' %}" class="logo-inhp" alt="Logo INHP">
+                </td>
+                <td class="header-cell header-cell-right">
+                    <img src="{% static 'images/logoMSHPCMU (1).svg' %}" class="header-logo" alt="Logo MSHP">
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="header-bar"></div>
+</div>
+
+<!-- ========= TITRE + PATIENT ========= -->
+<div class="title-block">
+    <div class="title-row">
+        <div class="title-left">
+            <h1>Carnet de Vaccination</h1>
+            <div class="patient-name">
+                {{ patient.nom|upper }} {{ patient.prenoms|title }}
+                <span class="patient-id">CAV-{{ patient.pk|stringformat:"06d" }}</span>
+            </div>
+            <div class="print-date">
+                Document généré le {{ today|date:"d/m/Y" }}
+            </div>
+        </div>
+        <div class="title-right">
+            {{ patient.code_patient }}
+        </div>
+    </div>
+</div>
+
+<!-- ========= STATUT VACCINAL – LIGNE COMPACTE ========= -->
+<div class="vaccination-status-line">
+    <span><strong>Vaccins administrés :</strong> {{ vaccinations|length|default:0 }}</span>
+    <span><strong>À l'étranger :</strong> {% if vaccines_ext %}{{ vaccines_ext|length }}{% else %}0{% endif %}</span>
+    <span><strong>Âge :</strong>
+        {% if patient.date_naissance %}
+            {{ patient.age }} ans
+        {% else %}
+            —
+        {% endif %}
+    </span>
+</div>
+
+<!-- ========= INFORMATIONS PATIENT ========= -->
+<div class="section">
+    <div class="section-header green">
+        <span class="section-icon">👤</span>
+        Informations personnelles
+    </div>
+    <div class="section-content">
+        <div class="patient-info-grid">
+            <div class="info-row">
+                <div class="info-item">
+                    <div class="info-label">Nom et prénoms</div>
+                    <div class="info-value">{{ patient.nom|upper }} {{ patient.prenoms|title }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Identifiant patient</div>
+                    <div class="info-value">{{ patient.code_patient }}</div>
+                </div>
+            </div>
+
+            <div class="info-row">
+                {% if patient.date_naissance %}
+                    <div class="info-item">
+                        <div class="info-label">Date de naissance</div>
+                        <div class="info-value">{{ patient.date_naissance|date:"d/m/Y" }}</div>
+                    </div>
+                {% endif %}
+
+                {% if patient.sexe %}
+                    <div class="info-item">
+                        <div class="info-label">Sexe</div>
+                        <div class="info-value">{{ patient.get_sexe_display }}</div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="info-row">
+                {% if patient.commune %}
+                    <div class="info-item">
+                        <div class="info-label">Commune</div>
+                        <div class="info-value">{{ patient.commune }}</div>
+                    </div>
+                {% endif %}
+
+                {% if patient.quartier %}
+                    <div class="info-item">
+                        <div class="info-label">Quartier</div>
+                        <div class="info-value">{{ patient.quartier }}</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========= VACCINATIONS EN CI (SECTION PRIORITAIRE) ========= -->
+<div class="section">
+    <div class="section-header blue">
+        <span class="section-icon">💉</span>
+        Vaccinations en Côte d'Ivoire
+    </div>
+    <div class="section-content">
+        {% if vaccinations %}
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Vaccin</th>
+                    <th>Maladie</th>
+                    <th>Dose</th>
+                    <th>Lot</th>
+                    <th>Centre</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for vacc in vaccinations %}
+                    <tr>
+                        <td>{{ vacc.date_vaccination|date:"d/m/Y" }}</td>
+                        <td>
+                            <div>{{ vacc.vaccin.nom }}</div>
+                            {% if vacc.vaccin.type_vaccin %}
+                                <span class="vaccine-type
+                                        {% if vacc.vaccin.type_vaccin|lower == 'vivant' %}
+                                            vaccine-type-live
+                                        {% else %}
+                                            vaccine-type-inactivated
+                                        {% endif %}
+                                    ">
+                                    {{ vacc.vaccin.get_type_vaccin_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if vacc.vaccin.maladie %}
+                                {{ vacc.vaccin.maladie.nom }}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="dose-info">
+                                <div class="dose-text">
+                                    n°{{ vacc.dose }} / {{ vacc.vaccin.doses_requises }}
+                                </div>
+                                <div class="dose-progress">
+                                    <div class="dose-bar">
+                                        <div class="dose-bar-fill"
+                                             style="width:{% widthratio vacc.dose vacc.vaccin.doses_requises 100 %}%;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if vacc.lot %}
+                                {{ vacc.lot.numero_lot }}
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ vacc.centre }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div style="text-align:center; padding:10px; color:#6b7280;">
+                Aucune vaccination enregistrée dans la plateforme.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ========= VACCINS À L'ÉTRANGER ========= -->
+{% if vaccines_ext %}
+    <div class="section">
+        <div class="section-header orange">
+            <span class="section-icon">🌍</span>
+            Vaccinations à l'étranger
+        </div>
+        <div class="section-content">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Vaccin</th>
+                    <th>Pays / Ville</th>
+                    <th>Dose</th>
+                    <th>Lot</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for vext in vaccines_ext %}
+                    <tr>
+                        <td>
+                            {% if vext.date %}
+                                {{ vext.date|date:"d/m/Y" }}
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ vext.vaccin.nom }}</td>
+                        <td>
+                            {{ vext.pays }}
+                            {% if vext.ville %}/ {{ vext.ville }}{% endif %}
+                        </td>
+                        <td>
+                            {% if vext.numero_dose %}
+                                n°{{ vext.numero_dose }}
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if vext.lot %}
+                                {{ vext.lot }}
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+<!-- ========= NOTES ========= -->
+<div class="footer">
+    <p>
+        <strong>Note :</strong>
+        Ce carnet présente les vaccinations enregistrées pour ce patient dans la Plateforme Vaccination CI
+        ainsi que les vaccinations déclarées à l'étranger, sur la base des données disponibles à la date d'édition.
+        Il est recommandé de présenter ce document lors de toute consultation médicale ou formalité de voyage.
+    </p>
+</div>
+
+<!-- ========= SIGNATURE ========= -->
+<div class="signature-block">
+    <div class="signature-text">
+        <p class="signature-date">
+            Carnet de vaccination N° CAV-{{ patient.pk|stringformat:"06d" }} établi électroniquement
+            le {{ today|date:"d/m/Y" }}
+        </p>
+        <div class="signature-line">
+            <div class="signature-name">Professeur Ekra Kouadio Daniel</div>
+            <div class="signature-title">Directeur Général de l'INHP</div>
+        </div>
+    </div>
+
+    {% if qr_code_data %}
+        <div class="signature-qr">
+            <div class="qr-code">
+                <img src="{{ qr_code_data }}" alt="QR Code de vérification">
+                <div class="qr-label">Scanner pour vérifier l'authenticité</div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+</body>
+</html>
+{#{% load static %}#}
+{##}
+{#<!DOCTYPE html>#}
+{#<html lang="fr">#}
+{#<head>#}
+{#    <meta charset="UTF-8">#}
+{#    <title>Carnet de vaccination – {{ patient.code_patient }}</title>#}
+{#    <style>#}
+{#        @page {#}
+{#            size: A4;#}
+{#            margin: 1.5cm;#}
+{#        }#}
+{##}
+{#        body {#}
+{#            font-family: "DejaVu Sans", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;#}
+{#            font-size: 11px;#}
+{#            color: #1f2933;#}
+{#            background-color: #ffffff;#}
+{#            line-height: 1.4;#}
+{#        }#}
+{##}
+{#        /* ========= FILIGRANE ========= */#}
+{#        .watermark {#}
+{#            position: fixed;#}
+{#            top: 50%;#}
+{#            left: 50%;#}
+{#            transform: translate(-50%, -50%) rotate(-45deg);#}
+{#            font-size: 70px;#}
+{#            color: rgba(15, 118, 110, 0.06);#}
+{#            z-index: -1;#}
+{#            font-weight: bold;#}
+{#            letter-spacing: 0.2em;#}
+{#            pointer-events: none;#}
+{#            text-transform: uppercase;#}
+{#        }#}
+{##}
+{#        /* ========= HEADER ========= */#}
+{#        .header {#}
+{#            margin-bottom: 6px;#}
+{#        }#}
+{##}
+{#        .header-top {#}
+{#            /* WeasyPrint gère mal certaines flex-complexes ; on reste simple */#}
+{#            width: 100%;#}
+{#            border-bottom: 1px solid #e2e8f0;#}
+{#            padding-bottom: 6px;#}
+{#            margin-bottom: 6px;#}
+{#        }#}
+{##}
+{#        .header-row {#}
+{#            width: 100%;#}
+{#            border-collapse: collapse;#}
+{#        }#}
+{##}
+{#        .header-cell {#}
+{#            vertical-align: middle;#}
+{#        }#}
+{##}
+{#        .header-cell-left,#}
+{#        .header-cell-right {#}
+{#            width: 25%;#}
+{#            text-align: center;#}
+{#        }#}
+{##}
+{#        .header-cell-center {#}
+{#            width: 50%;#}
+{#            text-align: center;#}
+{#            padding: 0 6px;#}
+{#        }#}
+{##}
+{#        .header-logo {#}
+{#            max-height: 120px;#}
+{#            max-width: 180px;#}
+{#        }#}
+{##}
+{#        .republique {#}
+{#            font-weight: bold;#}
+{#            text-transform: uppercase;#}
+{#            font-size: 13px;#}
+{#            color: #1a365d;#}
+{#            margin-bottom: 2px;#}
+{#        }#}
+{##}
+{#        .devise {#}
+{#            font-style: italic;#}
+{#            font-size: 10px;#}
+{#            color: #4a5568;#}
+{#            margin-bottom: 3px;#}
+{#        }#}
+{##}
+{#        .ministere {#}
+{#            font-weight: 600;#}
+{#            font-size: 11px;#}
+{#            color: #2d3748;#}
+{#            line-height: 1.3;#}
+{#        }#}
+{##}
+{#        .header-bar {#}
+{#            height: 4px;#}
+{#            width: 100%;#}
+{#            background: linear-gradient(to right, #f97316, #fbbf24, #16a34a);#}
+{#            border-radius: 2px;#}
+{#        }#}
+{##}
+{#        /* ========= TITRE PRINCIPAL ========= */#}
+{#        .title-block {#}
+{#            text-align: center;#}
+{#            margin: 10px 0 8px;#}
+{#            padding: 10px 10px;#}
+{#            background: linear-gradient(135deg, #ecfdf5 0%, #e0f2fe 100%);#}
+{#            border-radius: 10px;#}
+{#            border: 1px solid #bae6fd;#}
+{#        }#}
+{##}
+{#        .title-block h1 {#}
+{#            margin: 0 0 6px 0;#}
+{#            font-size: 20px;#}
+{#            text-transform: uppercase;#}
+{#            letter-spacing: 0.07em;#}
+{#            color: #0f766e;#}
+{#        }#}
+{##}
+{#        .patient-id {#}
+{#            display: inline-block;#}
+{#            margin: 4px 0;#}
+{#            padding: 3px 10px;#}
+{#            border-radius: 999px;#}
+{#            background-color: #0f766e;#}
+{#            color: #ffffff;#}
+{#            font-size: 9px;#}
+{#            text-transform: uppercase;#}
+{#            letter-spacing: 0.1em;#}
+{#            font-weight: 600;#}
+{#            float: right;#}
+{#        }#}
+{##}
+{#        .patient-name {#}
+{#            font-size: 15px;#}
+{#            font-weight: 600;#}
+{#            color: #111827;#}
+{#            margin-top: 6px;#}
+{#        }#}
+{##}
+{#        .print-date {#}
+{#            font-size: 10px;#}
+{#            color: #6b7280;#}
+{#            margin-top: 4px;#}
+{#        }#}
+{##}
+{#        /* ========= STATUT VACCINAL ========= */#}
+{#        .vaccination-status {#}
+{#            display: table;#}
+{#            width: 100%;#}
+{#            border-collapse: separate;#}
+{#            border-spacing: 10px 0;#}
+{#            margin-bottom: 5px;#}
+{#        }#}
+{##}
+{#        .status-card {#}
+{#            display: table-cell;#}
+{#            padding: 10px 9px;#}
+{#            border-radius: 8px;#}
+{#            text-align: center;#}
+{#            background-color: #ffffff;#}
+{#            border: 1px solid #e2e8f0;#}
+{#        }#}
+{##}
+{#        .status-card-primary {#}
+{#            border-color: #bfdbfe;#}
+{#            background-color: #eff6ff;#}
+{#        }#}
+{##}
+{#        .status-card-complete {#}
+{#            border-color: #bbf7d0;#}
+{#            background-color: #ecfdf3;#}
+{#        }#}
+{##}
+{#        .status-card-secondary {#}
+{#            border-color: #fed7aa;#}
+{#            background-color: #fff7ed;#}
+{#        }#}
+{##}
+{#        .status-label {#}
+{#            font-size: 10px;#}
+{#            text-transform: uppercase;#}
+{#            letter-spacing: 0.12em;#}
+{#            color: #6b7280;#}
+{#        }#}
+{##}
+{#        .status-value {#}
+{#            font-size: 11px;#}
+{#            font-weight: 700;#}
+{#            margin-top: 4px;#}
+{#            color: #1d4ed8;#}
+{#        }#}
+{##}
+{#        .status-card-complete .status-value {#}
+{#            color: #16a34a;#}
+{#        }#}
+{##}
+{#        .status-card-secondary .status-value {#}
+{#            color: #ea580c;#}
+{#        }#}
+{##}
+{#        /* ========= SECTIONS ========= */#}
+{#        .section {#}
+{#            margin-bottom: 7px;#}
+{#            border-radius: 8px;#}
+{#            overflow: hidden;#}
+{#            border: 1px solid #e2e8f0;#}
+{#        }#}
+{##}
+{#        .section-header {#}
+{#            padding: 7px 10px;#}
+{#            font-size: 12px;#}
+{#            font-weight: 700;#}
+{#            color: #ffffff;#}
+{#            display: flex;#}
+{#            align-items: center;#}
+{#            gap: 8px;#}
+{#        }#}
+{##}
+{#        .section-header.green {#}
+{#            background: linear-gradient(to right, #22c55e, #15803d);#}
+{#        }#}
+{##}
+{#        .section-header.blue {#}
+{#            background: linear-gradient(to right, #2563eb, #1d4ed8);#}
+{#        }#}
+{##}
+{#        .section-header.orange {#}
+{#            background: linear-gradient(to right, #f97316, #c2410c);#}
+{#        }#}
+{##}
+{#        .section-icon {#}
+{#            font-size: 14px;#}
+{#        }#}
+{##}
+{#        .section-content {#}
+{#            padding: 12px;#}
+{#            background-color: #f8fafc;#}
+{#        }#}
+{##}
+{#        /* ========= INFORMATIONS PATIENT ========= */#}
+{#        .patient-info-grid {#}
+{#            display: table;#}
+{#            width: 100%;#}
+{#        }#}
+{##}
+{#        .info-row {#}
+{#            display: table-row;#}
+{#        }#}
+{##}
+{#        .info-item {#}
+{#            display: table-cell;#}
+{#            width: 50%;#}
+{#            padding: 4px 4px 4px 0;#}
+{#        }#}
+{##}
+{#        .info-label {#}
+{#            font-weight: 600;#}
+{#            font-size: 10px;#}
+{#            color: #4b5563;#}
+{#            margin-bottom: 1px;#}
+{#        }#}
+{##}
+{#        .info-value {#}
+{#            font-size: 11px;#}
+{#            color: #111827;#}
+{#            padding: 4px 7px;#}
+{#            background-color: #ffffff;#}
+{#            border-radius: 4px;#}
+{#            border: 1px solid #e5e7eb;#}
+{#        }#}
+{##}
+{#        /* ========= TABLES ========= */#}
+{#        .data-table {#}
+{#            width: 100%;#}
+{#            border-collapse: collapse;#}
+{#            font-size: 10px;#}
+{#        }#}
+{##}
+{#        .data-table th {#}
+{#            background-color: #edf2f7;#}
+{#            color: #1f2933;#}
+{#            font-weight: 600;#}
+{#            text-align: left;#}
+{#            padding: 6px 7px;#}
+{#            border-bottom: 2px solid #cbd5e0;#}
+{#        }#}
+{##}
+{#        .data-table td {#}
+{#            padding: 5px 7px;#}
+{#            border-bottom: 1px solid #e5e7eb;#}
+{#            vertical-align: top;#}
+{#        }#}
+{##}
+{#        .data-table tr:nth-child(even) {#}
+{#            background-color: #f9fafb;#}
+{#        }#}
+{##}
+{#        .logo-inhp {#}
+{#            width: 170px !important;#}
+{#            height: auto !important;#}
+{#            max-height: 80px !important;#}
+{#            object-fit: contain;#}
+{#            display: block;#}
+{#            margin: 0 auto;#}
+{#        }#}
+{##}
+{#        .vaccine-type {#}
+{#            display: inline-block;#}
+{#            margin-top: 2px;#}
+{#            padding: 1px 6px;#}
+{#            border-radius: 999px;#}
+{#            font-size: 8.5px;#}
+{#            font-weight: 600;#}
+{#            background-color: #bfdbfe;#}
+{#            color: #1d4ed8;#}
+{#        }#}
+{##}
+{#        .vaccine-type-live {#}
+{#            background-color: #fecaca;#}
+{#            color: #b91c1c;#}
+{#        }#}
+{##}
+{#        .vaccine-type-inactivated {#}
+{#            background-color: #bbf7d0;#}
+{#            color: #166534;#}
+{#        }#}
+{##}
+{#        .dose-info {#}
+{#            display: table;#}
+{#            width: 100%;#}
+{#        }#}
+{##}
+{#        .dose-text {#}
+{#            display: table-cell;#}
+{#            width: 60%;#}
+{#        }#}
+{##}
+{#        .dose-progress {#}
+{#            display: table-cell;#}
+{#            width: 40%;#}
+{#            padding-left: 4px;#}
+{#            vertical-align: middle;#}
+{#        }#}
+{##}
+{#        .dose-bar {#}
+{#            width: 100%;#}
+{#            height: 5px;#}
+{#            background-color: #e5e7eb;#}
+{#            border-radius: 3px;#}
+{#            overflow: hidden;#}
+{#        }#}
+{##}
+{#        .dose-bar-fill {#}
+{#            height: 5px;#}
+{#            background-color: #22c55e;#}
+{#        }#}
+{##}
+{#        .text-muted {#}
+{#            color: #9ca3af;#}
+{#        }#}
+{##}
+{#        /* ========= FOOTER & SIGNATURE ========= */#}
+{#        .footer {#}
+{#            margin-top: 18px;#}
+{#            padding: 10px 12px;#}
+{#            border-radius: 8px;#}
+{#            background-color: #f9fafb;#}
+{#            border: 1px dashed #cbd5e0;#}
+{#            font-size: 10px;#}
+{#            color: #4b5563;#}
+{#        }#}
+{##}
+{#        .signature-block {#}
+{#            margin-top: 24px;#}
+{#            display: table;#}
+{#            width: 100%;#}
+{#        }#}
+{##}
+{#        .signature-text,#}
+{#        .signature-qr {#}
+{#            display: table-cell;#}
+{#            vertical-align: bottom;#}
+{#        }#}
+{##}
+{#        .signature-text {#}
+{#            width: 65%;#}
+{#        }#}
+{##}
+{#        .signature-line {#}
+{#            margin-top: 34px;#}
+{#            padding-top: 4px;#}
+{#            border-top: 1px solid #6b7280;#}
+{#            width: 210px;#}
+{#        }#}
+{##}
+{#        .signature-name {#}
+{#            font-weight: 700;#}
+{#            font-size: 11px;#}
+{#            color: #111827;#}
+{#        }#}
+{##}
+{#        .signature-title {#}
+{#            font-size: 9px;#}
+{#            color: #6b7280;#}
+{#        }#}
+{##}
+{#        .signature-date {#}
+{#            font-size: 10px;#}
+{#            color: #4b5563;#}
+{#        }#}
+{##}
+{#        .signature-qr {#}
+{#            text-align: right;#}
+{#        }#}
+{##}
+{#        .qr-code {#}
+{#            display: inline-block;#}
+{#            text-align: center;#}
+{#        }#}
+{##}
+{#        .qr-code img {#}
+{#            width: 85px;#}
+{#            height: 85px;#}
+{#            border: 1px solid #e2e8f0;#}
+{#            padding: 4px;#}
+{#            border-radius: 6px;#}
+{#            background-color: #ffffff;#}
+{#        }#}
+{##}
+{#        .qr-label {#}
+{#            margin-top: 3px;#}
+{#            font-size: 9px;#}
+{#            color: #6b7280;#}
+{#        }#}
+{##}
+{#        @media print {#}
+{#            .no-print {#}
+{#                display: none;#}
+{#            }#}
+{#        }#}
+{#    </style>#}
+{#</head>#}
+{#<body>#}
+{##}
+{#<div class="watermark">VACCINATION CI</div>#}
+{##}
+{#<!-- ========= EN-TÊTE ========= -->#}
+{#<div class="header">#}
+{#    <div class="header-top">#}
+{#        <table class="header-row">#}
+{#            <tr>#}
+{#                <td class="header-cell header-cell-left">#}
+{#                    <img src="{% static 'images/images.jpeg' %}" class="header-logo" alt="Logo CI">#}
+{#                </td>#}
+{#                <td class="header-cell header-cell-center">#}
+{#                    <div class="republique">République de Côte d'Ivoire</div>#}
+{#                    <div class="devise">Union - Discipline - Travail</div>#}
+{#                    <div class="ministere">Ministère de la Santé, de l'Hygiène Publique</div>#}
+{#                    <div class="ministere">et de la Couverture Maladie Universelle</div>#}
+{#                    <img src="{% static 'images/logo_inhp.png' %}" class="logo-inhp" alt="Logo INHP">#}
+{#                </td>#}
+{#                <td class="header-cell header-cell-right">#}
+{#                    <img src="{% static 'images/logoMSHPCMU (1).svg' %}" class="header-logo" alt="Logo MSHP">#}
+{#                </td>#}
+{#            </tr>#}
+{#        </table>#}
+{#    </div>#}
+{#CARNET DE VACCINATION vacc#}
+{#</div>#}
+{##}
+{#<!-- ========= TITRE PRINCIPAL ========= -->#}
+{#<div class="title-block">#}
+{#    <h1>Carnet de Vaccination </h1>#}
+{#    <div class="patient-id">N°: {{ patient.pk|stringformat:"06d" }}</div>#}
+{#    <div class="patient-name">{{ patient.nom|upper }} {{ patient.prenoms|title }}</div>#}
+{#    <div class="print-date">#}
+{#        Document généré le {{ today|date:"d/m/Y" }}#}
+{#    </div>#}
+{#</div>#}
+{##}
+{#<!-- ========= STATUT VACCINAL ========= -->#}
+{#<div class="vaccination-status">#}
+{#    <div class="status-card status-card-primary">#}
+{#        <div class="status-label">Vaccins administrés</div>#}
+{#        <div class="status-value">{{ vaccinations|length|default:0 }}</div>#}
+{#    </div>#}
+{#    <div class="status-card status-card-complete">#}
+{#        <div class="status-label">Âge du patient</div>#}
+{#        <div class="status-value">#}
+{#            {% if patient.date_naissance %}#}
+{#                {{ patient.age }} ans#}
+{#            {% else %}#}
+{#                —#}
+{#            {% endif %}#}
+{#        </div>#}
+{#    </div>#}
+{#    <div class="status-card status-card-secondary">#}
+{#        <div class="status-label">Vaccins à l'étranger</div>#}
+{#        <div class="status-value">#}
+{#            {% if vaccines_ext %}#}
+{#                {{ vaccines_ext|length }}#}
+{#            {% else %}#}
+{#                0#}
+{#            {% endif %}#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+{##}
+{#<!-- ========= INFORMATIONS PATIENT ========= -->#}
+{#<div class="section">#}
+{#    <div class="section-header green">#}
+{#        <span class="section-icon">👤</span>#}
+{#        Informations personnelles#}
+{#    </div>#}
+{#    <div class="section-content">#}
+{#        <div class="patient-info-grid">#}
+{#            <div class="info-row">#}
+{#                <div class="info-item">#}
+{#                    <div class="info-label">Nom et prénoms</div>#}
+{#                    <div class="info-value">{{ patient.nom|upper }} {{ patient.prenoms|title }}</div>#}
+{#                </div>#}
+{#                <div class="info-item">#}
+{#                    <div class="info-label">Identifiant patient</div>#}
+{#                    <div class="info-value">{{ patient.code_patient }}</div>#}
+{#                </div>#}
+{#            </div>#}
+{##}
+{#            <div class="info-row">#}
+{#                {% if patient.date_naissance %}#}
+{#                    <div class="info-item">#}
+{#                        <div class="info-label">Date de naissance</div>#}
+{#                        <div class="info-value">{{ patient.date_naissance|date:"d/m/Y" }}</div>#}
+{#                    </div>#}
+{#                {% endif %}#}
+{##}
+{#                {% if patient.sexe %}#}
+{#                    <div class="info-item">#}
+{#                        <div class="info-label">Sexe</div>#}
+{#                        <div class="info-value">{{ patient.get_sexe_display }}</div>#}
+{#                    </div>#}
+{#                {% endif %}#}
+{#            </div>#}
+{##}
+{#            <div class="info-row">#}
+{#                {% if patient.commune %}#}
+{#                    <div class="info-item">#}
+{#                        <div class="info-label">Commune</div>#}
+{#                        <div class="info-value">{{ patient.commune }}</div>#}
+{#                    </div>#}
+{#                {% endif %}#}
+{##}
+{#                {% if patient.quartier %}#}
+{#                    <div class="info-item">#}
+{#                        <div class="info-label">Quartier</div>#}
+{#                        <div class="info-value">{{ patient.quartier }}</div>#}
+{#                    </div>#}
+{#                {% endif %}#}
+{#            </div>#}
+{#        </div>#}
+{#    </div>#}
+{#</div>#}
+{##}
+{#<!-- ========= VACCINATIONS EN CI ========= -->#}
+{#<div class="section">#}
+{#    <div class="section-header blue">#}
+{#        <span class="section-icon">💉</span>#}
+{#        Vaccinations en Côte d'Ivoire#}
+{#    </div>#}
+{#    <div class="section-content">#}
+{#        {% if vaccinations %}#}
+{#            <table class="data-table">#}
+{#                <thead>#}
+{#                <tr>#}
+{#                    <th>Date</th>#}
+{#                    <th>Vaccin</th>#}
+{#                    <th>Maladie</th>#}
+{#                    <th>Dose</th>#}
+{#                    <th>Lot</th>#}
+{#                    <th>Centre</th>#}
+{##}
+{#                </tr>#}
+{#                </thead>#}
+{#                <tbody>#}
+{#                {% for vacc in vaccinations %}#}
+{#                    <tr>#}
+{#                        <td>{{ vacc.date_vaccination|date:"d/m/Y" }}</td>#}
+{#                        <td>#}
+{#                            <div>{{ vacc.vaccin.nom }}</div>#}
+{#                            {% if vacc.vaccin.type_vaccin %}#}
+{#                                <span class="vaccine-type#}
+{#                                        {% if vacc.vaccin.type_vaccin|lower == 'vivant' %}#}
+{#                                            vaccine-type-live#}
+{#                                        {% else %}#}
+{#                                            vaccine-type-inactivated#}
+{#                                        {% endif %}#}
+{#                                    ">#}
+{#                                        {{ vacc.vaccin.get_type_vaccin_display }}#}
+{#                                    </span>#}
+{#                            {% endif %}#}
+{#                        </td>#}
+{#                        <td>#}
+{#                            {% if vacc.vaccin.maladie %}#}
+{#                                {{ vacc.vaccin.maladie.nom }}#}
+{#                            {% else %}#}
+{#                                <span class="text-muted">—</span>#}
+{#                            {% endif %}#}
+{#                        </td>#}
+{#                        <td>#}
+{#                            <div class="dose-info">#}
+{#                                <div class="dose-text">#}
+{#                                    n°{{ vacc.dose }} / {{ vacc.vaccin.doses_requises }}#}
+{#                                </div>#}
+{#                                <div class="dose-progress">#}
+{#                                    <div class="dose-bar">#}
+{#                                        <div class="dose-bar-fill"#}
+{#                                             style="width:{% widthratio vacc.dose vacc.vaccin.doses_requises 100 %}%;">#}
+{#                                        </div>#}
+{#                                    </div>#}
+{#                                </div>#}
+{#                            </div>#}
+{#                        </td>#}
+{#                        <td>#}
+{#                            {% if vacc.lot %}#}
+{#                                {{ vacc.lot.numero_lot }}#}
+{#                            {% else %}#}
+{#                                <span class="text-muted">N/A</span>#}
+{#                            {% endif %}#}
+{#                        </td>#}
+{#                        <td>{{ vacc.centre }}</td>#}
+{##}
+{#                    </tr>#}
+{#                {% endfor %}#}
+{#                </tbody>#}
+{#            </table>#}
+{#        {% else %}#}
+{#            <div style="text-align:center; padding:16px; color:#6b7280;">#}
+{#                Aucune vaccination enregistrée dans la plateforme.#}
+{#            </div>#}
+{#        {% endif %}#}
+{#    </div>#}
+{#</div>#}
+{##}
+{#<!-- ========= VACCINS À L'ÉTRANGER ========= -->#}
+{#{% if vaccines_ext %}#}
+{#    <div class="section">#}
+{#        <div class="section-header orange">#}
+{#            <span class="section-icon">🌍</span>#}
+{#            Vaccinations à l'étranger#}
+{#        </div>#}
+{#        <div class="section-content">#}
+{#            <table class="data-table">#}
+{#                <thead>#}
+{#                <tr>#}
+{#                    <th>Date</th>#}
+{#                    <th>Vaccin</th>#}
+{#                    <th>Pays / Ville</th>#}
+{#                    <th>Dose</th>#}
+{#                    <th>Lot</th>#}
+{#                </tr>#}
+{#                </thead>#}
+{#                <tbody>#}
+{#                {% for vext in vaccines_ext %}#}
+{#                    <tr>#}
+{#                        <td>#}
+{#                            {% if vext.date %}#}
+{#                                {{ vext.date|date:"d/m/Y" }}#}
+{#                            {% else %}#}
+{#                                <span class="text-muted">N/A</span>#}
+{#                            {% endif %}#}
+{#                        </td>#}
+{#                        <td>{{ vext.vaccin.nom }}</td>#}
+{#                        <td>#}
+{#                            {{ vext.pays }}#}
+{#                            {% if vext.ville %}/ {{ vext.ville }}{% endif %}#}
+{#                        </td>#}
+{#                        <td>#}
+{#                            {% if vext.numero_dose %}#}
+{#                                n°{{ vext.numero_dose }}#}
+{#                            {% else %}#}
+{#                                <span class="text-muted">N/A</span>#}
+{#                            {% endif %}#}
+{#                        </td>#}
+{#                        <td>#}
+{#                            {% if vext.lot %}#}
+{#                                {{ vext.lot }}#}
+{#                            {% else %}#}
+{#                                <span class="text-muted">N/A</span>#}
+{#                            {% endif %}#}
+{#                        </td>#}
+{#                    </tr>#}
+{#                {% endfor %}#}
+{#                </tbody>#}
+{#            </table>#}
+{#        </div>#}
+{#    </div>#}
+{#{% endif %}#}
+{##}
+{#<!-- ========= NOTES ========= -->#}
+{#<div class="footer">#}
+{#    <p>#}
+{#        <strong>Note :</strong>#}
+{#        Ce carnet présente les vaccinations enregistrées pour ce patient dans la Plateforme Vaccination CI#}
+{#        ainsi que les vaccinations déclarées à l'étranger, sur la base des données disponibles à la date d'édition.#}
+{#        Il est recommandé de présenter ce document lors de toute consultation médicale ou formalité de voyage.#}
+{#    </p>#}
+{#</div>#}
+{##}
+{#<!-- ========= SIGNATURE ========= -->#}
+{#<div class="signature-block">#}
+{#    <div class="signature-text">#}
+{#        <p class="signature-date">#}
+{#            Carnet de vaccination N°:CAV-{{ patient.pk|stringformat:"06d" }} établi électroniquement#}
+{#            le {{ today|date:"d/m/Y" }}#}
+{#        </p>#}
+{#        <div class="signature-line">#}
+{#            <div class="signature-name">Professeur Ekra Kouadio Daniel</div>#}
+{#            <div class="signature-title">Directeur Général de l'INHP</div>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#    {% if qr_code_data %}#}
+{#        <div class="signature-qr">#}
+{#            <div class="qr-code">#}
+{#                <img src="{{ qr_code_data }}" alt="QR Code de vérification">#}
+{#                <div class="qr-label">Scanner pour vérifier l'authenticité</div>#}
+{#            </div>#}
+{#        </div>#}
+{#    {% endif %}#}
+{#</div>#}
+{##}
+{#</body>#}
+{#</html>#}

@@ -1,3 +1,22 @@
+version: '3.9'
+
+x-logging-rotated: &logging_rotated
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+networks:
+  vaccination_network:
+    driver: bridge
+  proxy:
+    external: true
+
+volumes:
+  pgdata:
+  static_volume:
+  staticfiles_volume:
+  media_volume:
 
 services:
   vaccinationweb:
@@ -15,12 +34,33 @@ services:
       - static_volume:/app/static
       - staticfiles_volume:/app/staticfiles
       - media_volume:/app/media
-    env_file:
-      - ./.env
+    env_file: [ .env ]
     depends_on:
       - vaccinationdb
       - redis
-    restart: always
+    networks: [vaccination_network, proxy]
+    restart: unless-stopped
+    logging: *logging_rotated
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.vaccination.rule=Host(`${VACCINATION_HOST}`)
+      - traefik.http.routers.vaccination.entrypoints=websecure
+      - traefik.http.routers.vaccination.tls=true
+      - traefik.http.routers.vaccination.tls.certresolver=lets
+      - traefik.http.routers.vaccination.service=vaccination-svc
+      - traefik.http.services.vaccination-svc.loadbalancer.server.port=8000
+      - traefik.http.services.vaccination-svc.loadbalancer.server.scheme=http
+      - traefik.http.routers.vaccination.middlewares=vaccination-headers@docker,vaccination-compress@docker,vaccination-rl@docker
+      - traefik.http.middlewares.vaccination-headers.headers.stsSeconds=31536000
+      - traefik.http.middlewares.vaccination-headers.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.vaccination-headers.headers.stsPreload=true
+      - traefik.http.middlewares.vaccination-headers.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.vaccination-headers.headers.frameDeny=true
+      - traefik.http.middlewares.vaccination-headers.headers.referrerPolicy=strict-origin-when-cross-origin
+      - traefik.http.middlewares.vaccination-compress.compress=true
+      - traefik.http.middlewares.vaccination-rl.ratelimit.average=100
+      - traefik.http.middlewares.vaccination-rl.ratelimit.burst=200
 
   vaccinationdb:
     image: postgis/postgis:13-3.1
@@ -28,42 +68,135 @@ services:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: Africa/Abidjan
     ports:
       - 5434:5432
     volumes:
       - pgdata:/var/lib/postgresql/data
-
-    restart: always
+    networks: [vaccination_network]
+    restart: unless-stopped
+    logging: *logging_rotated
 
   vaccinationadminer:
     image: adminer
-    restart: always
+    restart: unless-stopped
     ports:
-      - 1830:8080  # Port mapping for Adminer
+      - 1830:8080
     environment:
-      - ADMINER_DEFAULT_SERVER=vaccinationdb  # Default DB server in Adminer
+      - ADMINER_DEFAULT_SERVER=vaccinationdb
+      - TZ=Africa/Abidjan
+    networks: [vaccination_network, proxy]
+    logging: *logging_rotated
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=proxy
+      - traefik.http.routers.vaccinationadminer.rule=Host(`adminer.${VACCINATION_HOST}`)
+      - traefik.http.routers.vaccinationadminer.entrypoints=websecure
+      - traefik.http.routers.vaccinationadminer.tls=true
+      - traefik.http.routers.vaccinationadminer.tls.certresolver=lets
+      - traefik.http.services.vaccinationadminer.loadbalancer.server.port=8080
+      - traefik.http.services.vaccinationadminer.loadbalancer.server.scheme=http
 
   redis:
     image: redis:6
     ports:
-      - "6380:6379"  # Redirection directe pour éviter la confusion
-    restart: always
+      - "6380:6379"
+    networks: [vaccination_network]
+    restart: unless-stopped
+    logging: *logging_rotated
 
   celery:
     build:
       context: .
       dockerfile: Dockerfile
-    command: celery -A vaccination worker --loglevel=info
+    command: >
+      celery -A vaccination worker --loglevel=info
+    env_file: [ .env ]
+    depends_on:
+      - vaccinationdb
+      - redis
+    networks: [vaccination_network]
+    restart: unless-stopped
+    logging: *logging_rotated
 
   celery-beat:
     build:
       context: .
       dockerfile: Dockerfile
-    command: celery -A vaccination beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-
-volumes:
-  pgdata:
-    driver: local
-  static_volume:
-  staticfiles_volume:
-  media_volume:
+    command: >
+      celery -A vaccination beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file: [ .env ]
+    depends_on:
+      - vaccinationdb
+      - redis
+    networks: [vaccination_network]
+    restart: unless-stopped
+    logging: *logging_rotated
+#services:
+#  vaccinationweb:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    command: >
+#      sh -c "python manage.py migrate &&
+#             python manage.py collectstatic --noinput &&
+#             gunicorn vaccination.wsgi:application --bind 0.0.0.0:8000"
+#    ports:
+#      - "1105:8000"
+#    volumes:
+#      - .:/app
+#      - static_volume:/app/static
+#      - staticfiles_volume:/app/staticfiles
+#      - media_volume:/app/media
+#    env_file:
+#      - ./.env
+#    depends_on:
+#      - vaccinationdb
+#      - redis
+#    restart: always
+#
+#  vaccinationdb:
+#    image: postgis/postgis:13-3.1
+#    environment:
+#      POSTGRES_DB: ${DB_NAME}
+#      POSTGRES_USER: ${DB_USER}
+#      POSTGRES_PASSWORD: ${DB_PASSWORD}
+#    ports:
+#      - 5434:5432
+#    volumes:
+#      - pgdata:/var/lib/postgresql/data
+#
+#    restart: always
+#
+#  vaccinationadminer:
+#    image: adminer
+#    restart: always
+#    ports:
+#      - 1830:8080  # Port mapping for Adminer
+#    environment:
+#      - ADMINER_DEFAULT_SERVER=vaccinationdb  # Default DB server in Adminer
+#
+#  redis:
+#    image: redis:6
+#    ports:
+#      - "6380:6379"  # Redirection directe pour éviter la confusion
+#    restart: always
+#
+#  celery:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    command: celery -A vaccination worker --loglevel=info
+#
+#  celery-beat:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    command: celery -A vaccination beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+#
+#volumes:
+#  pgdata:
+#    driver: local
+#  static_volume:
+#  staticfiles_volume:
+#  media_volume:

@@ -1,0 +1,177 @@
+ {% load static %}
+ <footer class="bg-dark text-white py-8 mt-12">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Vaccin<span class="text-primary-500">CI</span></h2>
+                    <p class="text-gray-400 text-sm">Plateforme de gestion de vaccination en Côte d'Ivoire</p>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold mb-4">Liens rapides</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white">Tableau de bord</a></li>
+                        <li><a href="#" class="hover:text-white">Gestion des patients</a></li>
+                        <li><a href="#" class="hover:text-white">Stocks de vaccins</a></li>
+                        <li><a href="#" class="hover:text-white">Centres de santé</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold mb-4">Ressources</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-white">Documentation</a></li>
+                        <li><a href="#" class="hover:text-white">Guide d'utilisation</a></li>
+                        <li><a href="#" class="hover:text-white">FAQ</a></li>
+                        <li><a href="#" class="hover:text-white">Support</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold mb-4">Contact</h3>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li class="flex items-start">
+                            <i class="fas fa-map-marker-alt mt-1 mr-2 text-primary-500"></i>
+                            <span>Plateau, Abidjan, Côte d'Ivoire</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone mr-2 text-primary-500"></i>
+                            <span>+225 20 30 40 50</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope mr-2 text-primary-500"></i>
+                            <span>contact@vaccinci.ci</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-8 pt-6 text-center text-sm text-gray-400">
+                <p>&copy; 2023 Ministère de la Santé et de l'Hygiène Publique - Côte d'Ivoire. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Toggle menu mobile
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        // Toggle dropdown utilisateur
+        document.getElementById('userMenu').addEventListener('click', function() {
+            document.getElementById('userDropdown').classList.toggle('hidden');
+        });
+
+        // Fermer le dropdown en cliquant ailleurs
+        document.addEventListener('click', function(event) {
+            const userMenu = document.getElementById('userMenu');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (!userMenu.contains(event.target) && !userDropdown.contains(event.target)) {
+                userDropdown.classList.add('hidden');
+            }
+        });
+
+        // Graphique des vaccinations par mois
+        const vaccinationCtx = document.getElementById('vaccinationChart').getContext('2d');
+        const vaccinationChart = new Chart(vaccinationCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
+                datasets: [{
+                    label: 'Vaccinations',
+                    data: [1200, 1900, 1500, 2200, 1800, 2500, 3000, 2800, 3200, 3500, 3800, 4000],
+                    backgroundColor: '#009639',
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Graphique des types de vaccins
+        const vaccineTypeCtx = document.getElementById('vaccineTypeChart').getContext('2d');
+        const vaccineTypeChart = new Chart(vaccineTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pfizer', 'Moderna', 'AstraZeneca', 'Johnson & Johnson', 'Sinopharm'],
+                datasets: [{
+                    data: [35, 25, 20, 12, 8],
+                    backgroundColor: [
+                        '#009639',
+                        '#F77F00',
+                        '#3B82F6',
+                        '#8B5CF6',
+                        '#EF4444'
+                    ],
+                    borderWidth: 0,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 20
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+ 
+<nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 dark:bg-slate-950/95 border-t border-slate-200/70 dark:border-slate-800/80 backdrop-blur-xl">
+        <div class="max-w-md mx-auto px-4 py-2 flex items-center justify-between text-[11px]">
+            <button @click="setRole('admin')"
+                    :class="role === 'admin' ? 'text-ivoireBlue dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'"
+                    class="flex flex-col items-center gap-0.5">
+                <i class="fa-solid fa-shield-halved text-xs"></i>
+                <span>Admin</span>
+            </button>
+            <button @click="setRole('patient')"
+                    :class="role === 'patient' ? 'text-ivoireBlue dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'"
+                    class="flex flex-col items-center gap-0.5">
+                <i class="fa-solid fa-user text-xs"></i>
+                <span>Patient</span>
+            </button>
+            <button class="flex flex-col items-center gap-0.5 text-slate-500 dark:text-slate-400">
+                <i class="fa-solid fa-bell text-xs"></i>
+                <span>Alertes</span>
+            </button>
+            <button class="flex flex-col items-center gap-0.5 text-slate-500 dark:text-slate-400">
+                <i class="fa-solid fa-ellipsis text-xs"></i>
+                <span>Plus</span>
+            </button>
+        </div>
+    </nav>

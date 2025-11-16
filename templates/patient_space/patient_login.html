@@ -1,165 +1,614 @@
-{% extends 'layout/base.html' %}
-{% load static %}
-{% block content %}
-<!-- main @s -->
-<div class="nk-main">
-    <!-- wrap @s -->
-    <div class="nk-wrap nk-wrap-nosidebar">
-        <!-- content @s -->
-        <div class="nk-content">
-            <div class="nk-split nk-split-page nk-split-md">
-                <!-- Partie gauche - Formulaire -->
-                <div class="nk-split-content nk-block-area nk-block-area-column nk-auth-container bg-white">
-                    <div class="absolute-top-right d-lg-none p-3 p-sm-5">
-                        <a href="#" class="toggle btn-white btn btn-icon btn-light" data-target="athPromo"><em class="icon ni ni-info text-primary"></em></a>
-                    </div>
-                    <div class="nk-block nk-block-middle nk-auth-body">
-                        <div class="brand-logo pb-5 text-center">
-                            <a href="/" class="logo-link">
-                                <img class="logo-img logo-img-lg" src="{% static 'images/logo/logoMSHPCMU.svg' %}" alt="KENEYA" width="280">
-                            </a>
-                            <h5 class="mt-2 mb-0 text-primary">Plateforme de santé numérique</h5>
-                        </div>
-                        <div class="nk-block-head">
-                            <div class="nk-block-head-content">
-                                <h3 class="nk-block-title">Connexion Patient</h3>
-                                <div class="nk-block-des">
-                                    <p>Accédez à votre espace personnel KENEYA</p>
-                                </div>
-                            </div>
-                        </div>
+<!DOCTYPE html>
+<html lang="fr" x-data="loginApp()" x-bind:class="darkMode ? 'dark' : ''">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion - Plateforme Vaccination CI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-                        <form method="post" class="mt-4">
-                            {% csrf_token %}
-                            {% if form.errors %}
-                            <div class="alert alert-danger">
-                                <em class="icon ni ni-cross-circle"></em> 
-                                Identifiants incorrects. Veuillez réessayer.
-                            </div>
-                            {% endif %}
-                            
-                            <div class="form-group">
-                                <label class="form-label" for="code_patient">Code Patient</label>
-                                <div class="form-control-wrap">
-                                    <input type="text" class="form-control form-control-lg" id="code_patient" name="code_patient" placeholder="Votre code patient" required>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label" for="telephone">Numéro de Téléphone</label>
-                                <div class="form-control-wrap">
-                                    <input type="password" class="form-control form-control-lg" id="telephone" name="telephone" placeholder="Votre numéro enregistré" required>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <button type="submit" class="btn btn-lg btn-primary btn-block">
-                                    <em class="icon ni ni-signin"></em> Se connecter
-                                </button>
-                            </div>
-                        </form>
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        ivoireBlue: '#1d5501',
+                        ivoireGreen: '#18A999',
+                        ivoireOrange: '#F59E0B',
+                        ivoireNight: '#020617',
+                    },
+                    boxShadow: {
+                        soft: '0 18px 45px rgba(15,23,42,0.24)',
+                    },
+                    borderRadius: {
+                        '3xl': '1.75rem',
+                    }
+                }
+            }
+        }
+    </script>
 
-                        <div class="form-note-s2 pt-3 text-center">
-                            <a href="" class="text-soft">Mot de passe oublié ?</a>
+    <!-- Alpine state -->
+    <script>
+        window.loginApp = function () {
+            return {
+                darkMode: false,
+                currentView: 'login', // 'login', 'register', 'forgot'
+                loading: false,
+                userType: 'professional', // 'professional', 'patient'
+                formData: {
+                    email: '',
+                    password: '',
+                    remember: false,
+                    fullName: '',
+                    confirmPassword: '',
+                    phone: '',
+                    region: ''
+                },
+                regions: ['Abidjan', 'Gbêkê', 'Tonkpi', 'San-Pédro', 'Cavally', 'Bounkani', 'Autre'],
+                init() {
+                    const savedTheme = localStorage.getItem('vaccination_theme');
+                    if (savedTheme === 'dark') {
+                        this.darkMode = true;
+                    }
+                    
+                    // Vérifier s'il y a des identifiants enregistrés
+                    const savedEmail = localStorage.getItem('vaccination_saved_email');
+                    if (savedEmail) {
+                        this.formData.email = savedEmail;
+                        this.formData.remember = true;
+                    }
+                },
+                toggleTheme() {
+                    this.darkMode = !this.darkMode;
+                    localStorage.setItem('vaccination_theme', this.darkMode ? 'dark' : 'light');
+                },
+                setView(view) {
+                    this.currentView = view;
+                    this.resetForm();
+                },
+                setUserType(type) {
+                    this.userType = type;
+                },
+                resetForm() {
+                    this.formData = {
+                        email: '',
+                        password: '',
+                        remember: false,
+                        fullName: '',
+                        confirmPassword: '',
+                        phone: '',
+                        region: ''
+                    };
+                },
+                async handleLogin() {
+                    this.loading = true;
+                    
+                    // Simulation de requête API
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    if (this.formData.remember) {
+                        localStorage.setItem('vaccination_saved_email', this.formData.email);
+                    } else {
+                        localStorage.removeItem('vaccination_saved_email');
+                    }
+                    
+                    this.loading = false;
+                    
+                    // Redirection vers le dashboard
+                    window.location.href = 'dashboard.html';
+                },
+                async handleRegister() {
+                    this.loading = true;
+                    
+                    // Simulation de requête API
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    this.loading = false;
+                    this.currentView = 'login';
+                    
+                    // Afficher message de succès
+                    this.showNotification('Compte créé avec succès! Vous pouvez maintenant vous connecter.', 'success');
+                },
+                async handleForgotPassword() {
+                    this.loading = true;
+                    
+                    // Simulation de requête API
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    this.loading = false;
+                    this.currentView = 'login';
+                    
+                    // Afficher message de succès
+                    this.showNotification('Instructions de réinitialisation envoyées à votre email.', 'success');
+                },
+                showNotification(message, type = 'info') {
+                    // Créer une notification toast
+                    const toast = document.createElement('div');
+                    toast.className = `fixed top-4 right-4 z-50 p-4 rounded-2xl border text-sm font-medium shadow-soft animate-fade-in ${
+                        type === 'success' 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800' 
+                            : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
+                    }`;
+                    toast.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+                            <span>${message}</span>
                         </div>
-                        <div class="text-center pt-4 pb-3">
-                            <h6 class="overline-title overline-title-sap"><span>OU</span></h6>
-                        </div>
-                        <div class="text-center">
-                            <p>Première visite ? <a href="" class="text-primary">Créer un compte</a></p>
-                        </div>
-                    </div><!-- .nk-block -->
+                    `;
+                    document.body.appendChild(toast);
+                    
+                    // Supprimer après 5 secondes
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 5000);
+                }
+            }
+        }
+    </script>
 
-                    <div class="nk-block nk-auth-footer">
-                        <div class="text-center">
-                            <p class="text-soft small">&copy; {{ now|date:"Y" }} KENEYA - Plateforme de l'INHP<br>
-                            Ministère de la Santé et de l'Hygiène Publique - Côte d'Ivoire</p>
-                        </div>
-                    </div>
-                </div><!-- .nk-split-content -->
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-                <!-- Partie droite - Carousel -->
-                <div class="nk-split-content nk-split-stretch d-flex toggle-break-lg toggle-slide toggle-slide-right bg-primary" data-content="athPromo" data-toggle-screen="lg" data-toggle-overlay="true">
-                    <div class="slider-wrap w-100 w-max-550px p-3 p-sm-5 m-auto">
-                        <div class="slider-init" data-slick='{"dots":true, "arrows":false}'>
-                            <div class="slider-item">
-                                <div class="nk-feature nk-feature-center text-white">
-                                    <div class="nk-feature-img">
-                                        <img class="round" src="{% static 'images/slides/vaccination.jpg' %}" alt="Vaccination">
-                                    </div>
-                                    <div class="nk-feature-content py-4 p-sm-5">
-                                        <h3 class="text-white">Suivi Vaccinal</h3>
-                                        <p>Consultez votre historique vaccinal et recevez des alertes pour vos rappels.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="slider-item">
-                                <div class="nk-feature nk-feature-center text-white">
-                                    <div class="nk-feature-img">
-                                        <img class="round" src="{% static 'images/slides/rdv.jpg' %}" alt="Rendez-vous">
-                                    </div>
-                                    <div class="nk-feature-content py-4 p-sm-5">
-                                        <h3 class="text-white">Gestion des Rendez-vous</h3>
-                                        <p>Prenez rendez-vous en ligne avec les centres de santé partenaires.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="slider-item">
-                                <div class="nk-feature nk-feature-center text-white">
-                                    <div class="nk-feature-img">
-                                        <img class="round" src="{% static 'images/slides/dossier.jpg' %}" alt="Dossier médical">
-                                    </div>
-                                    <div class="nk-feature-content py-4 p-sm-5">
-                                        <h3 class="text-white">Dossier Médical Sécurisé</h3>
-                                        <p>Accédez à vos résultats d'analyse et prescriptions en toute sécurité.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-center mt-4">
-                            <img src="{% static 'images/logo-white.png' %}" alt="INHP" width="120" class="mb-2">
-                            <p class="text-white-50 small">Institut National d'Hygiène Publique</p>
-                        </div>
-                    </div>
-                </div><!-- .nk-split-content -->
-            </div><!-- .nk-split -->
+    <!-- Icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+    <style>
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        /* Custom gradients */
+        .gradient-primary {
+            background: linear-gradient(135deg, #1d5501 0%, #18A999 100%);
+        }
+        
+        .gradient-secondary {
+            background: linear-gradient(135deg, #18A999 0%, #F59E0B 100%);
+        }
+        
+        .gradient-auth {
+            background: linear-gradient(135deg, rgba(26, 87, 161, 0.03) 0%, rgba(24, 169, 153, 0.03) 100%);
+        }
+        
+        .dark .gradient-auth {
+            background: linear-gradient(135deg, rgba(26, 87, 161, 0.08) 0%, rgba(24, 169, 153, 0.08) 100%);
+        }
+        
+        /* Effet de brillance sur les inputs */
+        .input-glow:focus {
+            box-shadow: 0 0 0 3px rgba(26, 87, 161, 0.1);
+        }
+        
+        .dark .input-glow:focus {
+            box-shadow: 0 0 0 3px rgba(24, 169, 153, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-ivoireNight text-slate-900 dark:text-slate-100 antialiased min-h-screen flex items-center justify-center p-4">
+
+<!-- Aura dégradée de fond -->
+<div class="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.15),transparent_55%),radial-gradient(circle_at_bottom,rgba(16,185,129,0.12),transparent_55%)] opacity-70"></div>
+
+<!-- Particules flottantes décoratives -->
+<div class="fixed inset-0 pointer-events-none overflow-hidden">
+    <div class="absolute top-1/4 left-1/4 w-2 h-2 bg-ivoireBlue/20 rounded-full animate-float"></div>
+    <div class="absolute top-1/3 right-1/4 w-3 h-3 bg-ivoireGreen/20 rounded-full animate-float" style="animation-delay: 1s;"></div>
+    <div class="absolute bottom-1/4 left-1/3 w-2 h-2 bg-ivoireOrange/20 rounded-full animate-float" style="animation-delay: 2s;"></div>
+    <div class="absolute top-2/3 right-1/3 w-3 h-3 bg-ivoireBlue/15 rounded-full animate-float" style="animation-delay: 3s;"></div>
+</div>
+
+<div class="relative w-full max-w-6xl flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-12">
+
+    <!-- Section illustration / branding -->
+    <div class="w-full lg:w-1/2 flex flex-col items-center lg:items-start text-center lg:text-left animate-fade-in">
+        <div class="max-w-md space-y-6">
+            <!-- Logo -->
+            <div class="flex items-center gap-3 justify-center lg:justify-start">
+                <div class="h-12 w-12 rounded-2xl gradient-primary flex items-center justify-center text-white font-bold shadow-soft">
+                    <i class="fa-solid fa-syringe text-lg"></i>
+                </div>
+                <div class="leading-tight">
+                    <p class="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+                        MINISTÈRE DE LA SANTÉ · CI
+                    </p>
+                    <p class="text-lg font-semibold">
+                        Plateforme Nationale de Vaccination
+                    </p>
+                </div>
+            </div>
+
+            <!-- Titre principal -->
+            <h1 class="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
+                <span x-show="currentView === 'login'">Connexion Sécurisée</span>
+                <span x-show="currentView === 'register'">Créer un Compte</span>
+                <span x-show="currentView === 'forgot'">Réinitialisation</span>
+            </h1>
+
+            <!-- Description -->
+            <p class="text-slate-600 dark:text-slate-400 text-lg">
+                <span x-show="currentView === 'login'">
+                    Accédez à votre espace personnel pour gérer vos campagnes de vaccination, 
+                    suivre les statistiques nationales et coordonner les actions de santé publique.
+                </span>
+                <span x-show="currentView === 'register'">
+                    Rejoignez la plateforme nationale de vaccination et contribuez à la santé 
+                    publique en Côte d'Ivoire. Inscription rapide et sécurisée.
+                </span>
+                <span x-show="currentView === 'forgot'">
+                    Vous avez oublié votre mot de passe ? Pas de problème. 
+                    Entrez votre email pour recevoir les instructions de réinitialisation.
+                </span>
+            </p>
+
+            <!-- Indicateurs de sécurité -->
+            <div class="flex flex-wrap gap-3 justify-center lg:justify-start">
+                <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                    <i class="fa-solid fa-shield-check text-emerald-500"></i>
+                    <span>Authentification sécurisée</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                    <i class="fa-solid fa-lock text-ivoireBlue"></i>
+                    <span>Données chiffrées</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                    <i class="fa-solid fa-user-md text-ivoireGreen"></i>
+                    <span>Accès professionnel</span>
+                </div>
+            </div>
+
+            <!-- Statistiques -->
+            <div class="grid grid-cols-3 gap-4 pt-4">
+                <div class="text-center p-3 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 dark:border-slate-800/50">
+                    <p class="text-xl font-bold text-ivoireBlue dark:text-ivoireGreen">1.2M+</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Vaccinations</p>
+                </div>
+                <div class="text-center p-3 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 dark:border-slate-800/50">
+                    <p class="text-xl font-bold text-ivoireBlue dark:text-ivoireGreen">1,243</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Centres</p>
+                </div>
+                <div class="text-center p-3 rounded-2xl bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 dark:border-slate-800/50">
+                    <p class="text-xl font-bold text-ivoireBlue dark:text-ivoireGreen">78%</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Couverture</p>
+                </div>
+            </div>
         </div>
     </div>
-    <!-- wrap @e -->
-</div>
-<!-- main @e -->
 
-<style>
-    /* Style personnalisé pour la page de login */
-    .bg-primary {
-        background: linear-gradient(135deg, #009A44, #0055A4) !important;
-    }
-    .btn-primary {
-        background-color: #FF9F0D;
-        border-color: #FF9F0D;
-    }
-    .btn-primary:hover {
-        background-color: #e08a00;
-        border-color: #e08a00;
-    }
-    .text-primary {
-        color: #009A44 !important;
-    }
-    .overline-title-sap span {
-        background-color: #fff;
-        padding: 0 10px;
-    }
-    .form-control:focus {
-        border-color: #FF9F0D;
-        box-shadow: 0 0 0 2px rgba(255, 159, 13, 0.2);
-    }
-    .slider-dots li button:before {
-        color: rgba(255,255,255,0.5) !important;
-    }
-    .slider-dots li.slick-active button:before {
-        color: white !important;
-    }
-    .round {
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-</style>
-{% endblock %}
+    <!-- Carte de connexion -->
+    <div class="w-full lg:w-1/2 max-w-md animate-fade-in" style="animation-delay: 0.2s;">
+        <div class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-white/20 dark:border-slate-800/80 shadow-soft p-6 lg:p-8">
+
+            <!-- En-tête avec sélecteur de type d'utilisateur -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold">
+                    <span x-show="currentView === 'login'">Se connecter</span>
+                    <span x-show="currentView === 'register'">S'inscrire</span>
+                    <span x-show="currentView === 'forgot'">Mot de passe oublié</span>
+                </h2>
+                
+                <!-- Sélecteur de type d'utilisateur (visible seulement pour login/register) -->
+                <div x-show="currentView === 'login' || currentView === 'register'" 
+                     class="flex rounded-full bg-slate-100 dark:bg-slate-800 p-1 text-xs">
+                    <button 
+                        @click="setUserType('professional')"
+                        :class="userType === 'professional' 
+                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
+                            : 'text-slate-600 dark:text-slate-400'"
+                        class="px-3 py-1.5 rounded-full flex items-center gap-1 transition">
+                        <i class="fa-solid fa-user-md text-[10px]"></i>
+                        <span class="hidden sm:inline">Professionnel</span>
+                    </button>
+                    <button 
+                        @click="setUserType('patient')"
+                        :class="userType === 'patient' 
+                            ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' 
+                            : 'text-slate-600 dark:text-slate-400'"
+                        class="px-3 py-1.5 rounded-full flex items-center gap-1 transition">
+                        <i class="fa-solid fa-user text-[10px]"></i>
+                        <span class="hidden sm:inline">Patient</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Indicateur de type d'utilisateur -->
+            <div x-show="currentView === 'login' || currentView === 'register'" 
+                 class="mb-6 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-3">
+                    <div :class="userType === 'professional' 
+                        ? 'bg-ivoireBlue text-white' 
+                        : 'bg-ivoireGreen text-white'"
+                        class="h-8 w-8 rounded-xl flex items-center justify-center">
+                        <i :class="userType === 'professional' ? 'fa-user-md' : 'fa-user'" class="fa-solid text-sm"></i>
+                    </div>
+                    <div class="text-sm">
+                        <p class="font-medium" x-text="userType === 'professional' ? 'Espace Professionnel' : 'Espace Patient'"></p>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs" 
+                           x-text="userType === 'professional' 
+                               ? 'Accès aux outils de gestion et statistiques' 
+                               : 'Accès à votre carnet vaccinal et rendez-vous'"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulaire de connexion -->
+            <form x-show="currentView === 'login'" @submit.prevent="handleLogin" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Email professionnel
+                    </label>
+                    <div class="relative">
+                        <input 
+                            x-model="formData.email"
+                            type="email" 
+                            required
+                            class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
+                            placeholder="votre.email@example.ci">
+                        <i class="fa-solid fa-envelope absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Mot de passe
+                    </label>
+                    <div class="relative">
+                        <input 
+                            x-model="formData.password"
+                            type="password" 
+                            required
+                            class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
+                            placeholder="Votre mot de passe">
+                        <i class="fa-solid fa-lock absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <label class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                        <input 
+                            x-model="formData.remember"
+                            type="checkbox" 
+                            class="rounded border-slate-300 text-ivoireBlue focus:ring-ivoireBlue">
+                        Se souvenir de moi
+                    </label>
+                    <button type="button" @click="setView('forgot')" class="text-ivoireBlue dark:text-ivoireGreen hover:underline font-medium">
+                        Mot de passe oublié ?
+                    </button>
+                </div>
+
+                <button 
+                    type="submit"
+                    :disabled="loading"
+                    :class="loading 
+                        ? 'bg-slate-400 cursor-not-allowed' 
+                        : 'gradient-primary hover:shadow-lg transform hover:scale-[1.02]'"
+                    class="w-full py-3 px-4 rounded-2xl text-white font-semibold shadow-md transition duration-200 flex items-center justify-center gap-2">
+                    <template x-if="loading">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                    </template>
+                    <template x-if="!loading">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </template>
+                    <span x-text="loading ? 'Connexion...' : 'Se connecter'"></span>
+                </button>
+
+                <div class="text-center text-sm text-slate-500 dark:text-slate-400">
+                    Nouveau sur la plateforme ? 
+                    <button type="button" @click="setView('register')" class="text-ivoireBlue dark:text-ivoireGreen hover:underline font-medium ml-1">
+                        Créer un compte
+                    </button>
+                </div>
+            </form>
+
+            <!-- Formulaire d'inscription -->
+            <form x-show="currentView === 'register'" @submit.prevent="handleRegister" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Nom complet
+                    </label>
+                    <input 
+                        x-model="formData.fullName"
+                        type="text" 
+                        required
+                        class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
+                        placeholder="Votre nom complet">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Email
+                    </label>
+                    <input 
+                        x-model="formData.email"
+                        type="email" 
+                        required
+                        class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
+                        placeholder="votre.email@example.ci">
+                </div>
+
+                <div x-show="userType === 'professional'">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Numéro de téléphone
+                    </label>
+                    <input 
+                        x-model="formData.phone"
+                        type="tel" 
+                        class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
+                        placeholder="+225 XX XX XX XX">
+                </div>
+
+                <div x-show="userType === 'patient'">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Région
+                    </label>
+                    <select 
+                        x-model="formData.region"
+                        class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition">
+                        <option value="">Sélectionnez votre région</option>
+                        <template x-for="region in regions" :key="region">
+                            <option x-text="region" :value="region"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Mot de passe
+                    </label>
+                    <input 
+                        x-model="formData.password"
+                        type="password" 
+                        required
+                        class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
+                        placeholder="Créez un mot de passe sécurisé">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Confirmer le mot de passe
+                    </label>
+                    <input 
+                        x-model="formData.confirmPassword"
+                        type="password" 
+                        required
+                        class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
+                        placeholder="Confirmez votre mot de passe">
+                </div>
+
+                <button 
+                    type="submit"
+                    :disabled="loading"
+                    :class="loading 
+                        ? 'bg-slate-400 cursor-not-allowed' 
+                        : 'gradient-primary hover:shadow-lg transform hover:scale-[1.02]'"
+                    class="w-full py-3 px-4 rounded-2xl text-white font-semibold shadow-md transition duration-200 flex items-center justify-center gap-2">
+                    <template x-if="loading">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                    </template>
+                    <template x-if="!loading">
+                        <i class="fa-solid fa-user-plus"></i>
+                    </template>
+                    <span x-text="loading ? 'Création...' : 'Créer mon compte'"></span>
+                </button>
+
+                <div class="text-center text-sm text-slate-500 dark:text-slate-400">
+                    Déjà inscrit ? 
+                    <button type="button" @click="setView('login')" class="text-ivoireBlue dark:text-ivoireGreen hover:underline font-medium ml-1">
+                        Se connecter
+                    </button>
+                </div>
+            </form>
+
+            <!-- Formulaire de réinitialisation -->
+            <form x-show="currentView === 'forgot'" @submit.prevent="handleForgotPassword" class="space-y-4">
+                <div class="text-center mb-4">
+                    <div class="h-16 w-16 rounded-2xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-key text-xl"></i>
+                    </div>
+                    <p class="text-slate-600 dark:text-slate-400 text-sm">
+                        Entrez votre adresse email associée à votre compte. 
+                        Nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Email
+                    </label>
+                    <input 
+                        x-model="formData.email"
+                        type="email" 
+                        required
+                        class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
+                        placeholder="votre.email@example.ci">
+                </div>
+
+                <button 
+                    type="submit"
+                    :disabled="loading"
+                    :class="loading 
+                        ? 'bg-slate-400 cursor-not-allowed' 
+                        : 'bg-amber-500 hover:bg-amber-600 hover:shadow-lg transform hover:scale-[1.02]'"
+                    class="w-full py-3 px-4 rounded-2xl text-white font-semibold shadow-md transition duration-200 flex items-center justify-center gap-2">
+                    <template x-if="loading">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                    </template>
+                    <template x-if="!loading">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </template>
+                    <span x-text="loading ? 'Envoi...' : 'Envoyer les instructions'"></span>
+                </button>
+
+                <div class="text-center text-sm text-slate-500 dark:text-slate-400">
+                    <button type="button" @click="setView('login')" class="text-ivoireBlue dark:text-ivoireGreen hover:underline font-medium">
+                        ← Retour à la connexion
+                    </button>
+                </div>
+            </form>
+
+            <!-- Séparateur -->
+            <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-slate-300 dark:border-slate-700"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white dark:bg-slate-900 text-slate-500">Accès rapide</span>
+                </div>
+            </div>
+
+            <!-- Boutons d'accès rapide -->
+            <div class="grid grid-cols-2 gap-3">
+                <button class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-sm font-medium">
+                    <i class="fa-brands fa-google text-red-500"></i>
+                    <span>Google</span>
+                </button>
+                <button class="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-sm font-medium">
+                    <i class="fa-brands fa-microsoft text-blue-500"></i>
+                    <span>Microsoft</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer de la carte -->
+        <div class="mt-4 text-center text-xs text-slate-500 dark:text-slate-400">
+            <p>En vous connectant, vous acceptez nos 
+                <a href="#" class="text-ivoireBlue dark:text-ivoireGreen hover:underline">Conditions d'utilisation</a> 
+                et notre 
+                <a href="#" class="text-ivoireBlue dark:text-ivoireGreen hover:underline">Politique de confidentialité</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Bouton de changement de thème -->
+<button 
+    @click="toggleTheme"
+    class="fixed top-4 right-4 h-10 w-10 rounded-2xl border border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-slate-900/90 backdrop-blur-sm shadow-sm hover:scale-105 transition z-10">
+    <i class="fa-solid fa-sun text-sm" x-show="darkMode === false"></i>
+    <i class="fa-solid fa-moon text-sm" x-show="darkMode === true"></i>
+</button>
+
+<!-- Lien d'aide -->
+<a href="#" class="fixed bottom-4 right-4 flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-medium shadow-sm hover:shadow-md transition z-10">
+    <i class="fa-solid fa-circle-question text-ivoireBlue dark:text-ivoireGreen"></i>
+    <span>Aide & Support</span>
+</a>
+
+</body>
+</html>

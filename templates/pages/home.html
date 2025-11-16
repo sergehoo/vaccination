@@ -1,836 +1,1131 @@
-{% extends 'layout/base.html' %}
+<!DOCTYPE html>
+<html lang="fr" x-data="vaccinationApp()" x-bind:class="darkMode ? 'dark' : ''">
+<head>
+    <meta charset="UTF-8">
+    <title>Plateforme Vaccination CI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  {% block content %}
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        ivoireBlue: '#1A57A1',
+                        ivoireGreen: '#18A999',
+                        ivoireOrange: '#F59E0B',
+                        ivoireNight: '#020617',
+                    },
+                    boxShadow: {
+                        soft: '0 18px 45px rgba(15,23,42,0.24)',
+                    },
+                    borderRadius: {
+                        '3xl': '1.75rem',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Alpine state (avant Alpine.js) -->
+    <script>
+        window.vaccinationApp = function () {
+            return {
+                role: 'admin',
+                darkMode: false,
+                notifications: [
+                    { id: 1, type: 'alert', title: 'Stock critique', message: 'Penta 3 en rupture dans 3 centres', time: '10 min', read: false },
+                    { id: 2, type: 'info', title: 'Nouvelle campagne', message: 'Lancement vaccination grippe saisonnière', time: '1h', read: true },
+                    { id: 3, type: 'success', title: 'Synchro réussie', message: 'DHIS2 - Région Abidjan 1', time: '2h', read: true }
+                ],
+                unreadNotifications: 1,
+                currentRegion: 'Toutes les régions',
+                regions: ['Toutes les régions', 'Abidjan 1', 'Abidjan 2', 'Gbêkê', 'Tonkpi', 'San-Pédro'],
+                currentVaccine: 'Tous les vaccins',
+                vaccines: ['Tous les vaccins', 'COVID-19', 'PEV Routine', 'Rougeole-Rubéole', 'Fièvre Jaune'],
+                init() {
+                    const savedTheme = localStorage.getItem('vaccination_theme');
+                    if (savedTheme === 'dark') {
+                        this.darkMode = true;
+                    }
+                },
+                toggleTheme() {
+                    this.darkMode = !this.darkMode;
+                    localStorage.setItem('vaccination_theme', this.darkMode ? 'dark' : 'light');
+                },
+                setRole(r) {
+                    this.role = r;
+                },
+                markNotificationAsRead(id) {
+                    const notification = this.notifications.find(n => n.id === id);
+                    if (notification && !notification.read) {
+                        notification.read = true;
+                        this.unreadNotifications--;
+                    }
+                },
+                markAllAsRead() {
+                    this.notifications.forEach(n => {
+                        if (!n.read) {
+                            n.read = true;
+                            this.unreadNotifications--;
+                        }
+                    });
+                },
+                openModal(modalType) {
+                    this.activeModal = modalType;
+                },
+                closeModal() {
+                    this.activeModal = null;
+                }
+            }
+        }
+    </script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <!-- Icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+    <style>
+        /* Scrollbar custom */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { 
+            border-radius: 9999px; 
+            background: rgba(156, 163, 175, 0.5);
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: rgba(75, 85, 99, 0.5);
+        }
         
- <div class="nk-main ">
-            <!-- sidebar @s -->
-                      {% include 'layout/sidebarre.html' %}
-            <!-- sidebar @e -->
-            <!-- wrap @s -->
-            <div class="nk-wrap ">
-                <!-- main header @s -->
-                <div class="nk-header nk-header-fixed is-light">
-                    <div class="container-fluid">
-                        <div class="nk-header-wrap">
-                            <div class="nk-menu-trigger d-xl-none ml-n1">
-                                <a href="#" class="nk-nav-toggle nk-quick-nav-icon" data-target="sidebarMenu"><em class="icon ni ni-menu"></em></a>
-                            </div>
-                            <div class="nk-header-brand d-xl-none">
-                                <a href="html/index.html" class="logo-link">
-                                    <img class="logo-light logo-img" src="./images/logo.png" srcset="./images/logo2x.png 2x" alt="logo">
-                                    <img class="logo-dark logo-img" src="./images/logo-dark.png" srcset="./images/logo-dark2x.png 2x" alt="logo-dark">
-                                </a>
-                            </div><!-- .nk-header-brand -->
-                            <div class="nk-header-news d-none d-xl-block">
-                                <div class="nk-news-list">
-                                    <a class="nk-news-item" href="#">
-                                        <div class="nk-news-icon">
-                                            <em class="icon ni ni-card-view"></em>
-                                        </div>
-                                        <div class="nk-news-text">
-                                            <p>Do you know the latest update of 2019? <span> A overview of our is now available on YouTube</span></p>
-                                            <em class="icon ni ni-external"></em>
-                                        </div>
-                                    </a>
-                                </div>
-                            </div><!-- .nk-header-news -->
-                            <div class="nk-header-tools">
-                                <ul class="nk-quick-nav">
-                                    <li class="dropdown user-dropdown">
-                                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                            <div class="user-toggle">
-                                                <div class="user-avatar sm">
-                                                    <em class="icon ni ni-user-alt"></em>
-                                                </div>
-                                                <div class="user-info d-none d-md-block">
-                                                    <div class="user-status">Administrator</div>
-                                                    <div class="user-name dropdown-indicator">Abu Bin Ishityak</div>
-                                                </div>
-                                            </div>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-md dropdown-menu-right dropdown-menu-s1">
-                                            <div class="dropdown-inner user-card-wrap bg-lighter d-none d-md-block">
-                                                <div class="user-card">
-                                                    <div class="user-avatar">
-                                                        <span>AB</span>
-                                                    </div>
-                                                    <div class="user-info">
-                                                        <span class="lead-text">Abu Bin Ishtiyak</span>
-                                                        <span class="sub-text">info@softnio.com</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="dropdown-inner">
-                                                <ul class="link-list">
-                                                    <li><a href="html/user-profile-regular.html"><em class="icon ni ni-user-alt"></em><span>View Profile</span></a></li>
-                                                    <li><a href="html/user-profile-setting.html"><em class="icon ni ni-setting-alt"></em><span>Account Setting</span></a></li>
-                                                    <li><a href="html/user-profile-activity.html"><em class="icon ni ni-activity-alt"></em><span>Login Activity</span></a></li>
-                                                    <li><a class="dark-switch" href="#"><em class="icon ni ni-moon"></em><span>Dark Mode</span></a></li>
-                                                </ul>
-                                            </div>
-                                            <div class="dropdown-inner">
-                                                <ul class="link-list">
-                                                    <li><a href="#"><em class="icon ni ni-signout"></em><span>Sign out</span></a></li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </li><!-- .dropdown -->
-                                    <li class="dropdown notification-dropdown mr-n1">
-                                        <a href="#" class="dropdown-toggle nk-quick-nav-icon" data-toggle="dropdown">
-                                            <div class="icon-status icon-status-info"><em class="icon ni ni-bell"></em></div>
-                                        </a>
-                                        <div class="dropdown-menu dropdown-menu-xl dropdown-menu-right dropdown-menu-s1">
-                                            <div class="dropdown-head">
-                                                <span class="sub-title nk-dropdown-title">Notifications</span>
-                                                <a href="#">Mark All as Read</a>
-                                            </div>
-                                            <div class="dropdown-body">
-                                                <div class="nk-notification">
-                                                    <div class="nk-notification-item dropdown-inner">
-                                                        <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-warning-dim ni ni-curve-down-right"></em>
-                                                        </div>
-                                                        <div class="nk-notification-content">
-                                                            <div class="nk-notification-text">You have requested to <span>Widthdrawl</span></div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="nk-notification-item dropdown-inner">
-                                                        <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-success-dim ni ni-curve-down-left"></em>
-                                                        </div>
-                                                        <div class="nk-notification-content">
-                                                            <div class="nk-notification-text">Your <span>Deposit Order</span> is placed</div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="nk-notification-item dropdown-inner">
-                                                        <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-warning-dim ni ni-curve-down-right"></em>
-                                                        </div>
-                                                        <div class="nk-notification-content">
-                                                            <div class="nk-notification-text">You have requested to <span>Widthdrawl</span></div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="nk-notification-item dropdown-inner">
-                                                        <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-success-dim ni ni-curve-down-left"></em>
-                                                        </div>
-                                                        <div class="nk-notification-content">
-                                                            <div class="nk-notification-text">Your <span>Deposit Order</span> is placed</div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="nk-notification-item dropdown-inner">
-                                                        <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-warning-dim ni ni-curve-down-right"></em>
-                                                        </div>
-                                                        <div class="nk-notification-content">
-                                                            <div class="nk-notification-text">You have requested to <span>Widthdrawl</span></div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="nk-notification-item dropdown-inner">
-                                                        <div class="nk-notification-icon">
-                                                            <em class="icon icon-circle bg-success-dim ni ni-curve-down-left"></em>
-                                                        </div>
-                                                        <div class="nk-notification-content">
-                                                            <div class="nk-notification-text">Your <span>Deposit Order</span> is placed</div>
-                                                            <div class="nk-notification-time">2 hrs ago</div>
-                                                        </div>
-                                                    </div>
-                                                </div><!-- .nk-notification -->
-                                            </div><!-- .nk-dropdown-body -->
-                                            <div class="dropdown-foot center">
-                                                <a href="#">View All</a>
-                                            </div>
-                                        </div>
-                                    </li><!-- .dropdown -->
-                                </ul><!-- .nk-quick-nav -->
-                            </div><!-- .nk-header-tools -->
-                        </div><!-- .nk-header-wrap -->
-                    </div><!-- .container-fliud -->
-                </div>
-                <!-- main header @e -->
-                <!-- content @s -->
-                <div class="nk-content ">
-                    <div class="container-fluid">
-                        <div class="nk-content-inner">
-                            <div class="nk-content-body">
-                                <div class="nk-block-head nk-block-head-sm">
-                                    <div class="nk-block-between">
-                                        <div class="nk-block-head-content">
-                                            <h3 class="nk-block-title page-title">Sales Overview</h3>
-                                            <div class="nk-block-des text-soft">
-                                                <p>Welcome to DashLite Dashboard Template.</p>
-                                            </div>
-                                        </div><!-- .nk-block-head-content -->
-                                        <div class="nk-block-head-content">
-                                            <div class="toggle-wrap nk-block-tools-toggle">
-                                                <a href="#" class="btn btn-icon btn-trigger toggle-expand mr-n1" data-target="pageMenu"><em class="icon ni ni-more-v"></em></a>
-                                                <div class="toggle-expand-content" data-content="pageMenu">
-                                                    <ul class="nk-block-tools g-3">
-                                                        <li>
-                                                            <div class="dropdown">
-                                                                <a href="#" class="dropdown-toggle btn btn-white btn-dim btn-outline-light" data-toggle="dropdown"><em class="d-none d-sm-inline icon ni ni-calender-date"></em><span><span class="d-none d-md-inline">Last</span> 30 Days</span><em class="dd-indc icon ni ni-chevron-right"></em></a>
-                                                                <div class="dropdown-menu dropdown-menu-right">
-                                                                    <ul class="link-list-opt no-bdr">
-                                                                        <li><a href="#"><span>Last 30 Days</span></a></li>
-                                                                        <li><a href="#"><span>Last 6 Months</span></a></li>
-                                                                        <li><a href="#"><span>Last 1 Years</span></a></li>
-                                                                    </ul>
-                                                                </div>
-                                                            </div>
-                                                        </li>
-                                                        <li class="nk-block-tools-opt"><a href="#" class="btn btn-primary"><em class="icon ni ni-reports"></em><span>Reports</span></a></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div><!-- .nk-block-head-content -->
-                                    </div><!-- .nk-block-between -->
-                                </div><!-- .nk-block-head -->
-                                <div class="nk-block">
-                                    <div class="row g-gs">
-                                        <div class="col-xxl-6">
-                                            <div class="row g-gs">
-                                                <div class="col-lg-6 col-xxl-12">
-                                                    <div class="card card-bordered">
-                                                        <div class="card-inner">
-                                                            <div class="card-title-group align-start mb-2">
-                                                                <div class="card-title">
-                                                                    <h6 class="title">Sales Revenue</h6>
-                                                                    <p>In last 30 days revenue from subscription.</p>
-                                                                </div>
-                                                                <div class="card-tools">
-                                                                    <em class="card-hint icon ni ni-help-fill" data-toggle="tooltip" data-placement="left" title="Revenue from subscription"></em>
-                                                                </div>
-                                                            </div>
-                                                            <div class="align-end gy-3 gx-5 flex-wrap flex-md-nowrap flex-lg-wrap flex-xxl-nowrap">
-                                                                <div class="nk-sale-data-group flex-md-nowrap g-4">
-                                                                    <div class="nk-sale-data">
-                                                                        <span class="amount">14,299.59 <span class="change down text-danger"><em class="icon ni ni-arrow-long-down"></em>16.93%</span></span>
-                                                                        <span class="sub-title">This Month</span>
-                                                                    </div>
-                                                                    <div class="nk-sale-data">
-                                                                        <span class="amount">7,299.59 <span class="change up text-success"><em class="icon ni ni-arrow-long-up"></em>4.26%</span></span>
-                                                                        <span class="sub-title">This Week</span>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="nk-sales-ck sales-revenue">
-                                                                    <canvas class="sales-bar-chart" id="salesRevenue"></canvas>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div><!-- .col -->
-                                                <div class="col-lg-6 col-xxl-12">
-                                                    <div class="row g-gs">
-                                                        <div class="col-sm-6 col-lg-12 col-xxl-6">
-                                                            <div class="card card-bordered">
-                                                                <div class="card-inner">
-                                                                    <div class="card-title-group align-start mb-2">
-                                                                        <div class="card-title">
-                                                                            <h6 class="title">Active Subscriptions</h6>
-                                                                        </div>
-                                                                        <div class="card-tools">
-                                                                            <em class="card-hint icon ni ni-help-fill" data-toggle="tooltip" data-placement="left" title="Total active subscription"></em>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="align-end flex-sm-wrap g-4 flex-md-nowrap">
-                                                                        <div class="nk-sale-data">
-                                                                            <span class="amount">9.69K</span>
-                                                                            <span class="sub-title"><span class="change down text-danger"><em class="icon ni ni-arrow-long-down"></em>1.93%</span>since last month</span>
-                                                                        </div>
-                                                                        <div class="nk-sales-ck">
-                                                                            <canvas class="sales-bar-chart" id="activeSubscription"></canvas>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div><!-- .card -->
-                                                        </div><!-- .col -->
-                                                        <div class="col-sm-6 col-lg-12 col-xxl-6">
-                                                            <div class="card card-bordered">
-                                                                <div class="card-inner">
-                                                                    <div class="card-title-group align-start mb-2">
-                                                                        <div class="card-title">
-                                                                            <h6 class="title">Avg Subscriptions</h6>
-                                                                        </div>
-                                                                        <div class="card-tools">
-                                                                            <em class="card-hint icon ni ni-help-fill" data-toggle="tooltip" data-placement="left" title="Daily Avg. subscription"></em>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="align-end flex-sm-wrap g-4 flex-md-nowrap">
-                                                                        <div class="nk-sale-data">
-                                                                            <span class="amount">346.2</span>
-                                                                            <span class="sub-title"><span class="change up text-success"><em class="icon ni ni-arrow-long-up"></em>2.45%</span>since last week</span>
-                                                                        </div>
-                                                                        <div class="nk-sales-ck">
-                                                                            <canvas class="sales-bar-chart" id="totalSubscription"></canvas>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div><!-- .card -->
-                                                        </div><!-- .col -->
-                                                    </div><!-- .row -->
-                                                </div><!-- .col -->
-                                            </div><!-- .row -->
-                                        </div><!-- .col -->
-                                        <div class="col-xxl-6">
-                                            <div class="card card-bordered h-100">
-                                                <div class="card-inner">
-                                                    <div class="card-title-group align-start gx-3 mb-3">
-                                                        <div class="card-title">
-                                                            <h6 class="title">Sales Overview</h6>
-                                                            <p>In 30 days sales of product subscription. <a href="#">See Details</a></p>
-                                                        </div>
-                                                        <div class="card-tools">
-                                                            <div class="dropdown">
-                                                                <a href="#" class="btn btn-primary btn-dim d-none d-sm-inline-flex" data-toggle="dropdown"><em class="icon ni ni-download-cloud"></em><span><span class="d-none d-md-inline">Download</span> Report</span></a>
-                                                                <a href="#" class="btn btn-icon btn-primary btn-dim d-sm-none" data-toggle="dropdown"><em class="icon ni ni-download-cloud"></em></a>
-                                                                <div class="dropdown-menu dropdown-menu-right">
-                                                                    <ul class="link-list-opt no-bdr">
-                                                                        <li><a href="#"><span>Download Mini Version</span></a></li>
-                                                                        <li><a href="#"><span>Download Full Version</span></a></li>
-                                                                        <li class="divider"></li>
-                                                                        <li><a href="#"><em class="icon ni ni-opt-alt"></em><span>More Options</span></a></li>
-                                                                    </ul>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="nk-sale-data-group align-center justify-between gy-3 gx-5">
-                                                        <div class="nk-sale-data">
-                                                            <span class="amount">$82,944.60</span>
-                                                        </div>
-                                                        <div class="nk-sale-data">
-                                                            <span class="amount sm">1,937 <small>Subscribers</small></span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="nk-sales-ck large pt-4">
-                                                        <canvas class="sales-overview-chart" id="salesOverview"></canvas>
-                                                    </div>
-                                                </div>
-                                            </div><!-- .card -->
-                                        </div><!-- .col -->
-                                        <div class="col-xxl-8">
-                                            <div class="card card-bordered card-full">
-                                                <div class="card-inner">
-                                                    <div class="card-title-group">
-                                                        <div class="card-title">
-                                                            <h6 class="title"><span class="mr-2">Transaction</span> <a href="#" class="link d-none d-sm-inline">See History</a></h6>
-                                                        </div>
-                                                        <div class="card-tools">
-                                                            <ul class="card-tools-nav">
-                                                                <li><a href="#"><span>Paid</span></a></li>
-                                                                <li><a href="#"><span>Pending</span></a></li>
-                                                                <li class="active"><a href="#"><span>All</span></a></li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="card-inner p-0 border-top">
-                                                    <div class="nk-tb-list nk-tb-orders">
-                                                        <div class="nk-tb-item nk-tb-head">
-                                                            <div class="nk-tb-col"><span>Order No.</span></div>
-                                                            <div class="nk-tb-col tb-col-sm"><span>Customer</span></div>
-                                                            <div class="nk-tb-col tb-col-md"><span>Date</span></div>
-                                                            <div class="nk-tb-col tb-col-lg"><span>Ref</span></div>
-                                                            <div class="nk-tb-col"><span>Amount</span></div>
-                                                            <div class="nk-tb-col"><span class="d-none d-sm-inline">Status</span></div>
-                                                            <div class="nk-tb-col"><span>&nbsp;</span></div>
-                                                        </div>
-                                                        <div class="nk-tb-item">
-                                                            <div class="nk-tb-col">
-                                                                <span class="tb-lead"><a href="#">#95954</a></span>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-sm">
-                                                                <div class="user-card">
-                                                                    <div class="user-avatar user-avatar-sm bg-purple">
-                                                                        <span>AB</span>
-                                                                    </div>
-                                                                    <div class="user-name">
-                                                                        <span class="tb-lead">Abu Bin Ishtiyak</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-md">
-                                                                <span class="tb-sub">02/11/2020</span>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-lg">
-                                                                <span class="tb-sub text-primary">SUB-2309232</span>
-                                                            </div>
-                                                            <div class="nk-tb-col">
-                                                                <span class="tb-sub tb-amount">4,596.75 <span>USD</span></span>
-                                                            </div>
-                                                            <div class="nk-tb-col">
-                                                                <span class="badge badge-dot badge-dot-xs badge-success">Paid</span>
-                                                            </div>
-                                                            <div class="nk-tb-col nk-tb-col-action">
-                                                                <div class="dropdown">
-                                                                    <a class="text-soft dropdown-toggle btn btn-icon btn-trigger" data-toggle="dropdown"><em class="icon ni ni-more-h"></em></a>
-                                                                    <div class="dropdown-menu dropdown-menu-right dropdown-menu-xs">
-                                                                        <ul class="link-list-plain">
-                                                                            <li><a href="#">View</a></li>
-                                                                            <li><a href="#">Invoice</a></li>
-                                                                            <li><a href="#">Print</a></li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="nk-tb-item">
-                                                            <div class="nk-tb-col">
-                                                                <span class="tb-lead"><a href="#">#95850</a></span>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-sm">
-                                                                <div class="user-card">
-                                                                    <div class="user-avatar user-avatar-sm bg-azure">
-                                                                        <span>DE</span>
-                                                                    </div>
-                                                                    <div class="user-name">
-                                                                        <span class="tb-lead">Desiree Edwards</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-md">
-                                                                <span class="tb-sub">02/02/2020</span>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-lg">
-                                                                <span class="tb-sub text-primary">SUB-2309154</span>
-                                                            </div>
-                                                            <div class="nk-tb-col">
-                                                                <span class="tb-sub tb-amount">596.75 <span>USD</span></span>
-                                                            </div>
-                                                            <div class="nk-tb-col">
-                                                                <span class="badge badge-dot badge-dot-xs badge-danger">Canceled</span>
-                                                            </div>
-                                                            <div class="nk-tb-col nk-tb-col-action">
-                                                                <div class="dropdown">
-                                                                    <a class="text-soft dropdown-toggle btn btn-icon btn-trigger" data-toggle="dropdown"><em class="icon ni ni-more-h"></em></a>
-                                                                    <div class="dropdown-menu dropdown-menu-right dropdown-menu-xs">
-                                                                        <ul class="link-list-plain">
-                                                                            <li><a href="#">View</a></li>
-                                                                            <li><a href="#">Remove</a></li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="nk-tb-item">
-                                                            <div class="nk-tb-col">
-                                                                <span class="tb-lead"><a href="#">#95812</a></span>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-sm">
-                                                                <div class="user-card">
-                                                                    <div class="user-avatar user-avatar-sm bg-warning">
-                                                                        <img src="./images/avatar/b-sm.jpg" alt="">
-                                                                    </div>
-                                                                    <div class="user-name">
-                                                                        <span class="tb-lead">Blanca Schultz</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-md">
-                                                                <span class="tb-sub">02/01/2020</span>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-lg">
-                                                                <span class="tb-sub text-primary">SUB-2309143</span>
-                                                            </div>
-                                                            <div class="nk-tb-col">
-                                                                <span class="tb-sub tb-amount">199.99 <span>USD</span></span>
-                                                            </div>
-                                                            <div class="nk-tb-col">
-                                                                <span class="badge badge-dot badge-dot-xs badge-success">Paid</span>
-                                                            </div>
-                                                            <div class="nk-tb-col nk-tb-col-action">
-                                                                <div class="dropdown">
-                                                                    <a class="text-soft dropdown-toggle btn btn-icon btn-trigger" data-toggle="dropdown"><em class="icon ni ni-more-h"></em></a>
-                                                                    <div class="dropdown-menu dropdown-menu-right dropdown-menu-xs">
-                                                                        <ul class="link-list-plain">
-                                                                            <li><a href="#">View</a></li>
-                                                                            <li><a href="#">Invoice</a></li>
-                                                                            <li><a href="#">Print</a></li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="nk-tb-item">
-                                                            <div class="nk-tb-col">
-                                                                <span class="tb-lead"><a href="#">#95256</a></span>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-sm">
-                                                                <div class="user-card">
-                                                                    <div class="user-avatar user-avatar-sm bg-purple">
-                                                                        <span>NL</span>
-                                                                    </div>
-                                                                    <div class="user-name">
-                                                                        <span class="tb-lead">Naomi Lawrence</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-md">
-                                                                <span class="tb-sub">01/29/2020</span>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-lg">
-                                                                <span class="tb-sub text-primary">SUB-2305684</span>
-                                                            </div>
-                                                            <div class="nk-tb-col">
-                                                                <span class="tb-sub tb-amount">1099.99 <span>USD</span></span>
-                                                            </div>
-                                                            <div class="nk-tb-col">
-                                                                <span class="badge badge-dot badge-dot-xs badge-success">Paid</span>
-                                                            </div>
-                                                            <div class="nk-tb-col nk-tb-col-action">
-                                                                <div class="dropdown">
-                                                                    <a class="text-soft dropdown-toggle btn btn-icon btn-trigger" data-toggle="dropdown"><em class="icon ni ni-more-h"></em></a>
-                                                                    <div class="dropdown-menu dropdown-menu-right dropdown-menu-xs">
-                                                                        <ul class="link-list-plain">
-                                                                            <li><a href="#">View</a></li>
-                                                                            <li><a href="#">Invoice</a></li>
-                                                                            <li><a href="#">Print</a></li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div class="nk-tb-item">
-                                                            <div class="nk-tb-col">
-                                                                <span class="tb-lead"><a href="#">#95135</a></span>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-sm">
-                                                                <div class="user-card">
-                                                                    <div class="user-avatar user-avatar-sm bg-success">
-                                                                        <span>CH</span>
-                                                                    </div>
-                                                                    <div class="user-name">
-                                                                        <span class="tb-lead">Cassandra Hogan</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-md">
-                                                                <span class="tb-sub">01/29/2020</span>
-                                                            </div>
-                                                            <div class="nk-tb-col tb-col-lg">
-                                                                <span class="tb-sub text-primary">SUB-2305564</span>
-                                                            </div>
-                                                            <div class="nk-tb-col">
-                                                                <span class="tb-sub tb-amount">1099.99 <span>USD</span></span>
-                                                            </div>
-                                                            <div class="nk-tb-col">
-                                                                <span class="badge badge-dot badge-dot-xs badge-warning">Due</span>
-                                                            </div>
-                                                            <div class="nk-tb-col nk-tb-col-action">
-                                                                <div class="dropdown">
-                                                                    <a class="text-soft dropdown-toggle btn btn-icon btn-trigger" data-toggle="dropdown"><em class="icon ni ni-more-h"></em></a>
-                                                                    <div class="dropdown-menu dropdown-menu-right dropdown-menu-xs">
-                                                                        <ul class="link-list-plain">
-                                                                            <li><a href="#">View</a></li>
-                                                                            <li><a href="#">Invoice</a></li>
-                                                                            <li><a href="#">Notify</a></li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="card-inner-sm border-top text-center d-sm-none">
-                                                    <a href="#" class="btn btn-link btn-block">See History</a>
-                                                </div>
-                                            </div><!-- .card -->
-                                        </div><!-- .col -->
-                                        <div class="col-md-6 col-xxl-4">
-                                            <div class="card card-bordered card-full">
-                                                <div class="card-inner border-bottom">
-                                                    <div class="card-title-group">
-                                                        <div class="card-title">
-                                                            <h6 class="title">Recent Activities</h6>
-                                                        </div>
-                                                        <div class="card-tools">
-                                                            <ul class="card-tools-nav">
-                                                                <li><a href="#"><span>Cancel</span></a></li>
-                                                                <li class="active"><a href="#"><span>All</span></a></li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <ul class="nk-activity">
-                                                    <li class="nk-activity-item">
-                                                        <div class="nk-activity-media user-avatar bg-success"><img src="./images/avatar/c-sm.jpg" alt=""></div>
-                                                        <div class="nk-activity-data">
-                                                            <div class="label">Keith Jensen requested to Widthdrawl.</div>
-                                                            <span class="time">2 hours ago</span>
-                                                        </div>
-                                                    </li>
-                                                    <li class="nk-activity-item">
-                                                        <div class="nk-activity-media user-avatar bg-warning">HS</div>
-                                                        <div class="nk-activity-data">
-                                                            <div class="label">Harry Simpson placed a Order.</div>
-                                                            <span class="time">2 hours ago</span>
-                                                        </div>
-                                                    </li>
-                                                    <li class="nk-activity-item">
-                                                        <div class="nk-activity-media user-avatar bg-azure">SM</div>
-                                                        <div class="nk-activity-data">
-                                                            <div class="label">Stephanie Marshall got a huge bonus.</div>
-                                                            <span class="time">2 hours ago</span>
-                                                        </div>
-                                                    </li>
-                                                    <li class="nk-activity-item">
-                                                        <div class="nk-activity-media user-avatar bg-purple"><img src="./images/avatar/d-sm.jpg" alt=""></div>
-                                                        <div class="nk-activity-data">
-                                                            <div class="label">Nicholas Carr deposited funds.</div>
-                                                            <span class="time">2 hours ago</span>
-                                                        </div>
-                                                    </li>
-                                                    <li class="nk-activity-item">
-                                                        <div class="nk-activity-media user-avatar bg-pink">TM</div>
-                                                        <div class="nk-activity-data">
-                                                            <div class="label">Timothy Moreno placed a Order.</div>
-                                                            <span class="time">2 hours ago</span>
-                                                        </div>
-                                                    </li>
-                                                </ul>
-                                            </div><!-- .card -->
-                                        </div><!-- .col -->
-                                        <div class="col-md-6 col-xxl-4">
-                                            <div class="card card-bordered card-full">
-                                                <div class="card-inner-group">
-                                                    <div class="card-inner">
-                                                        <div class="card-title-group">
-                                                            <div class="card-title">
-                                                                <h6 class="title">New Users</h6>
-                                                            </div>
-                                                            <div class="card-tools">
-                                                                <a href="html/user-list-regular.html" class="link">View All</a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="card-inner card-inner-md">
-                                                        <div class="user-card">
-                                                            <div class="user-avatar bg-primary-dim">
-                                                                <span>AB</span>
-                                                            </div>
-                                                            <div class="user-info">
-                                                                <span class="lead-text">Abu Bin Ishtiyak</span>
-                                                                <span class="sub-text">info@softnio.com</span>
-                                                            </div>
-                                                            <div class="user-action">
-                                                                <div class="drodown">
-                                                                    <a href="#" class="dropdown-toggle btn btn-icon btn-trigger mr-n1" data-toggle="dropdown" aria-expanded="false"><em class="icon ni ni-more-h"></em></a>
-                                                                    <div class="dropdown-menu dropdown-menu-right">
-                                                                        <ul class="link-list-opt no-bdr">
-                                                                            <li><a href="#"><em class="icon ni ni-setting"></em><span>Action Settings</span></a></li>
-                                                                            <li><a href="#"><em class="icon ni ni-notify"></em><span>Push Notification</span></a></li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="card-inner card-inner-md">
-                                                        <div class="user-card">
-                                                            <div class="user-avatar bg-pink-dim">
-                                                                <span>SW</span>
-                                                            </div>
-                                                            <div class="user-info">
-                                                                <span class="lead-text">Sharon Walker</span>
-                                                                <span class="sub-text">sharon-90@example.com</span>
-                                                            </div>
-                                                            <div class="user-action">
-                                                                <div class="drodown">
-                                                                    <a href="#" class="dropdown-toggle btn btn-icon btn-trigger mr-n1" data-toggle="dropdown" aria-expanded="false"><em class="icon ni ni-more-h"></em></a>
-                                                                    <div class="dropdown-menu dropdown-menu-right">
-                                                                        <ul class="link-list-opt no-bdr">
-                                                                            <li><a href="#"><em class="icon ni ni-setting"></em><span>Action Settings</span></a></li>
-                                                                            <li><a href="#"><em class="icon ni ni-notify"></em><span>Push Notification</span></a></li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="card-inner card-inner-md">
-                                                        <div class="user-card">
-                                                            <div class="user-avatar bg-warning-dim">
-                                                                <span>GO</span>
-                                                            </div>
-                                                            <div class="user-info">
-                                                                <span class="lead-text">Gloria Oliver</span>
-                                                                <span class="sub-text">gloria_72@example.com</span>
-                                                            </div>
-                                                            <div class="user-action">
-                                                                <div class="drodown">
-                                                                    <a href="#" class="dropdown-toggle btn btn-icon btn-trigger mr-n1" data-toggle="dropdown" aria-expanded="false"><em class="icon ni ni-more-h"></em></a>
-                                                                    <div class="dropdown-menu dropdown-menu-right">
-                                                                        <ul class="link-list-opt no-bdr">
-                                                                            <li><a href="#"><em class="icon ni ni-setting"></em><span>Action Settings</span></a></li>
-                                                                            <li><a href="#"><em class="icon ni ni-notify"></em><span>Push Notification</span></a></li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="card-inner card-inner-md">
-                                                        <div class="user-card">
-                                                            <div class="user-avatar bg-success-dim">
-                                                                <span>PS</span>
-                                                            </div>
-                                                            <div class="user-info">
-                                                                <span class="lead-text">Phillip Sullivan</span>
-                                                                <span class="sub-text">phillip-85@example.com</span>
-                                                            </div>
-                                                            <div class="user-action">
-                                                                <div class="drodown">
-                                                                    <a href="#" class="dropdown-toggle btn btn-icon btn-trigger mr-n1" data-toggle="dropdown" aria-expanded="false"><em class="icon ni ni-more-h"></em></a>
-                                                                    <div class="dropdown-menu dropdown-menu-right">
-                                                                        <ul class="link-list-opt no-bdr">
-                                                                            <li><a href="#"><em class="icon ni ni-setting"></em><span>Action Settings</span></a></li>
-                                                                            <li><a href="#"><em class="icon ni ni-notify"></em><span>Push Notification</span></a></li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div><!-- .card -->
-                                        </div><!-- .col -->
-                                        <div class="col-lg-6 col-xxl-4">
-                                            <div class="card card-bordered h-100">
-                                                <div class="card-inner border-bottom">
-                                                    <div class="card-title-group">
-                                                        <div class="card-title">
-                                                            <h6 class="title">Support Requests</h6>
-                                                        </div>
-                                                        <div class="card-tools">
-                                                            <a href="#" class="link">All Tickets</a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <ul class="nk-support">
-                                                    <li class="nk-support-item">
-                                                        <div class="user-avatar">
-                                                            <img src="./images/avatar/a-sm.jpg" alt="">
-                                                        </div>
-                                                        <div class="nk-support-content">
-                                                            <div class="title">
-                                                                <span>Vincent Lopez</span><span class="badge badge-dot badge-dot-xs badge-warning ml-1">Pending</span>
-                                                            </div>
-                                                            <p>Thanks for contact us with your issues...</p>
-                                                            <span class="time">6 min ago</span>
-                                                        </div>
-                                                    </li>
-                                                    <li class="nk-support-item">
-                                                        <div class="user-avatar bg-purple-dim">
-                                                            <span>DM</span>
-                                                        </div>
-                                                        <div class="nk-support-content">
-                                                            <div class="title">
-                                                                <span>Daniel Moore</span><span class="badge badge-dot badge-dot-xs badge-info ml-1">Open</span>
-                                                            </div>
-                                                            <p>Thanks for contact us with your issues...</p>
-                                                            <span class="time">2 Hours ago</span>
-                                                        </div>
-                                                    </li>
-                                                    <li class="nk-support-item">
-                                                        <div class="user-avatar">
-                                                            <img src="./images/avatar/b-sm.jpg" alt="">
-                                                        </div>
-                                                        <div class="nk-support-content">
-                                                            <div class="title">
-                                                                <span>Larry Henry</span><span class="badge badge-dot badge-dot-xs badge-success ml-1">Solved</span>
-                                                            </div>
-                                                            <p>Thanks for contact us with your issues...</p>
-                                                            <span class="time">3 Hours ago</span>
-                                                        </div>
-                                                    </li>
-                                                </ul>
-                                            </div><!-- .card -->
-                                        </div><!-- .col -->
-                                        <div class="col-lg-6 col-xxl-4">
-                                            <div class="card card-bordered h-100">
-                                                <div class="card-inner border-bottom">
-                                                    <div class="card-title-group">
-                                                        <div class="card-title">
-                                                            <h6 class="title">Notifications</h6>
-                                                        </div>
-                                                        <div class="card-tools">
-                                                            <a href="#" class="link">View All</a>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="card-inner">
-                                                    <div class="timeline">
-                                                        <h6 class="timeline-head">November, 2019</h6>
-                                                        <ul class="timeline-list">
-                                                            <li class="timeline-item">
-                                                                <div class="timeline-status bg-primary is-outline"></div>
-                                                                <div class="timeline-date">13 Nov <em class="icon ni ni-alarm-alt"></em></div>
-                                                                <div class="timeline-data">
-                                                                    <h6 class="timeline-title">Submited KYC Application</h6>
-                                                                    <div class="timeline-des">
-                                                                        <p>Re-submitted KYC Application form.</p>
-                                                                        <span class="time">09:30am</span>
-                                                                    </div>
-                                                                </div>
-                                                            </li>
-                                                            <li class="timeline-item">
-                                                                <div class="timeline-status bg-primary"></div>
-                                                                <div class="timeline-date">13 Nov <em class="icon ni ni-alarm-alt"></em></div>
-                                                                <div class="timeline-data">
-                                                                    <h6 class="timeline-title">Submited KYC Application</h6>
-                                                                    <div class="timeline-des">
-                                                                        <p>Re-submitted KYC Application form.</p>
-                                                                        <span class="time">09:30am</span>
-                                                                    </div>
-                                                                </div>
-                                                            </li>
-                                                            <li class="timeline-item">
-                                                                <div class="timeline-status bg-pink"></div>
-                                                                <div class="timeline-date">13 Nov <em class="icon ni ni-alarm-alt"></em></div>
-                                                                <div class="timeline-data">
-                                                                    <h6 class="timeline-title">Submited KYC Application</h6>
-                                                                    <div class="timeline-des">
-                                                                        <p>Re-submitted KYC Application form.</p>
-                                                                        <span class="time">09:30am</span>
-                                                                    </div>
-                                                                </div>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </div><!-- .card -->
-                                        </div><!-- .col -->
-                                    </div><!-- .row -->
-                                </div><!-- .nk-block -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- content @e -->
-                <!-- footer @s -->
-                <div class="nk-footer">
-                    <div class="container-fluid">
-                        <div class="nk-footer-wrap">
-                            <div class="nk-footer-copyright"> &copy; 2020 DashLite. Template by <a href="https://softnio.com" target="_blank">Softnio</a>
-                            </div>
-                            <div class="nk-footer-links">
-                                <ul class="nav nav-sm">
-                                    <li class="nav-item"><a class="nav-link" href="#">Terms</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="#">Privacy</a></li>
-                                    <li class="nav-item"><a class="nav-link" href="#">Help</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- footer @e -->
-            </div>
-            <!-- wrap @e -->
-        </div>
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(24, 169, 153, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(24, 169, 153, 0.6); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        /* Custom gradients */
+        .gradient-primary {
+            background: linear-gradient(135deg, #1A57A1 0%, #18A999 100%);
+        }
+        
+        .gradient-secondary {
+            background: linear-gradient(135deg, #18A999 0%, #F59E0B 100%);
+        }
+        
+        /* Map placeholder styling */
+        .map-placeholder {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(24, 169, 153, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+        
+        .dark .map-placeholder {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(24, 169, 153, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.15) 0%, transparent 50%),
+                linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-ivoireNight text-slate-900 dark:text-slate-100 antialiased">
 
-{% endblock %}
+<!-- Aura dégradée -->
+<div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.19),transparent_55%),radial-gradient(circle_at_bottom,rgba(16,185,129,0.16),transparent_55%)] opacity-70"></div>
+
+<div class="relative min-h-screen flex flex-col">
+
+    <!-- TOPBAR -->
+    <header class="backdrop-blur-xl bg-white/70 dark:bg-slate-900/80 border-b border-white/10 dark:border-slate-800 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 lg:px-6 h-16 flex items-center justify-between gap-4">
+            <!-- Brand -->
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-2xl gradient-primary flex items-center justify-center text-white font-bold shadow-soft">
+                    <i class="fa-solid fa-syringe text-sm"></i>
+                </div>
+                <div class="leading-tight">
+                    <p class="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+                        MINISTÈRE DE LA SANTÉ · CI
+                    </p>
+                    <p class="text-sm font-semibold">
+                        Plateforme Nationale de Vaccination
+                    </p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-3">
+                <!-- Recherche -->
+                <div class="hidden md:flex items-center px-3 py-1.5 rounded-full bg-slate-100/80 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/70 text-xs text-slate-500 dark:text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass mr-2 text-[11px]"></i>
+                    <input
+                        type="text"
+                        placeholder="Rechercher un patient, un centre..."
+                        class="bg-transparent border-none focus:outline-none text-xs w-48 placeholder:text-slate-400 dark:placeholder:text-slate-500">
+                    <span class="ml-2 px-1.5 py-0.5 rounded-full bg-white/90 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700 text-[9px] font-medium">
+                        ⌘K
+                    </span>
+                </div>
+
+                <!-- Notifications -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="relative p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800">
+                        <i class="fas fa-bell text-xl"></i>
+                        <template x-if="$store.app.unreadNotifications > 0">
+                            <span class="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                        </template>
+                    </button>
+                    
+                    <!-- Dropdown notifications -->
+                    <div x-show="open" @click.outside="open = false" 
+                         class="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-soft border border-slate-200 dark:border-slate-700 z-50 overflow-hidden">
+                        <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                            <h3 class="font-semibold text-sm">Notifications</h3>
+                            <button @click="$store.app.markAllAsRead()" class="text-xs text-ivoireBlue dark:text-ivoireGreen hover:underline">
+                                Tout marquer comme lu
+                            </button>
+                        </div>
+                        <div class="max-h-96 overflow-y-auto">
+                            <template x-for="notification in $store.app.notifications" :key="notification.id">
+                                <div @click="$store.app.markNotificationAsRead(notification.id)" 
+                                     :class="notification.read ? 'bg-transparent' : 'bg-blue-50 dark:bg-blue-900/20'"
+                                     class="p-3 border-b border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                    <div class="flex gap-3">
+                                        <div :class="{
+                                            'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400': notification.type === 'alert',
+                                            'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400': notification.type === 'info',
+                                            'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400': notification.type === 'success'
+                                        }" class="h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0">
+                                            <i class="text-xs" :class="{
+                                                'fa-exclamation-triangle': notification.type === 'alert',
+                                                'fa-info-circle': notification.type === 'info',
+                                                'fa-check-circle': notification.type === 'success'
+                                            }"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-medium text-sm" x-text="notification.title"></p>
+                                            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1" x-text="notification.message"></p>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" x-text="notification.time"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="p-3 text-center border-t border-slate-200 dark:border-slate-700">
+                            <a href="#" class="text-xs text-ivoireBlue dark:text-ivoireGreen font-medium hover:underline">
+                                Voir toutes les notifications
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Switch rôle -->
+                <div class="flex items-center rounded-full bg-slate-900/5 dark:bg-slate-50/5 border border-slate-200/60 dark:border-slate-700/70 p-0.5 text-[11px]">
+                    <button
+                        @click="setRole('admin')"
+                        :class="role === 'admin'
+                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-soft'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/70'"
+                        class="px-3 py-1.5 rounded-full flex items-center gap-1 transition">
+                        <i class="fa-solid fa-shield-halved text-[10px]"></i>
+                        <span class="hidden sm:inline">Admin</span>
+                    </button>
+                    <button
+                        @click="setRole('patient')"
+                        :class="role === 'patient'
+                            ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-soft'
+                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/70'"
+                        class="px-3 py-1.5 rounded-full flex items-center gap-1 transition">
+                        <i class="fa-solid fa-user text-[10px]"></i>
+                        <span class="hidden sm:inline">Patient</span>
+                    </button>
+                </div>
+
+                <!-- Theme toggle -->
+                <button
+                    @click="toggleTheme"
+                    class="h-9 w-9 rounded-full border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-center text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-slate-900/90 shadow-sm hover:scale-[1.02] transition">
+                    <i class="fa-solid fa-sun text-xs" x-show="darkMode === false"></i>
+                    <i class="fa-solid fa-moon text-xs" x-show="darkMode === true"></i>
+                </button>
+
+                <!-- User -->
+                <div class="hidden sm:flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-slate-50/5 px-2.5 py-1 border border-slate-200/80 dark:border-slate-700/80">
+                    <div class="h-7 w-7 rounded-full gradient-primary flex items-center justify-center text-[11px] text-white font-semibold">
+                        SO
+                    </div>
+                    <div class="text-[11px] leading-tight">
+                        <p class="font-semibold">Dr. Admin CI</p>
+                        <p class="text-slate-500 dark:text-slate-400 text-[10px]">Superviseur Vaccination</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Layout principal -->
+    <div class="flex-1 flex max-h-[calc(100vh-4rem)] overflow-hidden">
+        <!-- SIDEBAR DESKTOP -->
+        <aside class="hidden md:flex w-64 xl:w-72 flex-col border-r border-white/20 dark:border-slate-800/90 bg-white/70 dark:bg-slate-950/60 backdrop-blur-2xl">
+            <!-- Navigation contextualisée -->
+            <div class="px-4 pt-4 pb-2">
+                <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-500 mb-2">
+                    Navigation
+                </p>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                    <i class="fa-solid fa-circle text-[5px] text-emerald-400 animate-pulse"></i>
+                    <span x-show="role === 'admin'">Mode <span class="font-semibold">Administration</span></span>
+                    <span x-show="role === 'patient'">Mode <span class="font-semibold">Espace Patient</span></span>
+                </div>
+            </div>
+
+            <!-- MENU ADMIN -->
+            <nav x-show="role === 'admin'" x-transition.opacity
+                 class="flex-1 px-3 pb-4 space-y-1 text-[13px] overflow-y-auto">
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-soft">
+                    <span class="w-8 h-8 rounded-xl bg-slate-900/20 dark:bg-slate-900/5 flex items-center justify-center">
+                        <i class="fa-solid fa-chart-line text-xs"></i>
+                    </span>
+                    <div class="flex flex-col">
+                        <span class="font-semibold">Tableau de bord</span>
+                        <span class="text-[11px] text-slate-300 dark:text-slate-500">Vue nationale en temps réel</span>
+                    </div>
+                </a>
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
+                    <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                        <i class="fa-solid fa-syringe text-xs"></i>
+                    </span>
+                    <span>Campagnes & PEV</span>
+                </a>
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
+                    <span class="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+                        <i class="fa-solid fa-hospital text-xs"></i>
+                    </span>
+                    <span>Centres & Régions</span>
+                </a>
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
+                    <span class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                        <i class="fa-solid fa-boxes-stacked text-xs"></i>
+                    </span>
+                    <span>Stocks & Chaîne du froid</span>
+                </a>
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
+                    <span class="w-8 h-8 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center">
+                        <i class="fa-solid fa-user-doctor text-xs"></i>
+                    </span>
+                    <span>Professionnels & rôles</span>
+                </a>
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
+                    <span class="w-8 h-8 rounded-xl bg-pink-500/10 text-pink-500 flex items-center justify-center">
+                        <i class="fa-solid fa-file-waveform text-xs"></i>
+                    </span>
+                    <span>Rapports, DHIS2, OMS</span>
+                </a>
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
+                    <span class="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+                        <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+                    </span>
+                    <span>Pharmacovigilance & incidents</span>
+                </a>
+            </nav>
+
+            <!-- MENU PATIENT -->
+            <nav x-show="role === 'patient'" x-transition.opacity
+                 class="flex-1 px-3 pb-4 space-y-1 text-[13px] overflow-y-auto">
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-soft">
+                    <span class="w-8 h-8 rounded-xl bg-slate-900/20 dark:bg-slate-900/5 flex items-center justify-center">
+                        <i class="fa-solid fa-gauge-high text-xs"></i>
+                    </span>
+                    <div class="flex flex-col">
+                        <span class="font-semibold">Dashboard Patient</span>
+                        <span class="text-[11px] text-slate-300 dark:text-slate-500">Vue de votre parcours vaccinal</span>
+                    </div>
+                </a>
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
+                    <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                        <i class="fa-solid fa-calendar-check text-xs"></i>
+                    </span>
+                    <span>Mes rendez-vous</span>
+                </a>
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
+                    <span class="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+                        <i class="fa-solid fa-notes-medical text-xs"></i>
+                    </span>
+                    <span>Mon carnet de vaccination</span>
+                </a>
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
+                    <span class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                        <i class="fa-solid fa-qrcode text-xs"></i>
+                    </span>
+                    <span>Mon pass vaccinal</span>
+                </a>
+                <a href="#"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
+                    <span class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
+                        <i class="fa-solid fa-location-dot text-xs"></i>
+                    </span>
+                    <span>Centres à proximité</span>
+                </a>
+            </nav>
+
+            <!-- Carte de progression -->
+            <div class="mx-3 mb-4 p-4 rounded-2xl gradient-primary text-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-semibold text-sm">Progression nationale</h3>
+                    <span class="text-xs bg-white/20 px-2 py-1 rounded-full">78%</span>
+                </div>
+                <div class="w-full bg-white/30 rounded-full h-2 mb-2">
+                    <div class="bg-white h-2 rounded-full" style="width: 78%"></div>
+                </div>
+                <p class="text-xs opacity-90">Objectif: 90% de couverture vaccinale</p>
+            </div>
+
+            <!-- Footer sidebar -->
+            <div class="px-4 py-3 border-t border-white/10 dark:border-slate-800/70 text-[10px] text-slate-500 dark:text-slate-500">
+                © Vaccination CI · v2.0
+            </div>
+        </aside>
+
+        <!-- CONTENU PRINCIPAL -->
+        <main class="flex-1 overflow-y-auto">
+            <div class="max-w-7xl mx-auto px-4 lg:px-6 py-5 space-y-6">
+
+                <!-- Bandeau contexte (visible pour les deux rôles, copy différente) -->
+                <div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft">
+                    <!-- Glow -->
+                    <div class="pointer-events-none absolute inset-0 opacity-40 mix-blend-screen bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.9),transparent_55%),radial-gradient(circle_at_bottom,_rgba(248,250,252,0.35),transparent_55%)]"></div>
+
+                    <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+                        <div class="space-y-1.5">
+                            <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90">
+                                Côte d’Ivoire · Programme Élargi de Vaccination
+                            </p>
+                            <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
+                                <span x-show="role === 'admin'">Pilotage temps réel des campagnes vaccinales</span>
+                                <span x-show="role === 'patient'">Votre parcours vaccinal, clair et sécurisé</span>
+                            </h1>
+                            <p class="text-[12px] text-slate-300 max-w-xl">
+                                <span x-show="role === 'admin'">
+                                    Suivez la couverture, les stocks et les incidents à l’échelle nationale.
+                                    Synchronisation directe avec DHIS2, PNLS, PEV et les systèmes nationaux.
+                                </span>
+                                <span x-show="role === 'patient'">
+                                    Visualisez vos vaccins, vos prochains rendez-vous et votre pass vaccinal numérique
+                                    validé par le Ministère de la Santé.
+                                </span>
+                            </p>
+                            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
+                                    <i class="fa-solid fa-shield-virus text-[9px]"></i>
+                                    <span>COVID-19</span>
+                                </span>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">
+                                    <i class="fa-solid fa-baby text-[9px]"></i>
+                                    <span>Vaccination infantile</span>
+                                </span>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/40">
+                                    <i class="fa-solid fa-syringe text-[9px]"></i>
+                                    <span>PEV de routine</span>
+                                </span>
+                            </div>
+                        </div>
+                        <!-- Carte mini-résumé -->
+                        <div class="rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-[11px] min-w-[220px] space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-slate-200/90 font-medium">
+                                    <span x-show="role === 'admin'">Activité nationale (jour)</span>
+                                    <span x-show="role === 'patient'">Votre statut vaccinal</span>
+                                </p>
+                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">
+                                    Synchro · OK
+                                </span>
+                            </div>
+                            <div class="flex gap-3 items-end">
+                                <div>
+                                    <p class="text-lg font-semibold">
+                                        <span x-show="role === 'admin'">12 548</span>
+                                        <span x-show="role === 'patient'">À jour</span>
+                                    </p>
+                                    <p class="text-[10px] text-slate-300">
+                                        <span x-show="role === 'admin'">doses enregistrées</span>
+                                        <span x-show="role === 'patient'">Calendrier de routine</span>
+                                    </p>
+                                </div>
+                                <div class="flex-1 h-10 relative">
+                                    <!-- Placeholder sparkline -->
+                                    <div class="absolute inset-0 rounded-xl bg-gradient-to-tr from-emerald-500/40 via-sky-500/30 to-amber-400/40 opacity-60 blur-[10px]"></div>
+                                    <div class="absolute inset-0 border border-dashed border-slate-500/40 rounded-xl"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-[10px] text-slate-300">
+                                <span>
+                                    Dernière mise à jour : 13/11/2025 · 10:32
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <i class="fa-solid fa-circle text-[5px] text-emerald-400 animate-pulse"></i>
+                                    temps réel
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filtres avancés -->
+                <div class="flex flex-wrap gap-3 items-center justify-between">
+                    <div class="flex flex-wrap gap-2">
+                        <div class="relative">
+                            <select x-model="currentRegion" class="appearance-none bg-white/70 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 rounded-2xl pl-3 pr-8 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50">
+                                <template x-for="region in regions" :key="region">
+                                    <option x-text="region" :value="region"></option>
+                                </template>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="relative">
+                            <select x-model="currentVaccine" class="appearance-none bg-white/70 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 rounded-2xl pl-3 pr-8 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50">
+                                <template x-for="vaccine in vaccines" :key="vaccine">
+                                    <option x-text="vaccine" :value="vaccine"></option>
+                                </template>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </div>
+                        </div>
+                        
+                        <button class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/70 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                            <i class="fa-solid fa-calendar text-[10px]"></i>
+                            <span>Période</span>
+                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/70 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                            <i class="fa-solid fa-download text-[10px]"></i>
+                            <span>Exporter</span>
+                        </button>
+                        
+                        <button class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-ivoireBlue text-white text-xs shadow-sm">
+                            <i class="fa-solid fa-plus text-[10px]"></i>
+                            <span>Nouveau rapport</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ===================== ESPACE ADMIN ===================== -->
+                <section x-show="role === 'admin'" x-transition.opacity x-transition.scale.origin.top
+                         class="space-y-6">
+
+                    <!-- Quick actions + filtres -->
+                    <div class="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
+                        <div class="flex flex-wrap gap-2 text-[11px]">
+                            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 shadow-sm">
+                                <i class="fa-solid fa-plus text-[9px] text-emerald-500"></i>
+                                Nouvelle campagne
+                            </button>
+                            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/60 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70">
+                                <i class="fa-solid fa-upload text-[9px]"></i>
+                                Import DHIS2
+                            </button>
+                            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/60 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70">
+                                <i class="fa-solid fa-download text-[9px]"></i>
+                                Export OMS / PEV
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap gap-2 text-[11px] items-center">
+                            <span class="text-slate-500 dark:text-slate-400">Période :</span>
+                            <button class="px-3 py-1.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[11px]">
+                                30 derniers jours
+                            </button>
+                            <button class="px-3 py-1.5 rounded-full bg-white/70 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70">
+                                Trimestre
+                            </button>
+                            <button class="px-3 py-1.5 rounded-full bg-white/70 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70">
+                                Année
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats & Graph -->
+                    <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
+                        <!-- 4 cards -->
+                        <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2 shadow-soft/40">
+                            <div class="flex items-center justify-between">
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
+                                    Doses administrées
+                                </p>
+                                <span class="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-syringe text-xs"></i>
+                                </span>
+                            </div>
+                            <p class="text-2xl font-semibold">2 345 870</p>
+                            <p class="text-[11px] text-emerald-600 dark:text-emerald-400">
+                                +12,3 % vs période précédente
+                            </p>
+                            <div class="mt-1 h-10 rounded-xl bg-gradient-to-r from-emerald-500/20 via-sky-500/10 to-amber-500/20 border border-dashed border-emerald-500/40"></div>
+                        </div>
+
+                        <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
+                                    Couverture nationale
+                                </p>
+                                <span class="h-8 w-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-globe-africa text-xs"></i>
+                                </span>
+                            </div>
+                            <p class="text-2xl font-semibold">78,4 %</p>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                Objectif OMS : 90 % · 7 régions &lt; 70 %
+                            </p>
+                            <div class="mt-1 flex items-center gap-2 text-[10px]">
+                                <div class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                                    <div class="h-full w-[78%] bg-emerald-500"></div>
+                                </div>
+                                <span>78%</span>
+                            </div>
+                        </div>
+
+                        <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
+                                    Centres actifs
+                                </p>
+                                <span class="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-hospital text-xs"></i>
+                                </span>
+                            </div>
+                            <p class="text-2xl font-semibold">1 243</p>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                85 en alerte stock · 12 hors ligne
+                            </p>
+                        </div>
+
+                        <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
+                                    Incidents & effets indésirables
+                                </p>
+                                <span class="h-8 w-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+                                </span>
+                            </div>
+                            <p class="text-2xl font-semibold">12</p>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                2 cas graves à investiguer · 24h
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Graph & listes -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                        <!-- Graph -->
+                        <div class="lg:col-span-2 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
+                            <div class="flex items-center justify-between gap-3">
+                                <div>
+                                    <h2 class="text-sm font-semibold">
+                                        Tendances des vaccinations (30 derniers jours)
+                                    </h2>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                        Routine · Campagnes COVID-19 · Rougeole-Rubéole · Autres.
+                                    </p>
+                                </div>
+                                <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                                    Exporter les données
+                                </button>
+                            </div>
+                            <div class="mt-2 h-64 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-[11px] text-slate-400 dark:text-slate-500">
+                                <span>
+                                    Zone graphique — intègre ici Chart.js ou ApexCharts  
+                                    (courbe multi-séries, filtres par vaccin, région, type de campagne…)
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Campagnes -->
+                        <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-sm font-semibold">
+                                    Campagnes en cours
+                                </h2>
+                                <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                                    + Nouvelle
+                                </button>
+                            </div>
+                            <div class="space-y-3 text-[11px]">
+                                <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-900/70 flex flex-col gap-1.5">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="font-semibold text-[12px]">
+                                            COVID-19 · Dose de rappel adultes
+                                        </p>
+                                        <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 text-[10px]">
+                                            En cours
+                                        </span>
+                                    </div>
+                                    <p class="text-slate-500 dark:text-slate-400">
+                                        Population cible : &gt; 18 ans · Zones urbaines prioritaire (Abidjan, Bouaké, San-Pédro).
+                                    </p>
+                                    <p class="text-slate-400 text-[10px]">
+                                        01 Oct – 31 Déc · Couverture : 62 % · 14 régions &gt; 70 %
+                                    </p>
+                                </div>
+
+                                <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-900/70 flex flex-col gap-1.5">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="font-semibold text-[12px]">
+                                            PEV de routine · 0–11 mois
+                                        </p>
+                                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 text-[10px]">
+                                            Continue
+                                        </span>
+                                    </div>
+                                    <p class="text-slate-500 dark:text-slate-400">
+                                        BCG, Penta, Polio, Rota, Pneumo, Rougeole. Liste de contrôle par centre.
+                                    </p>
+                                    <p class="text-slate-400 text-[10px]">
+                                        Couverture nationale : 81 % · 3 régions &lt; 60 %
+                                    </p>
+                                </div>
+
+                                <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-900/70 flex flex-col gap-1.5">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="font-semibold text-[12px]">
+                                            Rougeole-Rubéole · 9 mois – 14 ans
+                                        </p>
+                                        <span class="px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300 text-[10px]">
+                                            Prévue
+                                        </span>
+                                    </div>
+                                    <p class="text-slate-500 dark:text-slate-400">
+                                        Ciblage renforcé zones rurales & à faible couverture.
+                                    </p>
+                                    <p class="text-slate-400 text-[10px]">
+                                        15 Nov – 15 Déc · Mise en place logistique en cours.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tables & logs -->
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                        <!-- Centres en alerte -->
+                        <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-sm font-semibold">
+                                    Centres en alerte · Stock < 7 jours
+                                </h2>
+                                <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900/80">
+                                    Voir tous
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-[11px]">
+                                    <thead class="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                                    <tr>
+                                        <th class="py-2 pr-3 text-left">Centre</th>
+                                        <th class="py-2 pr-3 text-left">Région</th>
+                                        <th class="py-2 pr-3 text-left">Vaccin</th>
+                                        <th class="py-2 pr-3 text-left">Stock</th>
+                                        <th class="py-2 text-left">Statut</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                                    <tr>
+                                        <td class="py-2 pr-3">CHU Treichville</td>
+                                        <td class="py-2 pr-3">Abidjan 1</td>
+                                        <td class="py-2 pr-3">Penta 3</td>
+                                        <td class="py-2 pr-3">120 doses</td>
+                                        <td class="py-2">
+                                            <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 text-[10px]">
+                                                À réapprovisionner
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 pr-3">Hôpital Général de Bouaké</td>
+                                        <td class="py-2 pr-3">Gbêkê</td>
+                                        <td class="py-2 pr-3">COVID-19 (Pfizer)</td>
+                                        <td class="py-2 pr-3">45 doses</td>
+                                        <td class="py-2">
+                                            <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300 text-[10px]">
+                                                Critique
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 pr-3">CS Urbain de Man</td>
+                                        <td class="py-2 pr-3">Tonkpi</td>
+                                        <td class="py-2 pr-3">Rougeole-Rubéole</td>
+                                        <td class="py-2 pr-3">230 doses</td>
+                                        <td class="py-2">
+                                            <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 text-[10px]">
+                                                Surveiller
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Logs DHIS2 -->
+                        <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-sm font-semibold">
+                                    Synchronisations DHIS2 & systèmes nationaux
+                                </h2>
+                                <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900/80">
+                                    Journal complet
+                                </button>
+                            </div>
+                            <div class="space-y-3 text-[11px]">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="font-semibold">Région Sanitaire · Abidjan 1</p>
+                                        <p class="text-slate-500 dark:text-slate-400">
+                                            152 centres · 23 451 enregistrements envoyés.
+                                        </p>
+                                        <p class="text-slate-400 text-[10px]">
+                                            Dernière synchro : 13/11/2025 · 08:42
+                                        </p>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 text-[10px]">
+                                        Succès
+                                    </span>
+                                </div>
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="font-semibold">Région Sanitaire · Bounkani</p>
+                                        <p class="text-slate-500 dark:text-slate-400">
+                                            47 centres · 3 245 enregistrements envoyés.
+                                        </p>
+                                        <p class="text-slate-400 text-[10px]">
+                                            Dernière synchro : 13/11/2025 · 07:15
+                                        </p>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 text-[10px]">
+                                        À vérifier
+                                    </span>
+                                </div>
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <p class="font-semibold">Région Sanitaire · Cavally</p>
+                                        <p class="text-slate-500 dark:text-slate-400">
+                                            32 centres · erreurs sur 5 structures.
+                                        </p>
+                                        <p class="text-slate-400 text-[10px]">
+                                            Dernière synchro : 13/11/2025 · 06:58
+                                        </p>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300 text-[10px]">
+                                        Erreurs
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===================== ESPACE PATIENT ===================== -->
+                <section x-show="role === 'patient'" x-transition.opacity x-transition.scale.origin.top
+                         class="space-y-6">
+
+                    <!-- Résumé patient -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div class="lg:col-span-2 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4">
+                            <div class="flex items-start gap-3">
+                                <div class="h-12 w-12 rounded-2xl gradient-primary flex items-center justify-center text-white font-semibold text-sm">
+                                    SO
+                                </div>
+                                <div class="space-y-1 text-[12px]">
+                                    <p class="text-sm font-semibold">Serge OGAH</p>
+                                    <p class="text-slate-500 dark:text-slate-400">
+                                        N° Identifiant Santé : CI-2025-000872
+                                    </p>
+                                    <div class="flex flex-wrap gap-2 text-[11px] mt-1">
+                                        <span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                                            Statut : Calendrier à jour
+                                        </span>
+                                        <span class="px-2.5 py-1 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
+                                            Dernier vaccin : COVID-19 (rappel)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex-1 grid grid-cols-2 gap-3 text-[11px] border-t border-slate-200/70 dark:border-slate-800/70 sm:border-t-0 sm:border-l sm:pl-4 sm:ml-4 pt-3 sm:pt-0">
+                                <div class="space-y-1">
+                                    <p class="text-slate-500 dark:text-slate-400">Prochain rendez-vous</p>
+                                    <p class="font-semibold text-[12px]">
+                                        25 Novembre 2025 · 09:30
+                                    </p>
+                                    <p class="text-slate-500 dark:text-slate-400">
+                                        CS Urbain de Cocody
+                                    </p>
+                                </div>
+                                <div class="space-y-1">
+                                    <p class="text-slate-500 dark:text-slate-400">Rappels</p>
+                                    <p class="font-semibold text-[12px]">3 notifications</p>
+                                    <p class="text-slate-500 dark:text-slate-400">
+                                        1 rendez-vous · 2 infos santé
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 flex flex-col justify-between">
+                            <div class="space-y-1 text-[12px]">
+                                <p class="text-sm font-semibold">
+                                    Mon pass vaccinal numérique
+                                </p>
+                                <p class="text-slate-500 dark:text-slate-400">
+                                    QR Code signé par le Ministère de la Santé.
+                                </p>
+                            </div>
+                            <div class="mt-3 flex flex-col items-center gap-3">
+                                <div class="w-28 h-28 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-[10px] text-slate-400 pulse-glow">
+                                    <i class="fa-solid fa-qrcode text-2xl text-ivoireGreen"></i>
+                                </div>
+                                <button class="w-full text-[11px] px-3 py-2 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                                    Télécharger mon pass (PDF)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Carnet & centres -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                        <!-- Carnet -->
+                        <div class="lg:col-span-2 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-sm font-semibold">
+                                    Mon carnet de vaccination
+                                </h2>
+                                <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900/80">
+                                    Télécharger
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-[11px]">
+                                    <thead class="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                                    <tr>
+                                        <th class="py-2 pr-3 text-left">Vaccin</th>
+                                        <th class="py-2 pr-3 text-left">Date</th>
+                                        <th class="py-2 pr-3 text-left">Centre</th>
+                                        <th class="py-2 pr-3 text-left">Dose</th>
+                                        <th class="py-2 text-left">Statut</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                                    <tr>
+                                        <td class="py-2 pr-3">COVID-19 (Pfizer)</td>
+                                        <td class="py-2 pr-3">10/09/2025</td>
+                                        <td class="py-2 pr-3">CHU de Cocody</td>
+                                        <td class="py-2 pr-3">Rappel 1</td>
+                                        <td class="py-2">
+                                            <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 text-[10px]">
+                                                Réalisé
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 pr-3">Rougeole-Rubéole</td>
+                                        <td class="py-2 pr-3">15/04/2024</td>
+                                        <td class="py-2 pr-3">CS Urbain de Yopougon</td>
+                                        <td class="py-2 pr-3">Dose unique</td>
+                                        <td class="py-2">
+                                            <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 text-[10px]">
+                                                Réalisé
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 pr-3">Hépatite B</td>
+                                        <td class="py-2 pr-3">02/02/2023</td>
+                                        <td class="py-2 pr-3">CS Anonkoua-Kouté</td>
+                                        <td class="py-2 pr-3">3ᵉ dose</td>
+                                        <td class="py-2">
+                                            <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 text-[10px]">
+                                                Réalisé
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Centres à proximité -->
+                        <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h2 class="text-sm font-semibold">
+                                    Centres de vaccination à proximité
+                                </h2>
+                                <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900/80">
+                                    Voir sur la carte
+                                </button>
+                            </div>
+                            <div class="space-y-3 text-[11px]">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div>
+                                        <p class="font-semibold">CS Urbain de Cocody</p>
+                                        <p class="text-slate-500 dark:text-slate-400">
+                                            ~1,2 km · Rue des Jardins.
+                                        </p>
+                                        <p class="text-slate-400 text-[10px]">
+                                            Vaccins : COVID-19, PEV routine, Fièvre jaune.
+                                        </p>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 text-[10px]">
+                                        Ouvert
+                                    </span>
+                                </div>
+                                <div class="flex items-start justify-between gap-2">
+                                    <div>
+                                        <p class="font-semibold">Hôpital Général de Bingerville</p>
+                                        <p class="text-slate-500 dark:text-slate-400">
+                                            ~4,8 km · Route d'Abatta.
+                                        </p>
+                                        <p class="text-slate-400 text-[10px]">
+                                            Vaccins : COVID-19, Hépatite B, Rougeole-Rubéole.
+                                        </p>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 text-[10px]">
+                                        Forte affluence
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications -->
+                    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-sm font-semibold">
+                                Rappels & messages d'information
+                            </h2>
+                            <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900/80">
+                                Marquer tout comme lu
+                            </button>
+                        </div>
+                        <div class="space-y-3 text-[11px]">
+                            <div class="flex items-start gap-3">
+                                <span class="mt-1 h-7 w-7 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-calendar-check text-xs"></i>
+                                </span>
+                                <div>
+                                    <p class="font-semibold">Rappel de rendez-vous</p>
+                                    <p class="text-slate-500 dark:text-slate-400">
+                                        Votre prochain rendez-vous est prévu le 25/11/2025 à 09:30
+                                        au CS Urbain de Cocody.
+                                    </p>
+                                    <p class="text-slate-400 text-[10px]">
+                                        Reçu il y a 2 heures
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-3">
+                                <span class="mt-1 h-7 w-7 rounded-2xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-shield-virus text-xs"></i>
+                                </span>
+                                <div>
+                                    <p class="font-semibold">Vaccination grippe saisonnière</p>
+                                    <p class="text-slate-500 dark:text-slate-400">
+                                        La campagne démarre dans votre région à partir du 20/11/2025.
+                                    </p>
+                                    <p class="text-slate-400 text-[10px]">
+                                        Reçu hier
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-3">
+                                <span class="mt-1 h-7 w-7 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                                    <i class="fa-solid fa-circle-info text-xs"></i>
+                                </span>
+                                <div>
+                                    <p class="font-semibold">Mise à jour de vos informations</p>
+                                    <p class="text-slate-500 dark:text-slate-400">
+                                        Vérifiez votre numéro de téléphone et votre adresse pour
+                                        recevoir correctement vos rappels.
+                                    </p>
+                                    <p class="text-slate-400 text-[10px]">
+                                        Reçu il y a 3 jours
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- BOTTOM BAR MOBILE -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 dark:bg-slate-950/95 border-t border-slate-200/70 dark:border-slate-800/80 backdrop-blur-xl">
+        <div class="max-w-md mx-auto px-4 py-2 flex items-center justify-between text-[11px]">
+            <button @click="setRole('admin')"
+                    :class="role === 'admin' ? 'text-ivoireBlue dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'"
+                    class="flex flex-col items-center gap-0.5">
+                <i class="fa-solid fa-shield-halved text-xs"></i>
+                <span>Admin</span>
+            </button>
+            <button @click="setRole('patient')"
+                    :class="role === 'patient' ? 'text-ivoireBlue dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'"
+                    class="flex flex-col items-center gap-0.5">
+                <i class="fa-solid fa-user text-xs"></i>
+                <span>Patient</span>
+            </button>
+            <button class="flex flex-col items-center gap-0.5 text-slate-500 dark:text-slate-400">
+                <i class="fa-solid fa-bell text-xs"></i>
+                <span>Alertes</span>
+            </button>
+            <button class="flex flex-col items-center gap-0.5 text-slate-500 dark:text-slate-400">
+                <i class="fa-solid fa-ellipsis text-xs"></i>
+                <span>Plus</span>
+            </button>
+        </div>
+    </nav>
+</div>
+
+<script>
+    // Initialisation du store global
+    document.addEventListener('alpine:init', () => {
+        Alpine.store('app', window.vaccinationApp());
+    });
+</script>
+
+</body>
+</html>

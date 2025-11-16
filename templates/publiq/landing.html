@@ -1,468 +1,738 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" x-data="keneyaApp()" x-bind:class="darkMode ? 'dark' : ''">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KENEYA - Plateforme de santé numérique de l'INHP</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css">
-  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            ivoireBlue: '#1A57A1',
+            ivoireGreen: '#18A999',
+            ivoireOrange: '#F59E0B',
+            ivoireNight: '#020617',
+            keneyaPrimary: '#1A57A1',
+            keneyaSecondary: '#18A999',
+            keneyaAccent: '#F59E0B'
+          },
+          boxShadow: {
+            soft: '0 18px 45px rgba(15,23,42,0.24)',
+          },
+          borderRadius: {
+            '3xl': '1.75rem',
+            '4xl': '2rem'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Alpine.js -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- Icônes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
   <style>
-    :root {
-      --orange: #FF9F0D;  /* Orange ivoirien */
-      --vert: #009A44;    /* Vert ivoirien */
-      --blanc: #FFFFFF;
-      --bleu: #0055A4;    /* Bleu pour accent */
-    }
-    html, body { height: 100%; scroll-behavior: smooth; }
-
-    /* Hero Section */
-    .hero-section {
-      background: linear-gradient(135deg, var(--orange), var(--vert));
-      color: white;
-      padding: 120px 0 100px;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero-section::before {
-      content: '';
-      position: absolute;
-      bottom: -50px;
-      left: 0;
-      right: 0;
-      height: 100px;
-      background: white;
-      transform: skewY(-2deg);
-      z-index: 1;
-    }
-
-    /* Logo et identité */
-    .navbar-brand {
-      font-weight: 700;
-      color: var(--vert) !important;
-    }
-    .logo-container {
-      display: flex;
-      align-items: center;
-    }
-    .logo-img {
-      height: 50px;
-      margin-right: 10px;
-    }
-
-    /* Éléments visuels */
-    .feature-icon {
-      font-size: 2.5rem;
-      color: var(--vert);
-      margin-bottom: 1rem;
-      transition: all 0.3s ease;
-    }
-    .section-title {
-      font-weight: 700;
-      font-size: 2.5rem;
-      position: relative;
-      display: inline-block;
-      margin-bottom: 2rem;
-      color: var(--vert);
-    }
-    .section-title::after {
-      content: '';
-      position: absolute;
-      bottom: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 80px;
-      height: 4px;
-      background: var(--orange);
-    }
-
-    /* Carte de statistique */
-    .stat-card {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-      border-top: 4px solid var(--orange);
-      transition: all 0.3s ease;
-    }
-
-    /* Pied de page */
-    footer {
-      background-color: var(--vert);
-      color: white;
-      padding: 60px 0 30px;
-    }
-    .footer-links a {
-      color: #ecf0f1;
-      text-decoration: none;
-      transition: color 0.3s;
-    }
-
     /* Animations */
-    @keyframes float {
-      0% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-      100% { transform: translateY(0px); }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .floating-img {
-      animation: float 3s ease-in-out infinite;
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 5px rgba(24, 169, 153, 0.3); }
+      50% { box-shadow: 0 0 20px rgba(24, 169, 153, 0.6); }
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.8s ease-out;
+    }
+    
+    .animate-float {
+      animation: float 6s ease-in-out infinite;
+    }
+    
+    .pulse-glow {
+      animation: pulse-glow 3s infinite;
+    }
+    
+    /* Custom gradients */
+    .gradient-primary {
+      background: linear-gradient(135deg, #1A57A1 0%, #18A999 100%);
+    }
+    
+    .gradient-secondary {
+      background: linear-gradient(135deg, #18A999 0%, #F59E0B 100%);
+    }
+    
+    .gradient-hero {
+      background: linear-gradient(135deg, rgba(26, 87, 161, 0.95) 0%, rgba(24, 169, 153, 0.95) 100%);
+    }
+    
+    .gradient-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    }
+    
+    .dark .gradient-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    }
+    
+    /* Glass morphism */
+    .glass {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .dark .glass {
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Scroll behavior */
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    
+    .dark ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    
+    .dark ::-webkit-scrollbar-thumb {
+      background: #475569;
     }
   </style>
 </head>
-<body>
 
-<!-- Navigation -->
-<nav class="navbar navbar-expand-lg navbar-light fixed-top bg-white shadow-sm">
-  <div class="container">
-    <div class="logo-container">
-      <img src="{% static 'images/embleme_ci.png' %}" alt="Logo INHP" class="logo-img">
-      <a class="navbar-brand fw-bold" href="#"></a>
-    </div>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="#services">Services</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#features">Fonctionnalités</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#about">À propos</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#contact">Contact</a>
-        </li>
-        <li class="nav-item ms-lg-3">
-          <a class="btn btn-outline-success" href="{% url 'patient_login' %}">Connexion</a>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
-
-<!-- Hero Section -->
-<section class="hero-section text-center">
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-8" data-aos="fade-up">
-        <img src="{% static 'images/logo/logoMSHPCMU.svg' %}" alt="Armoiries Côte d'Ivoire" width="120" class="mb-4">
-        <h1 class="display-3 fw-bold mb-4">KENEYA - Votre santé numérique</h1>
-        <p class="lead fs-4 mb-5">Plateforme officielle de l'Institut National d'Hygiène Publique<br> sous l'égide du Ministère de la Santé et de l'Hygiène Publique</p>
-        <div class="d-flex justify-content-center gap-3">
-{#          <a href="{% url 'patient_register' %}" class="btn btn-light btn-lg px-4 py-3">Créer un compte</a>#}
-          <a href="#services" class="btn btn-outline-light btn-lg px-4 py-3">Découvrir</a>
-        </div>
-      </div>
-    </div>
-  </div>
-  <img src="{% static 'images/elephant_doc.png' %}" alt="Centre de santé en Côte d'Ivoire" class="position-absolute bottom-0 end-0 d-none d-lg-block floating-img" style="max-height: 600px; transform: translateX(100px);">
-</section>
-
-<!-- Partenaires -->
-<section class="py-4 bg-light">
-  <div class="container">
-    <div class="row align-items-center justify-content-center">
-      <div class="col-auto text-center">
-        <p class="mb-0">Soutenu par :</p>
-      </div>
-      <div class="col-auto">
-        <img src="{% static 'images/embleme_ci.png' %}" alt="Gouvernement CI" height="70">
-      </div>
-      <div class="col-auto">
-        <img src="{% static 'images/logo/logoMSHPCMU.svg' %}" alt="Ministère de la Santé" height="50">
-      </div>
-      <div class="col-auto">
-        <img src="{% static 'images/logo/logo-001_0.png' %}" alt="INHP" height="50">
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Services -->
-<section id="services" class="py-5 bg-white">
-  <div class="container py-5">
-    <div class="row mb-5 text-center">
-      <div class="col-lg-8 mx-auto">
-        <h2 class="section-title" data-aos="fade-up">Nos Services</h2>
-        <p class="lead" data-aos="fade-up" data-aos-delay="100">Tous les outils pour votre suivi médical en Côte d'Ivoire</p>
-      </div>
-    </div>
-    <div class="row g-4">
-      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
-        <div class="feature-card h-100 p-4 text-center border-top border-4 border-orange">
-          <i class="fas fa-notes-medical feature-icon"></i>
-          <h4>Dossier Médical Unique</h4>
-          <p>Votre historique médical complet sécurisé, accessible dans tous les centres de santé partenaires en Côte d'Ivoire.</p>
-          <img src="https://images.unsplash.com/photo-1581595219315-a187dd40c322?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Dossier médical en Côte d'Ivoire" class="img-fluid mt-3 rounded">
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
-        <div class="feature-card h-100 p-4 text-center border-top border-4 border-orange">
-          <i class="fas fa-syringe feature-icon"></i>
-          <h4>Carnet Vaccinal Numérique</h4>
-          <p>Suivez vos vaccinations et celles de votre famille, avec rappels automatiques selon le calendrier vaccinal ivoirien.</p>
-          <img src="https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Vaccination en Côte d'Ivoire" class="img-fluid mt-3 rounded">
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="400">
-        <div class="feature-card h-100 p-4 text-center border-top border-4 border-orange">
-          <i class="fas fa-calendar-check feature-icon"></i>
-          <h4>Rendez-vous en Ligne</h4>
-          <p>Prenez rendez-vous dans les centres de santé publics et privés partenaires à travers tout le pays.</p>
-          <img src="https://images.unsplash.com/photo-1581595210410-d9705f2944bc?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="Hôpital en Côte d'Ivoire" class="img-fluid mt-3 rounded">
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Vidéo Présentation -->
-<section class="py-5 bg-light">
-  <div class="container py-5">
-    <div class="row align-items-center">
-      <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-right">
-        <div class="ratio ratio-16x9">
-          <iframe src="https://www.youtube.com/embed/VIDEO_INHP" allowfullscreen></iframe>
-        </div>
-      </div>
-      <div class="col-lg-6" data-aos="fade-left">
-        <h2 class="section-title text-start">KENEYA en vidéo</h2>
-        <p class="lead">Découvrez comment KENEYA révolutionne l'accès aux soins en Côte d'Ivoire.</p>
-        <p>La plateforme KENEYA, développée par l'Institut National d'Hygiène Publique avec le soutien du Ministère de la Santé, offre à tous les Ivoiriens un accès simplifié à leurs informations de santé.</p>
-        <a href="#" class="btn btn-primary mt-3">Voir plus de vidéos</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Statistiques -->
-<section class="py-5 bg-white">
-  <div class="container py-5 text-center">
-    <div class="row mb-5">
-      <div class="col-lg-8 mx-auto">
-        <h2 class="section-title">KENEYA en chiffres</h2>
-        <p class="lead">La santé numérique pour tous les Ivoiriens</p>
-      </div>
-    </div>
-    <div class="row g-4">
-      <div class="col-md-6 col-lg-3" data-aos="fade-up">
-        <div class="stat-card">
-          <i class="fas fa-hospital mb-3" style="font-size: 2rem; color: var(--orange);"></i>
-          <h2 class="fw-bold">150+</h2>
-          <p>Centres de santé connectés</p>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="100">
-        <div class="stat-card">
-          <i class="fas fa-users mb-3" style="font-size: 2rem; color: var(--orange);"></i>
-          <h2 class="fw-bold">500K+</h2>
-          <p>Patients enregistrés</p>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="200">
-        <div class="stat-card">
-          <i class="fas fa-file-medical mb-3" style="font-size: 2rem; color: var(--orange);"></i>
-          <h2 class="fw-bold">1M+</h2>
-          <p>Documents médicaux stockés</p>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
-        <div class="stat-card">
-          <i class="fas fa-map-marked-alt mb-3" style="font-size: 2rem; color: var(--orange);"></i>
-          <h2 class="fw-bold">15</h2>
-          <p>Régions couvertes</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- À propos -->
-<section id="about" class="py-5 bg-light">
-  <div class="container py-5">
-    <div class="row align-items-center">
-      <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-right">
-        <img src="https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" alt="INHP Côte d'Ivoire" class="img-fluid rounded shadow">
-      </div>
-      <div class="col-lg-6" data-aos="fade-left">
-        <h2 class="section-title text-start">À propos de KENEYA</h2>
-        <p class="lead">Une initiative de l'Institut National d'Hygiène Publique</p>
-        <p>KENEYA (qui signifie "Santé" en langue locale) est la plateforme nationale de santé numérique développée par l'INHP sous la tutelle du Ministère de la Santé et de l'Hygiène Publique et de la Couverture Maladie Universelle de Côte d'Ivoire.</p>
-        <p>Notre mission est de démocratiser l'accès aux services de santé grâce au numérique, en conformité avec la stratégie nationale de santé digitale.</p>
-        <div class="d-flex align-items-start my-4">
-          <i class="fas fa-shield-alt me-4 mt-1" style="font-size: 1.5rem; color: var(--orange);"></i>
-          <div>
-            <h5>Sécurité des données</h5>
-            <p>Toutes vos informations médicales sont stockées de manière sécurisée sur des serveurs nationaux, conformément aux lois ivoiriennes sur la protection des données.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Témoignages -->
-<section class="py-5 bg-white">
-  <div class="container py-5">
-    <div class="row mb-5 text-center">
-      <div class="col-lg-8 mx-auto">
-        <h2 class="section-title">Témoignages</h2>
-        <p class="lead">Ce que disent nos utilisateurs</p>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-lg-4 mb-4" data-aos="fade-up">
-        <div class="testimonial-card rounded shadow-sm">
-          <div class="d-flex align-items-center mb-3">
-            <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Patient" class="rounded-circle me-3" width="60">
-            <div>
-              <h5 class="mb-0">Aminata Koné</h5>
-              <small>Abidjan</small>
-            </div>
-          </div>
-          <p>"KENEYA m'a permis de suivre les vaccinations de mes enfants sans perdre les carnets. Maintenant, tout est disponible sur mon téléphone."</p>
-          <div class="text-warning">
-            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-4 mb-4" data-aos="fade-up" data-aos-delay="100">
-        <div class="testimonial-card rounded shadow-sm">
-          <div class="d-flex align-items-center mb-3">
-            <img src="https://randomuser.me/api/portraits/men/54.jpg" alt="Patient" class="rounded-circle me-3" width="60">
-            <div>
-              <h5 class="mb-0">Yao Kouassi</h5>
-              <small>Bouaké</small>
-            </div>
-          </div>
-          <p>"En tant que diabétique, pouvoir montrer mon historique médical à n'importe quel médecin en Côte d'Ivoire est un vrai progrès."</p>
-          <div class="text-warning">
-            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-4 mb-4" data-aos="fade-up" data-aos-delay="200">
-        <div class="testimonial-card rounded shadow-sm">
-          <div class="d-flex align-items-center mb-3">
-            <img src="https://randomuser.me/api/portraits/women/65.jpg" alt="Médecin" class="rounded-circle me-3" width="60">
-            <div>
-              <h5 class="mb-0">Dr. Fatou Diomandé</h5>
-              <small>Médecin, Yamoussoukro</small>
-            </div>
-          </div>
-          <p>"Cette plateforme nous fait gagner un temps précieux. Nous avons directement accès aux antécédents des patients."</p>
-          <div class="text-warning">
-            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CTA -->
-<section class="py-5 text-white" style="background: linear-gradient(rgba(0,154,68,0.8), rgba(0,154,68,0.8)), url('https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'); background-size: cover;">
-  <div class="container py-5 text-center">
-    <div class="row justify-content-center">
-      <div class="col-lg-8" data-aos="zoom-in">
-        <h2 class="display-5 fw-bold mb-4">Prêt à rejoindre la santé numérique en Côte d'Ivoire ?</h2>
-        <p class="lead mb-5">Inscrivez-vous gratuitement dès maintenant et prenez le contrôle de votre santé.</p>
-        <div class="d-flex justify-content-center gap-3">
-{#          <a href="{% url 'patient_register' %}" class="btn btn-light btn-lg px-4 py-3">Créer un compte</a>#}
-          <a href="{% url 'patient_login' %}" class="btn btn-outline-light btn-lg px-4 py-3">Se connecter</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Footer -->
-<footer>
-  <div class="container">
-    <div class="row g-4">
-      <div class="col-lg-4">
-        <div class="logo-container mb-3">
-          <img src="https://www.inhp.ci/images/logo.png" alt="Logo INHP" class="logo-img">
-          <span class="navbar-brand fw-bold">KENEYA</span>
-        </div>
-        <p>Plateforme nationale de santé numérique de l'Institut National d'Hygiène Publique de Côte d'Ivoire.</p>
-        <div class="mt-3">
-          <a href="#" class="text-white me-2"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" class="text-white me-2"><i class="fab fa-twitter"></i></a>
-          <a href="#" class="text-white me-2"><i class="fab fa-linkedin-in"></i></a>
-          <a href="#" class="text-white"><i class="fab fa-youtube"></i></a>
-        </div>
-      </div>
-      <div class="col-lg-2 col-md-4">
-        <h6 class="text-white mb-4">Services</h6>
-        <ul class="list-unstyled footer-links">
-          <li class="mb-2"><a href="#">Dossier médical</a></li>
-          <li class="mb-2"><a href="#">Vaccinations</a></li>
-          <li class="mb-2"><a href="#">Rendez-vous</a></li>
-          <li class="mb-2"><a href="#">Résultats d'analyse</a></li>
-        </ul>
-      </div>
-      <div class="col-lg-2 col-md-4">
-        <h6 class="text-white mb-4">INHP</h6>
-        <ul class="list-unstyled footer-links">
-          <li class="mb-2"><a href="#">À propos de l'INHP</a></li>
-          <li class="mb-2"><a href="#">Nos missions</a></li>
-          <li class="mb-2"><a href="#">Centres INHP</a></li>
-          <li class="mb-2"><a href="#">Carrières</a></li>
-        </ul>
-      </div>
-      <div class="col-lg-2 col-md-4">
-        <h6 class="text-white mb-4">Aide</h6>
-        <ul class="list-unstyled footer-links">
-          <li class="mb-2"><a href="#">FAQ</a></li>
-          <li class="mb-2"><a href="#">Guide d'utilisation</a></li>
-          <li class="mb-2"><a href="#">Contact</a></li>
-          <li class="mb-2"><a href="#">Centre d'aide</a></li>
-        </ul>
-      </div>
-      <div class="col-lg-2">
-        <h6 class="text-white mb-4">Télécharger l'app</h6>
-        <a href="#" class="d-block mb-2"><img src="https://via.placeholder.com/120x40/FF9F0D/FFFFFF?text=App+Store" alt="App Store" class="img-fluid"></a>
-        <a href="#" class="d-block"><img src="https://via.placeholder.com/120x40/FF9F0D/FFFFFF?text=Play+Store" alt="Play Store" class="img-fluid"></a>
-      </div>
-    </div>
-    <hr class="my-4 bg-white opacity-25">
-    <div class="row">
-      <div class="col-md-6">
-        <p class="mb-0">&copy; {{ now|date:"Y" }} INHP - KENEYA. Tous droits réservés.</p>
-      </div>
-      <div class="col-md-6 text-md-end">
-        <a href="#" class="text-white me-3">Politique de confidentialité</a>
-        <a href="#" class="text-white">Conditions d'utilisation</a>
-      </div>
-    </div>
-  </div>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>
-  // Initialisation des animations
-  AOS.init({
-    duration: 800,
-    easing: 'ease-in-out',
-    once: true
-  });
-
-  // Changement de couleur de la navbar au scroll
-  window.addEventListener('scroll', function() {
-    const navbar = document.querySelector('.navbar');
-    if (window.scrollY > 50) {
-      navbar.classList.add('navbar-light', 'bg-white', 'shadow');
-      navbar.classList.remove('navbar-dark');
-    } else {
-      navbar.classList.remove('navbar-light', 'bg-white', 'shadow');
+<body class="bg-slate-50 dark:bg-ivoireNight text-slate-900 dark:text-slate-100 antialiased">
+  <!-- Alpine.js State -->
+  <script>
+    window.keneyaApp = function () {
+      return {
+        darkMode: false,
+        mobileMenuOpen: false,
+        currentTestimonial: 0,
+        testimonials: [
+          {
+            name: "Aminata Koné",
+            location: "Abidjan",
+            role: "Mère de famille",
+            content: "KENEYA m'a permis de suivre les vaccinations de mes enfants sans perdre les carnets. Maintenant, tout est disponible sur mon téléphone.",
+            rating: 5,
+            image: "https://randomuser.me/api/portraits/women/32.jpg"
+          },
+          {
+            name: "Yao Kouassi",
+            location: "Bouaké",
+            role: "Patient diabétique",
+            content: "En tant que diabétique, pouvoir montrer mon historique médical à n'importe quel médecin en Côte d'Ivoire est un vrai progrès.",
+            rating: 4.5,
+            image: "https://randomuser.me/api/portraits/men/54.jpg"
+          },
+          {
+            name: "Dr. Fatou Diomandé",
+            location: "Yamoussoukro",
+            role: "Médecin",
+            content: "Cette plateforme nous fait gagner un temps précieux. Nous avons directement accès aux antécédents des patients.",
+            rating: 5,
+            image: "https://randomuser.me/api/portraits/women/65.jpg"
+          }
+        ],
+        init() {
+          // Vérifier le thème sauvegardé
+          const savedTheme = localStorage.getItem('keneya_theme');
+          if (savedTheme === 'dark') {
+            this.darkMode = true;
+          }
+        },
+        toggleTheme() {
+          this.darkMode = !this.darkMode;
+          localStorage.setItem('keneya_theme', this.darkMode ? 'dark' : 'light');
+        },
+        toggleMobileMenu() {
+          this.mobileMenuOpen = !this.mobileMenuOpen;
+        },
+        nextTestimonial() {
+          this.currentTestimonial = (this.currentTestimonial + 1) % this.testimonials.length;
+        },
+        prevTestimonial() {
+          this.currentTestimonial = (this.currentTestimonial - 1 + this.testimonials.length) % this.testimonials.length;
+        },
+        scrollToSection(sectionId) {
+          document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
+          this.mobileMenuOpen = false;
+        }
+      }
     }
-  });
-</script>
+  </script>
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80 border-b border-white/10 dark:border-slate-800 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 lg:px-6">
+      <div class="flex justify-between items-center h-16">
+        <!-- Logo -->
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-2xl gradient-primary flex items-center justify-center text-white font-bold shadow-soft">
+            <i class="fa-solid fa-heart-pulse text-sm"></i>
+          </div>
+          <div class="leading-tight">
+            <p class="text-xs uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
+              INHP · CÔTE D'IVOIRE
+            </p>
+            <p class="text-sm font-semibold">
+              KENEYA
+            </p>
+          </div>
+        </div>
+
+        <!-- Menu desktop -->
+        <div class="hidden md:flex items-center space-x-1 text-sm">
+          <button @click="scrollToSection('services')" class="px-4 py-2 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 transition">Services</button>
+          <button @click="scrollToSection('features')" class="px-4 py-2 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 transition">Fonctionnalités</button>
+          <button @click="scrollToSection('about')" class="px-4 py-2 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 transition">À propos</button>
+          <button @click="scrollToSection('contact')" class="px-4 py-2 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 transition">Contact</button>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-3">
+          <!-- Theme toggle -->
+          <button @click="toggleTheme" class="h-9 w-9 rounded-full border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-center text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-slate-900/90 shadow-sm hover:scale-105 transition">
+            <i class="fa-solid fa-sun text-xs" x-show="!darkMode"></i>
+            <i class="fa-solid fa-moon text-xs" x-show="darkMode"></i>
+          </button>
+
+          <!-- Bouton connexion -->
+          <a href="{% url 'patient_login' %}" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-ivoireBlue text-white text-sm font-medium shadow-sm hover:shadow-md transition">
+            <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>
+            <span>Connexion</span>
+          </a>
+
+          <!-- Menu mobile -->
+          <button @click="toggleMobileMenu" class="md:hidden h-9 w-9 rounded-full border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-center text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-slate-900/90">
+            <i class="fa-solid fa-bars text-xs"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Menu mobile -->
+    <div x-show="mobileMenuOpen" x-transition.opacity class="md:hidden border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl">
+      <div class="px-4 py-3 space-y-2">
+        <button @click="scrollToSection('services')" class="block w-full text-left px-4 py-3 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 transition">Services</button>
+        <button @click="scrollToSection('features')" class="block w-full text-left px-4 py-3 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 transition">Fonctionnalités</button>
+        <button @click="scrollToSection('about')" class="block w-full text-left px-4 py-3 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 transition">À propos</button>
+        <button @click="scrollToSection('contact')" class="block w-full text-left px-4 py-3 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 transition">Contact</button>
+        <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
+          <a href="{% url 'patient_login' %}" class="block w-full text-center px-4 py-3 rounded-2xl bg-ivoireBlue text-white font-medium shadow-sm">
+            Se connecter
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+    <!-- Background avec dégradé -->
+    <div class="absolute inset-0 gradient-hero"></div>
+    
+    <!-- Éléments décoratifs -->
+    <div class="absolute inset-0 opacity-10">
+      <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+      <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-ivoireGreen rounded-full blur-3xl"></div>
+    </div>
+
+    <div class="relative max-w-7xl mx-auto px-4 lg:px-6 py-20 lg:py-28">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <!-- Content -->
+        <div class="text-center lg:text-left space-y-6 animate-fade-in">
+          <div class="inline-flex items-center gap-3 px-4 py-2 rounded-2xl glass text-white text-sm">
+            <i class="fa-solid fa-shield-check"></i>
+            <span>Plateforme officielle INHP · Ministère de la Santé</span>
+          </div>
+
+          <h1 class="text-4xl lg:text-6xl font-bold text-white leading-tight">
+            Votre santé
+            <span class="text-ivoireOrange">numérique</span>
+            en Côte d'Ivoire
+          </h1>
+
+          <p class="text-xl text-white/90 leading-relaxed">
+            KENEYA révolutionne l'accès aux soins avec une plateforme sécurisée de gestion 
+            médicale sous l'égide de l'Institut National d'Hygiène Publique.
+          </p>
+
+          <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <a href="#services" class="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white text-ivoireBlue font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition">
+              <i class="fa-solid fa-rocket"></i>
+              <span>Découvrir nos services</span>
+            </a>
+            <a href="{% url 'patient_login' %}" class="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl glass text-white font-semibold hover:bg-white/10 transition">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i>
+              <span>Accéder à mon compte</span>
+            </a>
+          </div>
+
+          <!-- Stats rapides -->
+          <div class="grid grid-cols-3 gap-4 pt-8">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-white">150+</div>
+              <div class="text-white/80 text-sm">Centres de santé</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-white">500K+</div>
+              <div class="text-white/80 text-sm">Patients</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-white">15</div>
+              <div class="text-white/80 text-sm">Régions</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Illustration -->
+        <div class="relative animate-fade-in" style="animation-delay: 0.3s;">
+          <div class="relative z-10">
+            <img src="{% static 'images/elephant_doc.png' %}" alt="Plateforme KENEYA" class="w-full max-w-lg mx-auto animate-float">
+          </div>
+          
+          <!-- Cartes flottantes -->
+          <div class="absolute -top-4 -left-4 bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-soft animate-float" style="animation-delay: 1s;">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                <i class="fa-solid fa-calendar-check"></i>
+              </div>
+              <div class="text-sm">
+                <div class="font-semibold">Rendez-vous</div>
+                <div class="text-slate-500">En ligne</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="absolute -bottom-4 -right-4 bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-soft animate-float" style="animation-delay: 2s;">
+            <div class="flex items-center gap-3">
+              <div class="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                <i class="fa-solid fa-file-medical"></i>
+              </div>
+              <div class="text-sm">
+                <div class="font-semibold">Dossier</div>
+                <div class="text-slate-500">Médical</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+      <button @click="scrollToSection('services')" class="text-white/70 hover:text-white transition">
+        <i class="fa-solid fa-chevron-down text-xl animate-bounce"></i>
+      </button>
+    </div>
+  </section>
+
+  <!-- Partenaires -->
+  <section class="py-12 bg-slate-100 dark:bg-slate-900">
+    <div class="max-w-7xl mx-auto px-4 lg:px-6">
+      <div class="text-center mb-8">
+        <p class="text-slate-500 dark:text-slate-400 text-sm uppercase tracking-wider">Soutenu par</p>
+      </div>
+      <div class="flex flex-wrap justify-center items-center gap-8 lg:gap-16 opacity-60">
+        <img src="{% static 'images/embleme_ci.png' %}" alt="Gouvernement CI" class="h-12 lg:h-16">
+        <img src="{% static 'images/logo/logoMSHPCMU.svg' %}" alt="Ministère de la Santé" class="h-10 lg:h-12">
+        <img src="{% static 'images/logo/logo-001_0.png' %}" alt="INHP" class="h-10 lg:h-12">
+      </div>
+    </div>
+  </section>
+
+  <!-- Services -->
+  <section id="services" class="py-20 bg-white dark:bg-slate-900">
+    <div class="max-w-7xl mx-auto px-4 lg:px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl lg:text-4xl font-bold mb-4">Nos Services</h2>
+        <p class="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+          Tous les outils pour votre suivi médical en Côte d'Ivoire
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Service 1 -->
+        <div class="gradient-card rounded-3xl p-6 shadow-soft hover:shadow-xl transition group">
+          <div class="h-12 w-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+            <i class="fa-solid fa-notes-medical text-xl"></i>
+          </div>
+          <h3 class="text-xl font-semibold mb-3">Dossier Médical Unique</h3>
+          <p class="text-slate-600 dark:text-slate-400 mb-4">
+            Votre historique médical complet sécurisé, accessible dans tous les centres de santé partenaires.
+          </p>
+          <div class="aspect-w-16 aspect-h-9 rounded-2xl overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1581595219315-a187dd40c322?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
+                 alt="Dossier médical" class="w-full h-48 object-cover rounded-2xl">
+          </div>
+        </div>
+
+        <!-- Service 2 -->
+        <div class="gradient-card rounded-3xl p-6 shadow-soft hover:shadow-xl transition group">
+          <div class="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+            <i class="fa-solid fa-syringe text-xl"></i>
+          </div>
+          <h3 class="text-xl font-semibold mb-3">Carnet Vaccinal Numérique</h3>
+          <p class="text-slate-600 dark:text-slate-400 mb-4">
+            Suivez vos vaccinations avec rappels automatiques selon le calendrier vaccinal ivoirien.
+          </p>
+          <div class="aspect-w-16 aspect-h-9 rounded-2xl overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
+                 alt="Vaccination" class="w-full h-48 object-cover rounded-2xl">
+          </div>
+        </div>
+
+        <!-- Service 3 -->
+        <div class="gradient-card rounded-3xl p-6 shadow-soft hover:shadow-xl transition group">
+          <div class="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+            <i class="fa-solid fa-calendar-check text-xl"></i>
+          </div>
+          <h3 class="text-xl font-semibold mb-3">Rendez-vous en Ligne</h3>
+          <p class="text-slate-600 dark:text-slate-400 mb-4">
+            Prenez rendez-vous dans les centres de santé publics et privés partenaires à travers le pays.
+          </p>
+          <div class="aspect-w-16 aspect-h-9 rounded-2xl overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1581595210410-d9705f2944bc?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
+                 alt="Rendez-vous médical" class="w-full h-48 object-cover rounded-2xl">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Vidéo et Présentation -->
+  <section class="py-20 bg-slate-100 dark:bg-slate-800">
+    <div class="max-w-7xl mx-auto px-4 lg:px-6">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <!-- Vidéo -->
+        <div class="relative rounded-3xl overflow-hidden shadow-soft">
+          <div class="aspect-w-16 aspect-h-9 bg-gradient-to-br from-ivoireBlue to-ivoireGreen flex items-center justify-center">
+            <div class="text-center text-white">
+              <i class="fa-solid fa-play text-4xl mb-4"></i>
+              <p class="text-lg">Présentation KENEYA</p>
+            </div>
+          </div>
+          <div class="absolute inset-0 border-2 border-white/20 rounded-3xl pointer-events-none"></div>
+        </div>
+
+        <!-- Content -->
+        <div class="space-y-6">
+          <h2 class="text-3xl lg:text-4xl font-bold">KENEYA en vidéo</h2>
+          <p class="text-xl text-slate-600 dark:text-slate-400">
+            Découvrez comment KENEYA révolutionne l'accès aux soins en Côte d'Ivoire.
+          </p>
+          <p class="text-slate-600 dark:text-slate-400">
+            La plateforme KENEYA, développée par l'Institut National d'Hygiène Publique avec le soutien du Ministère de la Santé, offre à tous les Ivoiriens un accès simplifié à leurs informations de santé.
+          </p>
+          
+          <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/50 dark:bg-slate-700/50">
+            <div class="h-12 w-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+              <i class="fa-solid fa-shield-alt"></i>
+            </div>
+            <div>
+              <h4 class="font-semibold">Sécurité des données</h4>
+              <p class="text-sm text-slate-600 dark:text-slate-400">Vos informations médicales sont stockées de manière sécurisée sur des serveurs nationaux.</p>
+            </div>
+          </div>
+
+          <a href="#" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-ivoireBlue text-white font-semibold hover:shadow-lg transition">
+            <i class="fa-solid fa-play"></i>
+            <span>Voir plus de vidéos</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Statistiques -->
+  <section class="py-20 bg-white dark:bg-slate-900">
+    <div class="max-w-7xl mx-auto px-4 lg:px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl lg:text-4xl font-bold mb-4">KENEYA en chiffres</h2>
+        <p class="text-xl text-slate-600 dark:text-slate-400">La santé numérique pour tous les Ivoiriens</p>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="text-center">
+          <div class="gradient-card rounded-3xl p-6 shadow-soft">
+            <div class="h-16 w-16 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mx-auto mb-4">
+              <i class="fa-solid fa-hospital text-2xl"></i>
+            </div>
+            <div class="text-3xl font-bold text-slate-900 dark:text-white mb-2">150+</div>
+            <div class="text-slate-600 dark:text-slate-400">Centres de santé connectés</div>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <div class="gradient-card rounded-3xl p-6 shadow-soft">
+            <div class="h-16 w-16 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto mb-4">
+              <i class="fa-solid fa-users text-2xl"></i>
+            </div>
+            <div class="text-3xl font-bold text-slate-900 dark:text-white mb-2">500K+</div>
+            <div class="text-slate-600 dark:text-slate-400">Patients enregistrés</div>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <div class="gradient-card rounded-3xl p-6 shadow-soft">
+            <div class="h-16 w-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-4">
+              <i class="fa-solid fa-file-medical text-2xl"></i>
+            </div>
+            <div class="text-3xl font-bold text-slate-900 dark:text-white mb-2">1M+</div>
+            <div class="text-slate-600 dark:text-slate-400">Documents médicaux</div>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <div class="gradient-card rounded-3xl p-6 shadow-soft">
+            <div class="h-16 w-16 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center mx-auto mb-4">
+              <i class="fa-solid fa-map-marked-alt text-2xl"></i>
+            </div>
+            <div class="text-3xl font-bold text-slate-900 dark:text-white mb-2">15</div>
+            <div class="text-slate-600 dark:text-slate-400">Régions couvertes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- À propos -->
+  <section id="about" class="py-20 bg-slate-100 dark:bg-slate-800">
+    <div class="max-w-7xl mx-auto px-4 lg:px-6">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div class="relative">
+          <img src="https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80" 
+               alt="INHP Côte d'Ivoire" class="rounded-3xl shadow-soft">
+          <div class="absolute -bottom-6 -right-6 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-soft">
+            <div class="flex items-center gap-3">
+              <div class="h-12 w-12 rounded-xl gradient-primary flex items-center justify-center text-white">
+                <i class="fa-solid fa-microscope"></i>
+              </div>
+              <div>
+                <div class="font-semibold">INHP</div>
+                <div class="text-sm text-slate-500">Depuis 1978</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <h2 class="text-3xl lg:text-4xl font-bold">À propos de KENEYA</h2>
+          <p class="text-xl text-slate-600 dark:text-slate-400">
+            Une initiative de l'Institut National d'Hygiène Publique
+          </p>
+          <p class="text-slate-600 dark:text-slate-400">
+            KENEYA (qui signifie "Santé" en langue locale) est la plateforme nationale de santé numérique développée par l'INHP sous la tutelle du Ministère de la Santé et de l'Hygiène Publique et de la Couverture Maladie Universelle de Côte d'Ivoire.
+          </p>
+          <p class="text-slate-600 dark:text-slate-400">
+            Notre mission est de démocratiser l'accès aux services de santé grâce au numérique, en conformité avec la stratégie nationale de santé digitale.
+          </p>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="flex items-center gap-3 p-4 rounded-2xl bg-white/50 dark:bg-slate-700/50">
+              <i class="fa-solid fa-shield-alt text-ivoireGreen"></i>
+              <span class="font-medium">Données sécurisées</span>
+            </div>
+            <div class="flex items-center gap-3 p-4 rounded-2xl bg-white/50 dark:bg-slate-700/50">
+              <i class="fa-solid fa-bolt text-ivoireOrange"></i>
+              <span class="font-medium">Accès rapide</span>
+            </div>
+            <div class="flex items-center gap-3 p-4 rounded-2xl bg-white/50 dark:bg-slate-700/50">
+              <i class="fa-solid fa-mobile-alt text-ivoireBlue"></i>
+              <span class="font-medium">Mobile friendly</span>
+            </div>
+            <div class="flex items-center gap-3 p-4 rounded-2xl bg-white/50 dark:bg-slate-700/50">
+              <i class="fa-solid fa-hand-holding-medical text-emerald-500"></i>
+              <span class="font-medium">Gratuit</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Témoignages -->
+  <section class="py-20 bg-white dark:bg-slate-900">
+    <div class="max-w-7xl mx-auto px-4 lg:px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl lg:text-4xl font-bold mb-4">Ils nous font confiance</h2>
+        <p class="text-xl text-slate-600 dark:text-slate-400">Ce que disent nos utilisateurs</p>
+      </div>
+
+      <div class="max-w-4xl mx-auto">
+        <div class="relative">
+          <!-- Témoignage actif -->
+          <div class="gradient-card rounded-3xl p-8 shadow-soft text-center">
+            <div class="flex justify-center mb-6">
+              <img :src="testimonials[currentTestimonial].image" 
+                   :alt="testimonials[currentTestimonial].name" 
+                   class="h-16 w-16 rounded-full object-cover">
+            </div>
+            
+            <div class="text-amber-500 mb-4">
+              <template x-for="i in 5">
+                <i class="fas fa-star" :class="{'text-amber-300': i > testimonials[currentTestimonial].rating}"></i>
+              </template>
+            </div>
+
+            <p class="text-lg text-slate-600 dark:text-slate-400 mb-6" x-text="testimonials[currentTestimonial].content"></p>
+
+            <div>
+              <div class="font-semibold text-slate-900 dark:text-white" x-text="testimonials[currentTestimonial].name"></div>
+              <div class="text-slate-500 text-sm" x-text="testimonials[currentTestimonial].role + ' · ' + testimonials[currentTestimonial].location"></div>
+            </div>
+          </div>
+
+          <!-- Contrôles -->
+          <button @click="prevTestimonial" class="absolute left-4 top-1/2 transform -translate-y-1/2 h-10 w-10 rounded-full bg-white dark:bg-slate-800 shadow-lg flex items-center justify-center hover:scale-110 transition">
+            <i class="fa-solid fa-chevron-left text-slate-600 dark:text-slate-400"></i>
+          </button>
+          <button @click="nextTestimonial" class="absolute right-4 top-1/2 transform -translate-y-1/2 h-10 w-10 rounded-full bg-white dark:bg-slate-800 shadow-lg flex items-center justify-center hover:scale-110 transition">
+            <i class="fa-solid fa-chevron-right text-slate-600 dark:text-slate-400"></i>
+          </button>
+
+          <!-- Indicateurs -->
+          <div class="flex justify-center gap-2 mt-6">
+            <template x-for="(testimonial, index) in testimonials" :key="index">
+              <button @click="currentTestimonial = index" 
+                      class="h-2 w-2 rounded-full transition"
+                      :class="currentTestimonial === index ? 'bg-ivoireBlue' : 'bg-slate-300 dark:bg-slate-600'"></button>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Final -->
+  <section class="py-20 gradient-primary text-white">
+    <div class="max-w-4xl mx-auto px-4 lg:px-6 text-center">
+      <h2 class="text-3xl lg:text-4xl font-bold mb-6">Prêt à rejoindre la santé numérique en Côte d'Ivoire ?</h2>
+      <p class="text-xl mb-8 opacity-90">Inscrivez-vous gratuitement dès maintenant et prenez le contrôle de votre santé.</p>
+      
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="{% url 'patient_login' %}" class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white text-ivoireBlue font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
+          <span>Se connecter</span>
+        </a>
+        <a href="#services" class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl glass text-white font-semibold hover:bg-white/10 transition">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>En savoir plus</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400">
+    <div class="max-w-7xl mx-auto px-4 lg:px-6 py-12">
+      <div class="grid lg:grid-cols-5 gap-8">
+        <!-- Brand -->
+        <div class="lg:col-span-2">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="h-10 w-10 rounded-2xl gradient-primary flex items-center justify-center text-white">
+              <i class="fa-solid fa-heart-pulse"></i>
+            </div>
+            <div>
+              <div class="text-white font-semibold">KENEYA</div>
+              <div class="text-sm">Plateforme de santé numérique</div>
+            </div>
+          </div>
+          <p class="mb-4">
+            Plateforme nationale de santé numérique de l'Institut National d'Hygiène Publique de Côte d'Ivoire.
+          </p>
+          <div class="flex gap-4">
+            <a href="#" class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-ivoireBlue transition">
+              <i class="fab fa-facebook-f text-sm"></i>
+            </a>
+            <a href="#" class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-ivoireBlue transition">
+              <i class="fab fa-twitter text-sm"></i>
+            </a>
+            <a href="#" class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-ivoireBlue transition">
+              <i class="fab fa-linkedin-in text-sm"></i>
+            </a>
+            <a href="#" class="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-ivoireBlue transition">
+              <i class="fab fa-youtube text-sm"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Liens -->
+        <div>
+          <h4 class="text-white font-semibold mb-4">Services</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="hover:text-white transition">Dossier médical</a></li>
+            <li><a href="#" class="hover:text-white transition">Vaccinations</a></li>
+            <li><a href="#" class="hover:text-white transition">Rendez-vous</a></li>
+            <li><a href="#" class="hover:text-white transition">Résultats d'analyse</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-white font-semibold mb-4">INHP</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="hover:text-white transition">À propos de l'INHP</a></li>
+            <li><a href="#" class="hover:text-white transition">Nos missions</a></li>
+            <li><a href="#" class="hover:text-white transition">Centres INHP</a></li>
+            <li><a href="#" class="hover:text-white transition">Carrières</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-white font-semibold mb-4">Aide</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="hover:text-white transition">FAQ</a></li>
+            <li><a href="#" class="hover:text-white transition">Guide d'utilisation</a></li>
+            <li><a href="#" class="hover:text-white transition">Contact</a></li>
+            <li><a href="#" class="hover:text-white transition">Centre d'aide</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="border-t border-slate-800 mt-8 pt-8 text-sm">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+          <div class="mb-4 md:mb-0">
+            &copy; 2024 INHP - KENEYA. Tous droits réservés.
+          </div>
+          <div class="flex gap-4">
+            <a href="#" class="hover:text-white transition">Politique de confidentialité</a>
+            <a href="#" class="hover:text-white transition">Conditions d'utilisation</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>

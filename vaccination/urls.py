@@ -20,16 +20,20 @@ from django.contrib import admin
 from django.urls import path, include
 from django_prometheus import exports
 
+import inhp
+from inhp import views
+from inhp.apis.urls import router
 from inhp.views import HomePageView, patient_login_view, patient_dashboard, mes_vaccins, generate_pdf_certificat, \
     verifier_certificat, LandingView, DashboardView, PatientListView, PatientCreateView, PatientDetailView, \
     PatientUpdateView, PatientDeleteView, MapiListView, MapiCreateView, MapiUpdateView, MapiDetailView, MapiDeleteView, \
-    VaccineExtListView, VaccineExtCreateView, VaccineExtDeleteView, VaccineExtUpdateView, VaccineExtDetailView
+    VaccineExtListView, VaccineExtCreateView, VaccineExtDeleteView, VaccineExtUpdateView, VaccineExtDetailView, \
+    VaccinationCertificatPDFView, PatientVaccinationCarnetPDFView
 
 urlpatterns = [
                   path('admin/', admin.site.urls),
 
                   path('', include("django_prometheus.urls")),
-
+                  path('management/', include(inhp.apis.urls)),
                   path('api-auth/', include('rest_framework.urls')),
                   path('accounts/', include('allauth.urls')),
                   path('', LandingView.as_view(), name='landing'),
@@ -43,14 +47,29 @@ urlpatterns = [
                   # ----------------------Admin ----------------urls
                   path('dashboard', DashboardView.as_view(), name='dashboard'),
 
-                  path('patients/', PatientListView.as_view(), name='patient-list'),
+                  path('patients/list', PatientListView.as_view(), name='patient_list'),
                   path('patients/create/', PatientCreateView.as_view(), name='patient-create'),
-                  path('patients/<str:code_patient>/', PatientDetailView.as_view(), name='patient-detail'),
+                  path('patients/<int:pk>/', PatientDetailView.as_view(), name='detail_patient'),
+                  path('vaccination/<int:pk>/certificat/',VaccinationCertificatPDFView.as_view(),  name='vaccination_certificat_pdf'),
+                  path(
+                      "patients/<slug:code_patient>/carnet-vaccinal.pdf",
+                      PatientVaccinationCarnetPDFView.as_view(),
+                      name="patient_carnet_vaccinal_pdf",
+                  ),
                   path('patients/<str:code_patient>/update/', PatientUpdateView.as_view(), name='patient-update'),
                   path('patients/<str:code_patient>/delete/', PatientDeleteView.as_view(), name='patient-delete'),
                   # path('patients/<str:code_patient>/mapis/', PatientMapiListView.as_view(), name='patient-mapis'),
                   # path('patients/<str:code_patient>/vaccine-exts/', PatientVaccineExtListView.as_view(),
                   #      name='patient-vaccine-exts'),
+
+                  path('vaccination/list', views.VaccinationListView.as_view(), name='vaccination_list'),
+                  path('nouveau/', views.VaccinationCreateView.as_view(), name='vaccination_create'),
+                  path('vaccination/<int:pk>/', views.VaccinationDetailView.as_view(), name='vaccination_detail'),
+                  path('vaccination/<int:pk>/modifier/', views.VaccinationUpdateView.as_view(),
+                       name='vaccination_update'),
+                  path('vaccination/<int:pk>/supprimer/', views.VaccinationDeleteView.as_view(),
+                       name='vaccination_delete'),
+                  path('rappels/', views.VaccinationsRappelListView.as_view(), name='vaccinations_rappel'),
 
                   # Mapi URLs
                   path('mapis/', MapiListView.as_view(), name='mapi-list'),

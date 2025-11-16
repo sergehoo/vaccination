@@ -1,0 +1,163 @@
+<div class="overflow-x-auto">
+    <table class="w-full text-[12px]">
+        <thead class="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+        <tr>
+            <th class="py-2 pr-3 text-left">Code</th>
+            <th class="py-2 pr-3 text-left">Identité</th>
+            <th class="py-2 pr-3 text-left">Naissance</th>
+            <th class="py-2 pr-3 text-left">Téléphone</th>
+            <th class="py-2 pr-3 text-left">Centre</th>
+            <th class="py-2 pr-3 text-left">Statut</th>
+            <th class="py-2 pr-3 text-left">Créé le</th>
+            <th class="py-2 text-right">Actions</th>
+        </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% if patients %}
+            {% for patient in patients %}
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/40">
+                    <td class="py-2.5 pr-3 align-top">
+                        <span class="font-mono text-[11px] px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70">
+                            {{ patient.code_patient }}
+                        </span>
+                    </td>
+                    <td class="py-2.5 pr-3 align-top">
+                        <div class="flex flex-col">
+                            <span class="font-semibold text-[12px]">
+                                {{ patient.nom|upper }} {{ patient.prenoms|title }}
+                            </span>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400">
+                                {% if patient.sexe == 'M' %}Masculin{% elif patient.sexe == 'F' %}Féminin{% else %}-{% endif %}
+                                · {{ patient.nationalite }}
+                            </span>
+                        </div>
+                    </td>
+                    <td class="py-2.5 pr-3 align-top">
+                        <span class="text-[12px]">
+                            {{ patient.date_naissance|date:"d/m/Y" }}
+                        </span>
+                        <span class="block text-[11px] text-slate-500 dark:text-slate-400">
+                            {% if patient.date_naissance %}
+                                {{ patient.age }} ans
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td class="py-2.5 pr-3 align-top">
+                        <span class="text-[12px]">
+                            {{ patient.telephone1|default:"—" }}
+                        </span>
+                        {% if patient.telephone2 %}
+                            <span class="block text-[11px] text-slate-500 dark:text-slate-400">
+                                {{ patient.telephone2 }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="py-2.5 pr-3 align-top">
+                        <span class="text-[12px]">
+                            {% if patient.centre_actuel %}
+                                {{ patient.centre_actuel }}
+                            {% elif patient.centre %}
+                                {{ patient.centre }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </span>
+                        {% if patient.commune %}
+                            <span class="block text-[11px] text-slate-500 dark:text-slate-400">
+                                {{ patient.commune }}{% if patient.quartier %}, {{ patient.quartier }}{% endif %}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="py-2.5 pr-3 align-top">
+                        {% if patient.statut == 'actif' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                                <i class="fa-solid fa-circle text-[7px] mr-1"></i> Actif
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">
+                                <i class="fa-solid fa-circle text-[7px] mr-1"></i> Inactif
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="py-2.5 pr-3 align-top">
+                        <span class="text-[12px]">
+                            {{ patient.created_at|date:"d/m/Y H:i" }}
+                        </span>
+                        {% if patient.created_by %}
+                            <span class="block text-[11px] text-slate-500 dark:text-slate-400">
+                                Par {{ patient.created_by }}
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="py-2.5 pl-3 align-top text-right">
+                        <div class="inline-flex items-center gap-1">
+                            <a href="{% url 'detail_patient' patient.pk %}"
+                               class="inline-flex items-center justify-center px-2 py-1 rounded-full text-[11px] bg-slate-100 dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 hover:bg-slate-200/80">
+                                <i class="fa-solid fa-eye text-[10px] mr-1"></i>
+                                Détails
+                            </a>
+                            <a href="{% url 'patient-vaccinations' patient.pk %}"
+                               class="inline-flex items-center justify-center px-2 py-1 rounded-full text-[11px] bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-500/20">
+                                <i class="fa-solid fa-syringe text-[10px] mr-1"></i>
+                                Vaccinations
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="8" class="py-6 text-center text-[12px] text-slate-500 dark:text-slate-400">
+                    Aucun patient trouvé pour ces critères.
+                </td>
+            </tr>
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+        <p>
+            Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }} —
+            {{ page_obj.paginator.count }} patient(s)
+        </p>
+        <div class="inline-flex items-center gap-1">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.centre %}&centre={{ request.GET.centre }}{% endif %}"
+                   class="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80">
+                    Précédent
+                </a>
+            {% else %}
+                <span class="px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 opacity-60">
+                    Précédent
+                </span>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <span class="px-3 py-1.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                        {{ num }}
+                    </span>
+                {% elif num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+                    <a href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.centre %}&centre={{ request.GET.centre }}{% endif %}"
+                       class="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 hover:bg-slate-100 dark:hover:bg-slate-800">
+                        {{ num }}
+                    </a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.centre %}&centre={{ request.GET.centre }}{% endif %}"
+                   class="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80">
+                    Suivant
+                </a>
+            {% else %}
+                <span class="px-3 py-1.5 rounded-full border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 opacity-60">
+                    Suivant
+                </span>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}

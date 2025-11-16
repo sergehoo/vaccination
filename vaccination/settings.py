@@ -172,7 +172,7 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  # this is default
     # 'guardian.backends.ObjectPermissionBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
-    'inhp.backends.PatientAuthBackend',  # <-- votre backend patient
+    'inhp.backends.PatientAuthBackend',  # <-- votre administration patient
 
     # "djoser.auth_backends.LoginFieldBackend",
 )

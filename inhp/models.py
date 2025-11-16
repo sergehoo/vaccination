@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin, Group, Permission
@@ -225,6 +227,22 @@ class Patient(AbstractBaseUser, PermissionsMixin):
 
     objects = PatientManager()
 
+    @property
+    def age(self):
+        """Retourne l'âge du patient en années (calcul précis au jour près)."""
+        if not self.date_naissance:
+            return None
+
+        today = date.today()
+
+        # Calcul standard de l'âge : année courante – année de naissance
+        age = today.year - self.date_naissance.year
+
+        # Correction si l'anniversaire n'est pas encore passé cette année
+        if (today.month, today.day) < (self.date_naissance.month, self.date_naissance.day):
+            age -= 1
+
+        return age
     def __str__(self):
         return f"{self.nom} {self.prenoms} ({self.code_patient})"
 
@@ -323,7 +341,7 @@ class Consultation(models.Model):
     deleted_at = models.DateTimeField(null=True, blank=True)
     centre = models.ForeignKey(CentreVaccination, on_delete=models.CASCADE, null=True, blank=True)
     code_patient = models.TextField(null=True, blank=True)
-    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, null=True, blank=True)
+    patient = models.ForeignKey(Patient, on_delete=models.CASCADE, null=True, blank=True, related_name='consultations')
     consultation = models.JSONField(null=True, blank=True)
     utilisateur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, null=True, blank=True)
     maladie = models.ForeignKey(Maladie, on_delete=models.CASCADE, null=True, blank=True)

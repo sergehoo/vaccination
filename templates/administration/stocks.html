@@ -1,0 +1,64 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Stocks & Chaîne du froid – Vaccination CI{% endblock %}
+{% block hero_title %}Surveillance des stocks & chaîne du froid{% endblock %}
+{% block hero_subtitle %}
+Visualisez les stocks par région, identifiez les centres en rupture et surveillez la température de la chaîne du froid.
+{% endblock %}
+{% block hero_card_title %}Centres en alerte{% endblock %}
+{% block hero_card_value %}85{% endblock %}
+{% block hero_card_label %}stocks < 7 jours{% endblock %}
+
+{% block content %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <!-- Carte stocks -->
+    <div class="lg:col-span-2 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-3">
+        <div class="flex items-center justify-between">
+            <h2 class="text-sm font-semibold">Vue géographique des stocks</h2>
+            <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900/80">
+                Voir dans SIG / carte détaillée
+            </button>
+        </div>
+        <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
+            <img src="{% static 'vaccination/img/map-ci.svg' %}" alt="Carte des stocks de vaccins en Côte d'Ivoire"
+                 class="w-full h-64 object-cover">
+        </div>
+    </div>
+
+    <!-- Résumé chaîne du froid -->
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-3">
+        <h2 class="text-sm font-semibold">Chaîne du froid</h2>
+        <div class="space-y-2 text-[12px]">
+            <p class="flex items-center justify-between">
+                <span>Réfrigérateurs suivis</span>
+                <span class="font-semibold">1 024</span>
+            </p>
+            <p class="flex items-center justify-between">
+                <span>Alarmes température (24h)</span>
+                <span class="font-semibold text-amber-600">12</span>
+            </p>
+            <p class="flex items-center justify-between">
+                <span>Incidents critiques</span>
+                <span class="font-semibold text-red-600">3</span>
+            </p>
+        </div>
+        <button class="mt-2 text-xs px-3 py-2 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+            Consulter le détail des alarmes
+        </button>
+    </div>
+</div>
+
+<!-- Tableau des centres en alerte -->
+<div class="mt-5 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
+    <div class="flex items-center justify-between">
+        <h2 class="text-sm font-semibold">Centres en alerte (stock < 7 jours)</h2>
+        <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900/80">
+            Exporter CSV
+        </button>
+    </div>
+    <!-- Reprends ici ton tableau centres en alerte -->
+    <!-- ... -->
+</div>
+
+{% endblock %}

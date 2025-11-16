@@ -68,6 +68,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'allauth',
     'allauth.account',
+    'corsheaders',
+    'rest_framework_simplejwt'
 ]
 
 MIDDLEWARE = [
@@ -80,13 +82,15 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     "allauth.account.middleware.AccountMiddleware",
-    'inhp.middleware.PrometheusIPTrackingMiddleware',
+    # 'inhp.middleware.PrometheusIPTrackingMiddleware',
+    'inhp.middleware.EnhancedPrometheusMiddleware',
     'django_prometheus.middleware.PrometheusAfterMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 
 ]
 
 ROOT_URLCONF = 'vaccination.urls'
-
+PROMETHEUS_LATENCY_BUCKETS = (0.01, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10)
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -149,6 +153,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
 
+
+
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -157,7 +163,7 @@ REST_FRAMEWORK = {
 
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10,  # Limite les résultats paginés à 10 par page
+    'PAGE_SIZE': 20,  # Limite les résultats paginés à 10 par page
 
 }
 
@@ -165,7 +171,7 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  # this is default
     # 'guardian.backends.ObjectPermissionBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
-    'inhp.backends.PatientAuthBackend',  # <-- votre backend patient
+    'inhp.backends.PatientAuthBackend',  # <-- votre administration patient
 
     # "djoser.auth_backends.LoginFieldBackend",
 )

@@ -1,0 +1,416 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Certificat de vaccination</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 12px;
+            color: #0a1e01;
+            background-color: #f3f4f6;
+        }
+
+        .page {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            padding: 20px 24px;
+        }
+
+        /* HEADER OFFICIEL */
+        .header-top {
+            border-bottom: 3px solid #1d5501;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .header-top-inner {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .header-top-inner td {
+            vertical-align: middle;
+        }
+
+        .header-logo-left,
+        .header-logo-right {
+            width: 100px;
+        }
+
+        .header-logo-left img,
+        .header-logo-right img {
+            max-width: 100px;
+            max-height: 100px;
+        }
+.logo-inhp {
+    width: 170px !important;
+    height: auto !important;
+    max-height: 80px !important;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+        .header-center {
+            text-align: center;
+        }
+
+        .header-center p {
+            margin: 1px 0;
+            font-size: 9px;
+        }
+
+        .header-center .rep {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .header-center .min {
+            font-weight: bold;
+        }
+
+        .header-title-block {
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 12px;
+        }
+
+        .header-title-block h1 {
+            font-size: 14px;
+            margin: 0;
+            text-transform: uppercase;
+            color: #1d5501;
+            letter-spacing: 1px;
+        }
+
+        .header-title-block p {
+            margin: 3px 0 0 0;
+            font-size: 11px;
+            color: #4b5563;
+        }
+
+        .meta-info {
+            text-align: right;
+            font-size: 11px;
+            color: #4b5563;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 16px;
+            margin-bottom: 6px;
+            color: #1d5501;
+        }
+
+        .section-title span {
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 2px;
+        }
+
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 10px 12px;
+            background-color: #f9fafb;
+            margin-bottom: 8px;
+        }
+
+        .label {
+            font-weight: bold;
+            color: #374151;
+        }
+
+        .info-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-grid td {
+            padding: 2px 4px;
+            vertical-align: top;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+        }
+
+        .table th {
+            background-color: #1d5501;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: normal;
+            text-align: left;
+            padding: 4px 6px;
+        }
+
+        .table td {
+            border: 1px solid #e5e7eb;
+            padding: 4px 6px;
+            font-size: 11px;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 999px;
+            font-size: 10px;
+            background-color: #e5f3ff;
+            color: #1d5501;
+        }
+
+        .footer {
+            margin-top: 24px;
+            font-size: 11px;
+            color: #4b5563;
+        }
+
+        .signature-block {
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 20px;
+}
+
+.signature-text {
+    max-width: 65%;
+}
+
+.signature-line {
+    margin-top: 30px;
+    padding-top: 4px;
+    border-top: 1px solid #9ca3af;
+    font-size: 11px;
+    text-align: left;
+}
+
+.signature-qr {
+    text-align: center;
+    font-size: 10px;
+}
+
+.signature-qr .qr-image {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    border: 1px solid #e5e7eb;
+    padding: 4px;
+    border-radius: 6px;
+}
+
+.signature-qr .qr-caption {
+    margin-top: 4px;
+    color: #4b5563;
+}
+
+        .footer-bar {
+            margin-top: 20px;
+            border-top: 2px solid #1d5501;
+            padding-top: 4px;
+            font-size: 9px;
+            color: #6b7280;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- BANDEAU OFFICIEL AVEC TES LOGOS -->
+    <div class="header-top">
+        <table class="header-top-inner">
+            <tr>
+                <td class="header-logo-left">
+                    <img src="{% static 'images/images.jpeg' %}" alt="Emblème CI">
+                </td>
+                <td class="header-center">
+                    <p class="rep">République de Côte d’Ivoire</p>
+                    <p>Union - Discipline - Travail</p>
+                    <p class="min">Ministère de la Santé, de l’Hygiène Publique</p>
+                    <p class="min">et de la Couverture Maladie Universelle</p>
+                    <img src="{% static 'images/logo_inhp.png' %}" class="logo-inhp" alt="Logo INHP">
+                </td>
+                <td class="header-logo-right" style="text-align:right;">
+                    <img src="{% static 'images/logoMSHPCMU (1).svg' %}" alt="Logo MSHPCMU">
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- TITRE CERTIFICAT -->
+    <div class="header-title-block">
+        <h1>Certificat de Vaccination</h1>
+        <p style="font-size: 8px">Document attestant la réalisation d’un acte vaccinal selon les protocoles nationaux en vigueur.</p>
+    </div>
+
+    <!-- META -->
+    <div class="meta-info">
+        Émis le {{ today|date:"d/m/Y" }}<br>
+        N° certificat : CV-{{ vaccination.pk|stringformat:"06d" }}
+    </div>
+
+    <!-- INFORMATIONS PATIENT -->
+    <div class="section-title"><span>Informations sur le patient</span></div>
+    <div class="card">
+        <table class="info-grid">
+            <tr>
+                <td width="50%">
+                    <span class="label">Nom et prénoms :</span>
+                    {{ patient.nom }} {{ patient.prenoms }}
+                </td>
+                <td width="50%">
+                    <span class="label">Identifiant patient :</span>
+                    {{ patient.code_patient }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="label">Date de naissance :</span>
+                    {{ patient.date_naissance|date:"d/m/Y" }}
+                </td>
+                <td>
+                    <span class="label">Sexe :</span>
+                    {{ patient.get_sexe_display }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="label">Téléphone :</span>
+                    {{ patient.telephone1|default:"Non renseigné" }}
+                </td>
+                <td>
+                    <span class="label">Autres identifiants :</span>
+                    {{ patient.numero_carnet|default:"N/A" }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- DÉTAILS VACCINATION -->
+    <div class="section-title"><span>Détails de la vaccination</span></div>
+    <div class="card">
+        <table class="table">
+            <tr>
+                <th>Vaccin</th>
+                <th>Maladie</th>
+                <th>Dose</th>
+                <th>Date d'administration</th>
+                <th>Lot</th>
+                <th>Centre</th>
+            </tr>
+            <tr>
+                <td>
+                    {{ vaccination.vaccin.nom }}<br>
+                    <span class="pill">
+                        {{ vaccination.vaccin.get_type_vaccin_display }}
+                    </span>
+                </td>
+                <td>{{ vaccination.vaccin.maladie.nom }}</td>
+                <td>
+                    Dose {{ vaccination.dose }}
+                    / {{ vaccination.vaccin.doses_requises }}
+                </td>
+                <td>{{ vaccination.date_vaccination|date:"d/m/Y" }}</td>
+                <td>{{ vaccination.lot.numero_lot|default:"N/A" }}</td>
+                <td>{{ centre.name }}</td>
+            </tr>
+        </table>
+
+        {% if vaccination.date_rappel %}
+            <p style="margin-top:8px;">
+                <span class="label">Prochain rappel recommandé :</span>
+                {{ vaccination.date_rappel|date:"d/m/Y" }}
+            </p>
+        {% endif %}
+
+        <p style="margin-top:6px;">
+            <span class="label">Professionnel / Agent ayant enregistré l’acte :</span>
+            {% if vaccination.created_by %}
+                {{ vaccination.created_by.get_full_name|default:vaccination.created_by }}
+            {% else %}
+                Non renseigné
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- CENTRE -->
+    <div class="section-title"><span>Centre de vaccination</span></div>
+    <div class="card">
+        <table class="info-grid">
+            <tr>
+                <td width="50%">
+                    <span class="label">Centre :</span>
+                    {{ centre.name }}
+                </td>
+                <td width="50%">
+                    <span class="label">Région sanitaire :</span>
+                    {{ centre.region|default:"Non spécifiée" }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="label">Adresse :</span>
+                    {{ centre.adresse|default:"Non renseignée" }}
+                </td>
+                <td>
+                    <span class="label">Téléphone du centre :</span>
+                    {{ centre.telephone|default:"Non renseigné" }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- TEXTE LÉGAL -->
+    <div class="footer">
+        <p>
+            Ce document atteste que le patient susmentionné a reçu la vaccination indiquée ci-dessus,
+            conformément aux protocoles en vigueur à l'Institut National d'hygiène Publique (INHP) et aux directives
+            du Ministère de la Santé, de l’Hygiène Publique et de la Couverture Maladie Universelle.
+        </p>
+        <p style="margin-top:6px;">
+            Il doit être présenté en cas de contrôle sanitaire, de demande de preuve vaccinale, ou pour la
+            poursuite du schéma vaccinal recommandé.
+        </p>
+    </div>
+
+    <!-- SIGNATURE -->
+    <div class="signature-block">
+    <div class="signature-text">
+        <p>
+            Fait à {{ centre.nom }}, le {{ today|date:"d/m/Y" }}
+        </p>
+        <div class="signature-line">
+            <span><strong>Professeur Ekra Kouadio Daniel</strong></span>
+            <br>
+            <span>Directeur Général de l'INHP</span>
+        </div>
+    </div>
+
+    {% if qr_code_data %}
+    <div class="signature-qr">
+        <img src="{{ qr_code_data }}" alt="QR Code de vérification" class="qr-image">
+        <p class="qr-caption">Vérification numérique</p>
+    </div>
+    {% endif %}
+</div>
+
+    <!-- BANDEAU BAS -->
+    <div class="footer-bar">
+        INHP — Système de Management Intégré des Vaccinations · Plateforme de gestion des vaccinations et du parcours
+        patient
+    </div>
+
+</div>
+</body>
+</html>
