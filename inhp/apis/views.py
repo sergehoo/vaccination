@@ -105,8 +105,6 @@ class VaccinationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = Vaccination.objects.select_related(
             'patient', 'centre', 'vaccin', 'lot', 'created_by'
-        ).filter(
-            deleted_at__isnull=True
         )
 
         params = self.request.query_params
