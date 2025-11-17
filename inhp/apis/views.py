@@ -2,6 +2,7 @@ from datetime import timedelta, date
 
 from dateutil.relativedelta import relativedelta
 from django.db.models import Count, Q
+from django.db.models.functions import TruncMonth, TruncWeek
 from django.utils import timezone
 from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend
