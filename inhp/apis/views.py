@@ -4,6 +4,7 @@ from dateutil.relativedelta import relativedelta
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth, TruncWeek
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -93,23 +94,64 @@ class VaccinationViewSet(viewsets.ModelViewSet):
     queryset = Vaccination.objects.filter(deleted_at__isnull=True)
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
     pagination_class = VaccinationPagination
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
 
     filterset_fields = ['centre', 'vaccin', 'dose']
     search_fields = ['patient__nom', 'patient__prenoms', 'vaccin__nom', 'centre__name']
     ordering_fields = ['date_vaccination', 'date_rappel', 'created_at', 'dose']
     ordering = ['-date_vaccination']
 
+    # def get_queryset(self):
+    #     qs = Vaccination.objects.filter(deleted_at__isnull=True).select_related(
+    #         'patient', 'centre', 'vaccin', 'lot', 'created_by'
+    #     )
+    #
+    #     request = self.request
+    #     params = request.query_params
+    #
+    #     # 🔹 Filtre patient texte (code, nom, prénom, téléphone)
+    #     patient_value = params.get('patient')
+    #     if patient_value:
+    #         qs = qs.filter(
+    #             Q(patient__code_patient__icontains=patient_value) |
+    #             Q(patient__nom__icontains=patient_value) |
+    #             Q(patient__prenoms__icontains=patient_value) |
+    #             Q(patient__telephone1__icontains=patient_value)
+    #         )
+    #
+    #     # 🔹 Filtre dates
+    #     date_debut = params.get('date_debut')
+    #     date_fin = params.get('date_fin')
+    #
+    #     if not date_debut and not date_fin:
+    #         # si aucune date fournie => 90 derniers jours par défaut
+    #         default_start = timezone.now().date() - timedelta(days=90)
+    #         qs = qs.filter(date_vaccination__gte=default_start)
+    #     else:
+    #         if date_debut:
+    #             qs = qs.filter(date_vaccination__gte=date_debut)
+    #         if date_fin:
+    #             qs = qs.filter(date_vaccination__lte=date_fin)
+    #
+    #     return qs
+
     def get_queryset(self):
-        qs = Vaccination.objects.filter(deleted_at__isnull=True).select_related(
+        qs = Vaccination.objects.select_related(
             'patient', 'centre', 'vaccin', 'lot', 'created_by'
         )
 
-        request = self.request
-        params = request.query_params
+        # Soft delete
+        # qs = qs.filter(
+        #     Q(deleted_at__isnull=True) |
+        #     Q(deleted_at='') |
+        #     Q(deleted_at='1900-01-01') |
+        #     Q(deleted_at='1900-01-01 00:00:00+00')
+        # )
+
+        params = self.request.query_params
 
         # 🔹 Filtre patient texte (code, nom, prénom, téléphone)
-        patient_value = params.get('patient')
+        patient_value = (params.get('patient') or '').strip()
         if patient_value:
             qs = qs.filter(
                 Q(patient__code_patient__icontains=patient_value) |
@@ -118,22 +160,37 @@ class VaccinationViewSet(viewsets.ModelViewSet):
                 Q(patient__telephone1__icontains=patient_value)
             )
 
-        # 🔹 Filtre dates
-        date_debut = params.get('date_debut')
-        date_fin = params.get('date_fin')
+        # 🔹 Filtre centre, vaccin, dose (remplace DjangoFilterBackend)
+        centre_id = (params.get('centre') or '').strip()
+        if centre_id:
+            qs = qs.filter(centre_id=centre_id)
 
-        if not date_debut and not date_fin:
-            # si aucune date fournie => 90 derniers jours par défaut
-            default_start = timezone.now().date() - timedelta(days=90)
-            qs = qs.filter(date_vaccination__gte=default_start)
-        else:
+        vaccin_id = (params.get('vaccin') or '').strip()
+        if vaccin_id:
+            qs = qs.filter(vaccin_id=vaccin_id)
+
+        dose = (params.get('dose') or '').strip()
+        if dose:
+            qs = qs.filter(dose=dose)
+
+        # 🔹 Nettoyage des dates : on enlève TOUS les espaces (y compris \xa0)
+        raw_debut = (params.get('date_debut') or '').replace('\xa0', ' ').strip()
+        raw_fin = (params.get('date_fin') or '').replace('\xa0', ' ').strip()
+
+        date_debut = parse_date(raw_debut) if raw_debut else None
+        date_fin = parse_date(raw_fin) if raw_fin else None
+
+        if date_debut or date_fin:
             if date_debut:
                 qs = qs.filter(date_vaccination__gte=date_debut)
             if date_fin:
                 qs = qs.filter(date_vaccination__lte=date_fin)
+        else:
+            # pour le moment : pas de limite → tu vois bien si les données s'affichent
+            # Quand tout sera OK, tu pourras remettre un filtre type "90 derniers jours"
+            pass
 
         return qs
-
     def get_serializer_class(self):
         if self.action == 'list':
             return VaccinationListSerializer
