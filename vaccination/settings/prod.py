@@ -4,7 +4,7 @@ from .base import *
 # SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-CHANGE_ME')
 
 # ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost').split(',') if h.strip()]
-ALLOWED_HOSTS = ['localhost', '127.0.0.1','147.93.84.26', 'vaccinationweb']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1','santeci.net', 'vaccinationweb']
 
 DATABASES = {
     'default': {
