@@ -692,7 +692,6 @@ class VaccinationDetailView(StaffOnlyMixin,LoginRequiredMixin, DetailView):
         # On optimise juste les FK directs, sans prefetch foireux
         return (
             Vaccination.objects
-            .filter(deleted_at__isnull=True)
             .select_related(
                 'patient',
                 'centre',
