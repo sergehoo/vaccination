@@ -1,6 +1,6 @@
 {% extends "layout/base.html" %}
 {% load static %}
-
+{% load humanize %}
 {% block title %}Patients – Plateforme Vaccination CI{% endblock %}
 
 {% block hero_title %}Gestion des patients{% endblock %}
@@ -123,13 +123,13 @@ Visualisez, filtrez et suivez les patients inscrits dans la plateforme de vaccin
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
     <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-1 shadow-soft/40">
         <p class="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-[0.16em]">Total patients</p>
-        <p class="text-2xl font-semibold">{{ total_patients|default:0 }}</p>
+        <p class="text-2xl font-semibold">{{ total_patients|default:0|intcomma:"fr" }}</p>
         <p class="text-[11px] text-slate-500 dark:text-slate-400">Tous statuts confondus</p>
     </div>
 
     <div class="bg-white/80 dark:bg-slate-950/80 border border-emerald-200/60 dark:border-emerald-800/80 rounded-3xl p-4 space-y-1">
         <p class="text-[11px] text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.16em]">Patients actifs</p>
-        <p class="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{{ active_patients|default:0 }}</p>
+        <p class="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{{ active_patients|default:0|intcomma:"fr" }}</p>
         <p class="text-[11px] text-slate-500 dark:text-slate-400">
             {{ stats.active_percentage|floatformat:1 }}% du total
         </p>
@@ -137,7 +137,7 @@ Visualisez, filtrez et suivez les patients inscrits dans la plateforme de vaccin
 
     <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-1">
         <p class="text-[11px] text-rose-600 dark:text-rose-400 uppercase tracking-[0.16em]">Patients inactifs</p>
-        <p class="text-2xl font-semibold text-rose-600 dark:text-rose-400">{{ inactive_patients|default:0 }}</p>
+        <p class="text-2xl font-semibold text-rose-600 dark:text-rose-400">{{ inactive_patients|default:0|intcomma:"fr" }}</p>
         <p class="text-[11px] text-slate-500 dark:text-slate-400">
             {{ stats.inactive_percentage|floatformat:1 }}% du total
         </p>
@@ -145,7 +145,7 @@ Visualisez, filtrez et suivez les patients inscrits dans la plateforme de vaccin
 
     <div class="bg-white/80 dark:bg-slate-950/80 border border-sky-200/60 dark:border-sky-800/80 rounded-3xl p-4 space-y-1">
         <p class="text-[11px] text-sky-600 dark:text-sky-400 uppercase tracking-[0.16em]">Nouveaux (7 jours)</p>
-        <p class="text-2xl font-semibold text-sky-600 dark:text-sky-400">{{ new_patients|default:0 }}</p>
+        <p class="text-2xl font-semibold text-sky-600 dark:text-sky-400">{{ new_patients|default:0|intcomma:"fr" }}</p>
         <p class="text-[11px] text-slate-500 dark:text-slate-400">
             Ajouts récents
         </p>
