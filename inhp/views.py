@@ -183,7 +183,7 @@ class DashboardView(StaffOnlyMixin, TemplateView):
         Applique le scope (centre / district / région / pôle / national)
         sur un queryset qui possède un lien vers centre/district/région/pôle.
 
-        field_prefix: nom du champ de base, ex: "centre" ou "centre__district"
+        Field_prefix : nom du champ de base, ex : "centre" ou "centre__district"
         """
         if not isinstance(user, Utilisateur):
             return queryset
@@ -201,7 +201,7 @@ class DashboardView(StaffOnlyMixin, TemplateView):
         if user.access_level == AccessLevel.POLE and user.pole_id:
             return queryset.filter(**{f"{field_prefix}__district__region__poles": user.pole})
 
-        # Niveau national => pas de restriction supplémentaire
+        # Niveau national > pas de restriction supplémentaire
         return queryset
 
     def _get_scope_label(self, user):
@@ -227,9 +227,7 @@ class DashboardView(StaffOnlyMixin, TemplateView):
         # ---------------------------------------------------------------------
         # 1) VACCINATIONS (scopées)
         # ---------------------------------------------------------------------
-        vaccinations_qs = Vaccination.objects.filter(
-            deleted_at__isnull=True
-        ).select_related("centre", "vaccin", "centre__district__region")
+        vaccinations_qs = Vaccination.objects.all().select_related("centre", "vaccin", "centre__district__region")
 
         vaccinations_qs = self._apply_scope(vaccinations_qs, user, field_prefix="centre")
 
@@ -259,9 +257,9 @@ class DashboardView(StaffOnlyMixin, TemplateView):
 
         # ---------------------------------------------------------------------
         # 2) Couverture "nationale" (ou scope)
-        #    approche simple: patients vaccinés / patients enregistrés
+        #    approche simple : patients vaccinés / patients enregistrés
         # ---------------------------------------------------------------------
-        patients_qs = Patient.objects.filter(deleted_at__isnull=True)
+        patients_qs = Patient.objects.all()
         patients_qs = self._apply_scope(patients_qs, user, field_prefix="centre")
 
         total_patients = patients_qs.count()
@@ -279,9 +277,7 @@ class DashboardView(StaffOnlyMixin, TemplateView):
         # ---------------------------------------------------------------------
         # 3) Centres actifs + alertes stock
         # ---------------------------------------------------------------------
-        centres_qs = CentreVaccination.objects.filter(
-            deleted_at__isnull=True
-        ).select_related("district__region")
+        centres_qs = CentreVaccination.objects.all().select_related("district__region")
 
         centres_qs = self._apply_scope(centres_qs, user, field_prefix="id")
 
@@ -327,7 +323,6 @@ class DashboardView(StaffOnlyMixin, TemplateView):
         # 4) Incidents / MAPI
         # ---------------------------------------------------------------------
         mapi_qs = Mapi.objects.filter(
-            deleted_at__isnull=True,
             vaccination__in=vaccinations_qs,
         ).select_related("centre", "vaccination", "patient")
 
@@ -715,7 +710,7 @@ class VaccinationDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
             .filter(
                 patient=vaccination.patient,
                 vaccin=vaccination.vaccin,
-                deleted_at__isnull=True,
+
             )
             .select_related('centre', 'lot')
             .order_by('dose')
@@ -726,7 +721,7 @@ class VaccinationDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
             Vaccination.objects
             .filter(
                 patient=vaccination.patient,
-                deleted_at__isnull=True,
+
             )
             .select_related('vaccin', 'centre', 'lot')
             .order_by('-date_vaccination')[:10]
@@ -740,7 +735,7 @@ class VaccinationDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
                 .filter(
                     patient=vaccination.patient,
                     maladie=maladie,
-                    deleted_at__isnull=True,
+
                 )
                 .select_related('utilisateur', 'centre')
                 .order_by('-created_at')[:5]
@@ -754,8 +749,8 @@ class VaccinationDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
         context['effets_secondaires'] = (
             Mapi.objects
             .filter(
-                vaccination=vaccination,
-                deleted_at__isnull=True,
+                vaccination=vaccination
+
             )
             .select_related('utilisateur')
             .order_by('-created_at')
@@ -771,8 +766,7 @@ class VaccinationDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
         # Vaccinations similaires (même vaccin, même centre)
         vaccinations_similaires = Vaccination.objects.filter(
             vaccin=vaccination.vaccin,
-            centre=vaccination.centre,
-            deleted_at__isnull=True,
+            centre=vaccination.centre
         )
 
         total_vaccin_centre = vaccinations_similaires.count()
@@ -913,7 +907,7 @@ class VaccinationsRappelListView(StaffOnlyMixin, LoginRequiredMixin, ListView):
         # Vaccinations avec rappel dans les 30 prochains jours
         date_limit = timezone.now().date() + timezone.timedelta(days=30)
         return Vaccination.objects.filter(
-            deleted_at__isnull=True,
+
             date_rappel__isnull=False,
             date_rappel__gte=timezone.now().date(),
             date_rappel__lte=date_limit
@@ -929,7 +923,7 @@ class MapiListView(StaffOnlyMixin, LoginRequiredMixin, ListView):
     ordering = ['-date']
 
     def get_queryset(self):
-        queryset = super().get_queryset().filter(deleted_at__isnull=True)
+        queryset = super().get_queryset().all()
         # Filtrage par patient si besoin
         if 'patient_id' in self.kwargs:
             queryset = queryset.filter(patient__code_patient=self.kwargs['patient_id'])
@@ -996,7 +990,7 @@ class VaccineExtListView(StaffOnlyMixin, LoginRequiredMixin, ListView):
     ordering = ['-date']
 
     def get_queryset(self):
-        queryset = super().get_queryset().filter(deleted_at__isnull=True)
+        queryset = super().get_queryset().all()
         if 'patient_id' in self.kwargs:
             queryset = queryset.filter(patient__code_patient=self.kwargs['patient_id'])
         return queryset
