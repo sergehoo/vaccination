@@ -63,6 +63,7 @@ INSTALLED_APPS = [
 
     "inhp",
     'rest_framework',
+    'django_filters',
     'allauth',
     'allauth.account',
     'corsheaders',
