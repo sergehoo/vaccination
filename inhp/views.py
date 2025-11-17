@@ -1,10 +1,12 @@
 import base64
 import datetime
 import io
+import os
 import tempfile
 from collections import defaultdict
 
 import qrcode
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
@@ -20,7 +22,8 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView, View
-from weasyprint import HTML
+from weasyprint import HTML, CSS
+from weasyprint.text.fonts import FontConfiguration
 from xhtml2pdf import pisa
 
 from inhp.backends import StaffOnlyMixin
@@ -423,12 +426,13 @@ class PatientVaccinationCarnetPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
     """
 
     def get(self, request, code_patient, *args, **kwargs):
+        # 1) Patient
         patient = get_object_or_404(
             Patient.objects.all(),
             code_patient=code_patient,
         )
 
-        # Reprise des mêmes jeux de données que PatientDetailView
+        # 2) Données (comme dans PatientDetailView)
         vaccinations = (
             Vaccination.objects
             .filter(patient=patient)
@@ -457,9 +461,7 @@ class PatientVaccinationCarnetPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
             .order_by('-created_at')
         )
 
-        # ------------------ Génération du QR code ------------------
-        # Tu peux mettre ici ce que tu veux encoder : URL de vérification,
-        # payload signé, etc. Pour l'instant : code patient + date.
+        # 3) QR code (data URI)
         verification_payload = (
             f"CARNET|{patient.code_patient}|"
             f"{patient.nom} {patient.prenoms}|"
@@ -469,20 +471,19 @@ class PatientVaccinationCarnetPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_M,
-            box_size=4,  # taille raisonnable pour un PDF A4
+            box_size=4,
             border=2,
         )
         qr.add_data(verification_payload)
         qr.make(fit=True)
 
         img = qr.make_image(fill_color="black", back_color="white")
-
         buffer = io.BytesIO()
         img.save(buffer, format="PNG")
         qr_base64 = base64.b64encode(buffer.getvalue()).decode("ascii")
         qr_data_uri = f"data:image/png;base64,{qr_base64}"
-        # -----------------------------------------------------------
 
+        # 4) Contexte pour le template
         context = {
             "patient": patient,
             "vaccinations": vaccinations,
@@ -493,25 +494,40 @@ class PatientVaccinationCarnetPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
             "qr_code_data": qr_data_uri,
         }
 
-        # 1) On rend le template HTML
-        html_string = render_to_string(
-            "administration/vaccinations/carnet_vaccination_pdf.html",
-            context
+        # 5) Rendu HTML
+        template = get_template("administration/vaccinations/carnet_vaccination_pdf.html")
+        html_string = template.render(context, request=request)
+
+        # 6) Génération du PDF avec WeasyPrint
+
+        # Config des polices (recommandé)
+        font_config = FontConfiguration()
+
+        # ✅ IMPORTANT : base_url = STATIC_ROOT (là où collectstatic dépose les fichiers)
+        base_url = settings.STATIC_ROOT or settings.BASE_DIR
+
+        html = HTML(
+            string=html_string,
+            base_url=base_url,
         )
 
-        if HTML is None:
-            # fallback : renvoyer juste l’HTML si WeasyPrint n’est pas installé
-            return HttpResponse(html_string)
+        stylesheets = []
+        # si tu as un CSS PDF dédié, ex : static/css/pdf_carnet.css
+        pdf_css_path = os.path.join(settings.STATIC_ROOT or "", "css", "pdf_carnet.css")
+        if os.path.exists(pdf_css_path):
+            stylesheets.append(CSS(filename=pdf_css_path, font_config=font_config))
 
-        # 2) On génère le PDF avec WeasyPrint
-        pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
+        pdf_bytes = html.write_pdf(
+            target=None,
+            stylesheets=stylesheets,
+            font_config=font_config,
+        )
 
-        # 3) On renvoie la réponse HTTP PDF
+        # 7) Réponse HTTP
         filename = f"Carnet_vaccinal_{patient.code_patient}.pdf"
-        response = HttpResponse(pdf_file, content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename=\"{filename}\"'
         return response
-
 
 class PatientDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
     model = Patient
@@ -807,7 +823,7 @@ class VaccinationCertificatPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
         patient = vaccination.patient
         centre = vaccination.centre
 
-        # Contenu encodé dans le QR (à adapter : URL de vérification, résumé, etc.)
+        # Contenu encodé dans le QR (à adapter si besoin)
         qr_content = (
             f"Certificat de vaccination\n"
             f"Patient: {patient.nom} {patient.prenoms} ({patient.code_patient})\n"
@@ -817,7 +833,7 @@ class VaccinationCertificatPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
             f"Centre: {centre.name}\n"
         )
 
-        # Génération du QR code en mémoire
+        # Génération du QR code en mémoire (data URI)
         qr = qrcode.QRCode(
             version=1,
             box_size=4,
@@ -829,28 +845,51 @@ class VaccinationCertificatPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
 
         buffer = io.BytesIO()
         img.save(buffer, format="PNG")
-        qr_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
         qr_data_uri = f"data:image/png;base64,{qr_base64}"
 
-        template = get_template('administration/vaccinations/certificat_vaccination_pdf.html')
+        template = get_template("administration/vaccinations/certificat_vaccination_pdf.html")
 
         context = {
-            'vaccination': vaccination,
-            'patient': vaccination.patient,
-            'centre': vaccination.centre,
-            'today': timezone.now().date(),
+            "vaccination": vaccination,
+            "patient": patient,
+            "centre": centre,
+            "today": timezone.now().date(),
             "qr_code_data": qr_data_uri,
         }
 
         html_string = template.render(context, request=request)
 
-        response = HttpResponse(content_type='application/pdf')
-        filename = f"certificat_vaccination_{vaccination.patient.code_patient}_{vaccination.pk}.pdf"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        # 📄 Préparation de la réponse HTTP
+        response = HttpResponse(content_type="application/pdf")
+        filename = f"certificat_vaccination_{patient.code_patient}_{vaccination.pk}.pdf"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
-        # base_url obligatoire pour que les assets (logo, css) soient résolus correctement
-        HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf(target=response)
+        # 🧩 Config des polices (recommandé avec WeasyPrint)
+        font_config = FontConfiguration()
 
+        # 🟢 BASE_URL = STATIC_ROOT pour que les {% static %} soient résolus depuis le disque
+        base_url = settings.STATIC_ROOT or settings.BASE_DIR
+
+        html = HTML(
+            string=html_string,
+            base_url=base_url,  # ⬅️ au lieu de request.build_absolute_uri()
+        )
+
+        # Optionnel : CSS spécifique PDF si tu en as un (ex: static/css/pdf.css)
+        stylesheets = []
+        pdf_css_path = os.path.join(settings.STATIC_ROOT or "", "css", "pdf.css")
+        if os.path.exists(pdf_css_path):
+            stylesheets.append(CSS(filename=pdf_css_path, font_config=font_config))
+
+        # Génération du PDF
+        pdf_bytes = html.write_pdf(
+            target=None,
+            stylesheets=stylesheets,
+            font_config=font_config,
+        )
+
+        response.write(pdf_bytes)
         return response
 
 
