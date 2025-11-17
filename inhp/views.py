@@ -6,50 +6,52 @@ from collections import defaultdict
 
 import qrcode
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.db import models
-from django.db.models import Q, Prefetch
+from django.db.models import Q, Prefetch, Count
+from django.db.models.functions import TruncDate
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string, get_template
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.timezone import now
+from django.views.decorators.csrf import csrf_protect
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView, View
 from weasyprint import HTML
 from xhtml2pdf import pisa
 
-from inhp.backends import PatientAuthBackend
+from inhp.backends import StaffOnlyMixin
 from inhp.forms import VaccinationFilterForm, VaccinationForm
-from inhp.models import Patient, Vaccination, Maladie, Mapi, VaccineExt, Consultation
+from inhp.models import Patient, Vaccination, Maladie, Mapi, VaccineExt, Consultation, AccessLevel, Role, Vaccin, \
+    LotVaccin, CentreVaccination
+from django.utils.translation import gettext as _
 
-
-# Create your views here.
 
 class LandingView(TemplateView):
     template_name = "publiq/landing.html"
 
 
-class HomePageView(LoginRequiredMixin, TemplateView):
+class HomePageView(StaffOnlyMixin,LoginRequiredMixin, TemplateView):
     login_url = '/accounts/login/'
     # form_class = LoginForm
     template_name = "pages/home.html"
 
 
-def patient_login_view(request):
-    if request.method == 'POST':
-        code_patient = request.POST.get('code_patient')
-        telephone = request.POST.get('telephone')
-        backend = PatientAuthBackend()
-        user = backend.authenticate(request, code_patient=code_patient, telephone=telephone)
-        if user:
-            login(request, user, backend='inhp.backends.PatientAuthBackend')
-            return redirect('patient_dashboard')  # Vue spéciale patient
-        else:
-            messages.error(request, 'Code patient ou téléphone incorrect.')
-    return render(request, 'patient_space/patient_login.html')
+# def patient_login_view(request):
+#     if request.method == 'POST':
+#         code_patient = request.POST.get('code_patient')
+#         telephone = request.POST.get('telephone')
+#         backend = PatientAuthBackend()
+#         user = backend.authenticate(request, code_patient=code_patient, telephone=telephone)
+#         if user:
+#             login(request, user, backend='inhp.backends.PatientAuthBackend')
+#             return redirect('patient_dashboard')  # Vue spéciale patient
+#         else:
+#             messages.error(request, 'Code patient ou téléphone incorrect.')
+#     return render(request, 'patient_space/patient_login.html')
 
 
 @login_required
@@ -172,14 +174,165 @@ def generate_pdf_certificat(request, maladie_id):
 #------------------------------------------------------For Bakend Part------------------------
 
 
-class DashboardView(LoginRequiredMixin, TemplateView):
+class DashboardView(StaffOnlyMixin, LoginRequiredMixin, TemplateView):
     login_url = '/accounts/login/'
-    # form_class = LoginForm
     template_name = "administration/dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        # Période de référence (30 derniers jours)
+        today = timezone.now().date()
+        last_30_days = today - datetime.timedelta(days=30)
+
+        # Statistiques principales
+        total_patients = Patient.objects.count()
+        total_vaccinations = Vaccination.objects.count()
+        total_centres = CentreVaccination.objects.count()
+        total_vaccins = Vaccin.objects.count()
+
+        # Activité du jour
+        vaccinations_du_jour = Vaccination.objects.filter(
+            date_vaccination=today
+        ).count()
+
+        # Statistiques des 30 derniers jours
+        vaccinations_30_jours = Vaccination.objects.filter(
+            date_vaccination__gte=last_30_days
+        ).count()
+
+        # Couverture vaccinale (estimation basée sur les patients vaccinés)
+        patients_vaccines = Patient.objects.filter(
+            historique_vaccinations__isnull=False
+        ).distinct().count()
+
+        couverture_nationale = (patients_vaccines / total_patients * 100) if total_patients > 0 else 0
+
+        # Centres en alerte stock
+        centres_alerte_stock = LotVaccin.objects.filter(
+            quantite_disponible__lt=50,  # Moins de 50 doses
+            date_expiration__gt=today
+        ).values('centre').annotate(
+            alert_count=Count('id')
+        ).count()
+
+        # Effets indésirables récents
+        effets_indesirables_24h = Mapi.objects.filter(
+            created_at__gte=timezone.now() - datetime.timedelta(hours=24)
+        ).count()
+
+        effets_indesirables_graves = Mapi.objects.filter(
+            created_at__gte=timezone.now() - datetime.timedelta(hours=24),
+            symptome__icontains='grave'
+        ).count()
+
+        # Tendance des vaccinations (30 derniers jours)
+        tendance_vaccinations = Vaccination.objects.filter(
+            date_vaccination__gte=last_30_days
+        ).annotate(
+            jour=TruncDate('date_vaccination')
+        ).values('jour').annotate(
+            total=Count('id')
+        ).order_by('jour')
+
+        # Vaccins les plus administrés
+        vaccins_populaires = Vaccination.objects.filter(
+            date_vaccination__gte=last_30_days
+        ).values(
+            'vaccin__nom'
+        ).annotate(
+            total=Count('id')
+        ).order_by('-total')[:5]
+
+        # Centres les plus actifs
+        centres_actifs = Vaccination.objects.filter(
+            date_vaccination__gte=last_30_days
+        ).values(
+            'centre__name'
+        ).annotate(
+            total=Count('id')
+        ).order_by('-total')[:10]
+
+        # Alertes stocks critiques
+        stocks_critiques = LotVaccin.objects.filter(
+            quantite_disponible__lt=20,
+            date_expiration__gt=today
+        ).select_related('centre', 'vaccin', 'centre__district', 'centre__district__region')[:10]
+
+        # Campagnes en cours (basé sur les vaccins administrés récemment)
+        campagnes_actives = Vaccin.objects.filter(
+            vaccination__date_vaccination__gte=last_30_days
+        ).distinct().annotate(
+            doses_administrees=Count('vaccination')
+        ).order_by('-doses_administrees')[:5]
+
+        # Synchronisations récentes (simulé - à adapter selon votre logique)
+        synchronisations = [
+            {
+                'region': 'Abidjan 1',
+                'centres': 152,
+                'enregistrements': 23451,
+                'statut': 'success',
+                'derniere_synchro': timezone.now() - datetime.timedelta(hours=2)
+            },
+            {
+                'region': 'Bounkani',
+                'centres': 47,
+                'enregistrements': 3245,
+                'statut': 'warning',
+                'derniere_synchro': timezone.now() - datetime.timedelta(hours=3)
+            },
+            {
+                'region': 'Cavally',
+                'centres': 32,
+                'enregistrements': 0,
+                'statut': 'error',
+                'derniere_synchro': timezone.now() - datetime.timedelta(hours=4)
+            }
+        ]
+
+        # Préparation des données pour les graphiques
+        dates_tendance = [item['jour'].strftime('%d/%m') for item in tendance_vaccinations]
+        valeurs_tendance = [item['total'] for item in tendance_vaccinations]
+
+        noms_vaccins = [item['vaccin__nom'] for item in vaccins_populaires]
+        doses_vaccins = [item['total'] for item in vaccins_populaires]
+
+        context.update({
+            # Statistiques principales
+            'total_patients': total_patients,
+            'total_vaccinations': total_vaccinations,
+            'total_centres': total_centres,
+            'total_vaccins': total_vaccins,
+            'vaccinations_du_jour': vaccinations_du_jour,
+            'vaccinations_30_jours': vaccinations_30_jours,
+            'couverture_nationale': round(couverture_nationale, 1),
+            'centres_alerte_stock': centres_alerte_stock,
+            'effets_indesirables_24h': effets_indesirables_24h,
+            'effets_indesirables_graves': effets_indesirables_graves,
+
+            # Données pour graphiques
+            'dates_tendance': dates_tendance,
+            'valeurs_tendance': valeurs_tendance,
+            'noms_vaccins': noms_vaccins,
+            'doses_vaccins': doses_vaccins,
+
+            # Listes détaillées
+            'centres_actifs': centres_actifs,
+            'stocks_critiques': stocks_critiques,
+            'campagnes_actives': campagnes_actives,
+            'synchronisations': synchronisations,
+
+            # Métadonnées
+            'today': today,
+            'last_update': timezone.now(),
+        })
+
+        return context
 
 
 #----------------============================== Patiens ========================== -----------------------------------
-class PatientListView(LoginRequiredMixin, ListView):
+class PatientListView(StaffOnlyMixin,LoginRequiredMixin, ListView):
     model = Patient
     template_name = 'administration/patients_list.html'
     context_object_name = 'patients'
@@ -240,7 +393,7 @@ class PatientListView(LoginRequiredMixin, ListView):
         return context
 
 
-class PatientVaccinationCarnetPDFView(LoginRequiredMixin, View):
+class PatientVaccinationCarnetPDFView(StaffOnlyMixin,LoginRequiredMixin, View):
     """
     Génère le carnet de vaccination complet d'un patient en PDF.
     """
@@ -336,7 +489,7 @@ class PatientVaccinationCarnetPDFView(LoginRequiredMixin, View):
         return response
 
 
-class PatientDetailView(LoginRequiredMixin, DetailView):
+class PatientDetailView(StaffOnlyMixin,LoginRequiredMixin, DetailView):
     model = Patient
     template_name = 'administration/patient_detail.html'
     context_object_name = 'patient'
@@ -404,7 +557,7 @@ class PatientDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class PatientCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class PatientCreateView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Patient
     template_name = 'patient/form.html'
     fields = [
@@ -426,7 +579,7 @@ class PatientCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         return reverse_lazy('patient-detail', kwargs={'code_patient': self.object.code_patient})
 
 
-class PatientUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class PatientUpdateView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Patient
     template_name = 'patient/form.html'
     fields = [
@@ -446,7 +599,7 @@ class PatientUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView)
         return reverse_lazy('patient-detail', kwargs={'code_patient': self.object.code_patient})
 
 
-class PatientDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class PatientDeleteView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Patient
     template_name = 'patient/confirm_delete.html'
     permission_required = 'patients.delete_patient'
@@ -463,7 +616,7 @@ class PatientDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView)
 
 
 #--------====================== Vaccination ================== -------
-class VaccinationListView(LoginRequiredMixin, TemplateView):
+class VaccinationListView(StaffOnlyMixin,LoginRequiredMixin, TemplateView):
     template_name = 'administration/vaccinations/vaccination_list.html'
 
     def get_context_data(self, **kwargs):
@@ -477,7 +630,7 @@ class VaccinationListView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class VaccinationCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class VaccinationCreateView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Vaccination
     form_class = VaccinationForm
     template_name = 'administration/vaccinations/vaccination_form.html'
@@ -502,7 +655,7 @@ class VaccinationCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateV
         return response
 
 
-class VaccinationDetailView(LoginRequiredMixin, DetailView):
+class VaccinationDetailView(StaffOnlyMixin,LoginRequiredMixin, DetailView):
     model = Vaccination
     template_name = 'administration/vaccinations/vaccination_detail.html'
     context_object_name = 'vaccination'
@@ -619,7 +772,7 @@ class VaccinationDetailView(LoginRequiredMixin, DetailView):
         }
 
 
-class VaccinationCertificatPDFView(LoginRequiredMixin, View):
+class VaccinationCertificatPDFView(StaffOnlyMixin,LoginRequiredMixin, View):
     """
     Génère un certificat de vaccination en PDF pour une vaccination donnée.
     """
@@ -681,7 +834,7 @@ class VaccinationCertificatPDFView(LoginRequiredMixin, View):
         return response
 
 
-class VaccinationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class VaccinationUpdateView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Vaccination
     form_class = VaccinationForm
     template_name = 'administration/vaccinations/vaccination_form.html'
@@ -712,7 +865,7 @@ class VaccinationUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateV
         return response
 
 
-class VaccinationDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class VaccinationDeleteView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Vaccination
     template_name = 'administration/administration/vaccinations/vaccination_confirm_delete.html'
     permission_required = 'vaccinations.delete_vaccination'
@@ -725,7 +878,7 @@ class VaccinationDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteV
         return super().form_valid(form)
 
 
-class VaccinationsRappelListView(LoginRequiredMixin, ListView):
+class VaccinationsRappelListView(StaffOnlyMixin,LoginRequiredMixin, ListView):
     model = Vaccination
     template_name = 'administration/administration/vaccinations/vaccinations_rappel.html'
     context_object_name = 'vaccinations_rappel'
@@ -742,7 +895,7 @@ class VaccinationsRappelListView(LoginRequiredMixin, ListView):
 
 
 #----------------============================== Mapi  ========================== -----------------------------------
-class MapiListView(LoginRequiredMixin, ListView):
+class MapiListView(StaffOnlyMixin,LoginRequiredMixin, ListView):
     model = Mapi
     template_name = 'mapi/list.html'
     context_object_name = 'mapis'
@@ -757,13 +910,13 @@ class MapiListView(LoginRequiredMixin, ListView):
         return queryset
 
 
-class MapiDetailView(LoginRequiredMixin, DetailView):
+class MapiDetailView(StaffOnlyMixin,LoginRequiredMixin, DetailView):
     model = Mapi
     template_name = 'mapi/detail.html'
     context_object_name = 'mapi'
 
 
-class MapiCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class MapiCreateView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = Mapi
     template_name = 'mapi/form.html'
     fields = ['symptome', 'commentaire', 'date', 'patient', 'centre', 'vaccination']
@@ -783,7 +936,7 @@ class MapiCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
         return reverse_lazy('mapi-detail', kwargs={'pk': self.object.pk})
 
 
-class MapiUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class MapiUpdateView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = Mapi
     template_name = 'mapi/form.html'
     fields = ['symptome', 'commentaire', 'date', 'patient', 'centre', 'vaccination']
@@ -793,7 +946,7 @@ class MapiUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
         return reverse_lazy('mapi-detail', kwargs={'pk': self.object.pk})
 
 
-class MapiDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class MapiDeleteView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = Mapi
     template_name = 'mapi/confirm_delete.html'
     permission_required = 'patients.delete_mapi'
@@ -809,7 +962,7 @@ class MapiDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
 #----------------============================== Vaccin exterieur  ========================== -----------------------------------
 
 
-class VaccineExtListView(LoginRequiredMixin, ListView):
+class VaccineExtListView(StaffOnlyMixin,LoginRequiredMixin, ListView):
     model = VaccineExt
     template_name = 'vaccine_ext/list.html'
     context_object_name = 'vaccine_exts'
@@ -823,13 +976,13 @@ class VaccineExtListView(LoginRequiredMixin, ListView):
         return queryset
 
 
-class VaccineExtDetailView(LoginRequiredMixin, DetailView):
+class VaccineExtDetailView(StaffOnlyMixin,LoginRequiredMixin, DetailView):
     model = VaccineExt
     template_name = 'vaccine_ext/detail.html'
     context_object_name = 'vaccine_ext'
 
 
-class VaccineExtCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class VaccineExtCreateView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = VaccineExt
     template_name = 'vaccine_ext/form.html'
     fields = ['pays', 'ville', 'numero_dose', 'lot', 'patient', 'vaccin', 'date']
@@ -851,7 +1004,7 @@ class VaccineExtCreateView(LoginRequiredMixin, PermissionRequiredMixin, CreateVi
         return reverse_lazy('vaccine-ext-detail', kwargs={'pk': self.object.pk})
 
 
-class VaccineExtUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class VaccineExtUpdateView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = VaccineExt
     template_name = 'vaccine_ext/form.html'
     fields = ['pays', 'ville', 'numero_dose', 'lot', 'patient', 'vaccin', 'date']
@@ -861,7 +1014,7 @@ class VaccineExtUpdateView(LoginRequiredMixin, PermissionRequiredMixin, UpdateVi
         return reverse_lazy('vaccine-ext-detail', kwargs={'pk': self.object.pk})
 
 
-class VaccineExtDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+class VaccineExtDeleteView(StaffOnlyMixin,LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = VaccineExt
     template_name = 'vaccine_ext/confirm_delete.html'
     permission_required = 'patients.delete_vaccineext'

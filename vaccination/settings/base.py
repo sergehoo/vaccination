@@ -84,8 +84,11 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
     # 'inhp.middleware.PrometheusIPTrackingMiddleware',
     'inhp.middleware.EnhancedPrometheusMiddleware',
+    'inhp.middleware.BlockPatientAdminMiddleware',
+
     'django_prometheus.middleware.PrometheusAfterMiddleware',
     'corsheaders.middleware.CorsMiddleware'
+
 
 ]
 
@@ -168,15 +171,12 @@ REST_FRAMEWORK = {
 }
 
 AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',  # this is default
-    # 'guardian.backends.ObjectPermissionBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
-    'inhp.backends.PatientAuthBackend',  # <-- votre administration patient
+    'django.contrib.auth.backends.ModelBackend',
+    "inhp.backends.ProfessionalAuthBackend",
+    "inhp.backends.PatientAuthBackend",
 
     # "djoser.auth_backends.LoginFieldBackend",
 )
-# GDAL_LIBRARY_PATH = os.getenv('GDAL_LIBRARY_PATH', '/opt/homebrew/opt/gdal/lib/libgdal.dylib')
-# GEOS_LIBRARY_PATH = os.getenv('GEOS_LIBRARY_PATH', '/opt/homebrew/opt/geos/lib/libgeos_c.dylib')
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -264,3 +264,23 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+# Logging
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'auth_file': {
+#             'level': 'INFO',
+#             'class': 'logging.FileHandler',
+#             'filename': 'auth.log',
+#         },
+#     },
+#     'loggers': {
+#         'inhp.backends': {
+#             'handlers': ['auth_file'],
+#             'level': 'INFO',
+#             'propagate': False,
+#         },
+#     },
+# }

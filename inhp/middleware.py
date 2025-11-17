@@ -1,8 +1,11 @@
+from django.shortcuts import redirect
 from prometheus_client import Counter, Histogram, Gauge
 from django.utils.deprecation import MiddlewareMixin
 from django.conf import settings
 import socket
 import time
+
+from inhp.models import Patient
 
 REQUEST_DURATION_BUCKETS = (0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 30, 60, float('inf'))
 
@@ -43,6 +46,7 @@ concurrent_requests = Gauge(
     'Nombre de requêtes concurrentes',
     ['method', 'path', 'host']
 )
+
 
 class EnhancedPrometheusMiddleware(MiddlewareMixin):
     def __init__(self, get_response=None):
@@ -106,3 +110,15 @@ class EnhancedPrometheusMiddleware(MiddlewareMixin):
 
         return '/'.join(parts)
 
+
+class BlockPatientAdminMiddleware(MiddlewareMixin):
+
+    def process_request(self, request):
+        # Vérifie si l'utilisateur est connecté et est un patient
+        if request.user.is_authenticated and isinstance(request.user, Patient):
+
+            # Si le patient tente d'accéder au /admin/
+            if request.path.startswith("/admin/"):
+                return redirect("home")   # ou une page d'erreur personnalisée
+
+        return None

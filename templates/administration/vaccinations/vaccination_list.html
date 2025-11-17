@@ -114,7 +114,7 @@
             <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-5">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-lg font-semibold">📊 Tableau de bord des vaccinations</h2>
-                    <button onclick="toggleStatsSection()" 
+                    <button onclick="toggleStatsSection()"
                             class="px-3 py-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-sm">
                         <i class="fa-solid fa-times"></i>
                     </button>
@@ -341,7 +341,7 @@
         function toggleStatsSection() {
             const statsSection = document.getElementById('stats-section');
             statsSection.classList.toggle('hidden');
-            
+
             if (!statsSection.classList.contains('hidden')) {
                 loadStatistics();
             }
@@ -350,26 +350,26 @@
         // Chargement des statistiques
         async function loadStatistics() {
             const statsUrl = document.getElementById('vaccination-page').dataset.statsUrl;
-            
+
             try {
                 const response = await fetch(statsUrl);
                 const data = await response.json();
-                
+
                 // Mise à jour des KPIs
-                document.getElementById('stats-total-vaccinations').textContent = 
+                document.getElementById('stats-total-vaccinations').textContent =
                     data.kpis.total_vaccinations?.toLocaleString() || '0';
-                document.getElementById('stats-vaccinations-mois').textContent = 
+                document.getElementById('stats-vaccinations-mois').textContent =
                     data.kpis.vaccinations_mois?.toLocaleString() || '0';
-                document.getElementById('stats-rappels-prochains').textContent = 
+                document.getElementById('stats-rappels-prochains').textContent =
                     data.kpis.rappels_prochains?.toLocaleString() || '0';
-                document.getElementById('stats-taux-rappel').textContent = 
+                document.getElementById('stats-taux-rappel').textContent =
                     data.kpis.taux_rappel + '%' || '0%';
-                
+
                 // Évolution du mois
                 const evolutionElem = document.getElementById('stats-evolution-mois');
                 const evolution = data.kpis.evolution_mois || 0;
                 evolutionElem.textContent = (evolution > 0 ? '+' : '') + evolution + '%';
-                evolutionElem.className = evolution >= 0 ? 
+                evolutionElem.className = evolution >= 0 ?
                     'text-[10px] text-green-500' : 'text-[10px] text-rose-500';
 
                 // Répartition par vaccin
@@ -399,12 +399,12 @@
                 // Graphique d'évolution mensuelle
                 const evolutionContainer = document.getElementById('stats-evolution-mensuelle');
                 const maxValue = Math.max(...data.periodes.vaccinations_par_mois.map(m => m.total));
-                
+
                 evolutionContainer.innerHTML = data.periodes.vaccinations_par_mois.map(mois => {
                     const height = maxValue > 0 ? (mois.total / maxValue) * 100 : 0;
                     const date = new Date(mois.mois);
                     const monthName = date.toLocaleDateString('fr-FR', { month: 'short' });
-                    
+
                     return `
                         <div class="flex flex-col items-center gap-1 flex-1">
                             <div class="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-lg transition-all hover:from-blue-600 hover:to-blue-500"
@@ -606,7 +606,7 @@
                     const statsUrl = document.getElementById('vaccination-page').dataset.statsUrl;
                     const response = await fetch(statsUrl);
                     const data = await response.json();
-                    
+
                     if (heroRappelsProchains) {
                         heroRappelsProchains.textContent = data.kpis.rappels_prochains || '0';
                     }
@@ -643,7 +643,7 @@
     </script>
 {% endblock %}
 
-{#{% extends "layout/base.html" %}#}
+{#{% extends "layout_patient/base.html" %}#}
 {#{% load static %}#}
 {##}
 {#{% block title %}Vaccinations – Plateforme Vaccination CI{% endblock %}#}

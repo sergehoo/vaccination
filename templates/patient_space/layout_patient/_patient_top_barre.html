@@ -1,0 +1,221 @@
+{% load static %}
+<!-- TOPBAR PATIENT -->
+
+<header class="backdrop-blur-xl bg-white/70 dark:bg-slate-900/80 border-b border-white/10 dark:border-slate-800 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 lg:px-6 h-16 flex items-center justify-between gap-4">
+            <!-- Brand -->
+            <div class="flex items-center gap-3">
+             <div class="h-10 w-10 rounded-2xl flex items-center justify-center text-white font-bold ">
+                <img src="{% static 'images/logo/images.jpeg' %}" alt="Logo CI" class="h-25 w-25 object-contain">
+            </div>
+            <div class="h-10 w-10 rounded-2xl flex items-center justify-center text-white font-bold shadow-soft">
+                <img src="{% static 'images/logo/logoMSHPCMU.svg' %}" alt="Logo CI" class="h-22 w-22 object-contain">
+            </div>
+            <div class="leading-tight">
+                <p class="text-lg uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">
+                    MSHP-CMU
+                </p>
+                <p class="text-xs font-semibold">
+                    Plateforme Nationale de Vaccination
+                </p>
+            </div>
+        </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-3">
+                <!-- Notifications -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="relative p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800">
+                        <i class="fas fa-bell text-xl"></i>
+                        <template x-if="unreadNotifications > 0">
+                            <span class="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                        </template>
+                    </button>
+
+                    <!-- Dropdown notifications -->
+                    <div x-show="open" @click.outside="open = false"
+                         class="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-2xl shadow-soft border border-slate-200 dark:border-slate-700 z-50 overflow-hidden">
+                        <div class="p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                            <h3 class="font-semibold text-sm">Notifications</h3>
+                            <button @click="markAllAsRead()" class="text-xs text-ivoireBlue dark:text-ivoireGreen hover:underline">
+                                Tout marquer comme lu
+                            </button>
+                        </div>
+                        <div class="max-h-96 overflow-y-auto">
+                            <template x-for="notification in notifications" :key="notification.id">
+                                <div @click="markNotificationAsRead(notification.id)"
+                                     :class="notification.read ? 'bg-transparent' : 'bg-blue-50 dark:bg-blue-900/20'"
+                                     class="p-3 border-b border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                    <div class="flex gap-3">
+                                        <div class="h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0"
+                                             :class="{
+                                                'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400': notification.type === 'rappel',
+                                                'bg-sky-100 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400': notification.type === 'info',
+                                                'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400': notification.type === 'profil'
+                                             }">
+                                            <i class="text-xs"
+                                               :class="{
+                                                    'fa-calendar-check': notification.type === 'rappel',
+                                                    'fa-circle-info': notification.type === 'info',
+                                                    'fa-user-pen': notification.type === 'profil'
+                                               }"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-medium text-sm" x-text="notification.title"></p>
+                                            <p class="text-xs text-slate-600 dark:text-slate-300 mt-1" x-text="notification.message"></p>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" x-text="notification.time"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Theme toggle -->
+                <button
+                    @click="toggleTheme"
+                    class="h-9 w-9 rounded-full border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-center text-slate-600 dark:text-slate-300 bg-white/80 dark:bg-slate-900/90 shadow-sm hover:scale-[1.02] transition">
+                    <i class="fa-solid fa-sun text-xs" x-show="darkMode === false"></i>
+                    <i class="fa-solid fa-moon text-xs" x-show="darkMode === true"></i>
+                </button>
+
+                {# Patient - avatar + dropdown actions rapides #}
+<div
+    class="relative hidden sm:flex items-center"
+    x-data="{ openPatientMenu: false }"
+    @click.outside="openPatientMenu = false"
+>
+    <button
+        type="button"
+        @click="openPatientMenu = !openPatientMenu"
+        class="flex items-center gap-2 rounded-full bg-slate-900/5 dark:bg-slate-50/5 px-2.5 py-1 border border-slate-200/80 dark:border-slate-700/80 hover:bg-slate-900/10 dark:hover:bg-slate-50/10 transition-colors"
+    >
+        <!-- Avatar / initiales patient -->
+        <div class="h-7 w-7 rounded-full gradient-primary flex items-center justify-center text-[11px] text-white font-semibold">
+            {% if request.user.is_authenticated %}
+                {# Pour le modèle Patient : nom + prénoms #}
+                {% if request.user.prenoms or request.user.nom %}
+                    {{ request.user.prenoms|default:''|slice:":1" }}{{ request.user.nom|default:''|slice:":1" }}
+                {% else %}
+                    {{ request.user.code_patient|default:'PT'|slice:":2" }}
+                {% endif %}
+            {% else %}
+                PT
+            {% endif %}
+        </div>
+
+        <!-- Infos patient -->
+        <div class="text-[11px] leading-tight text-left">
+            <p class="font-semibold">
+                {% if request.user.is_authenticated %}
+                    {% if request.user.prenoms or request.user.nom %}
+                        {{ request.user.prenoms|title }} {{ request.user.nom|upper }}
+                    {% else %}
+                        {{ request.user.code_patient }}
+                    {% endif %}
+                {% else %}
+                    Espace patient
+                {% endif %}
+            </p>
+            <p class="text-slate-500 dark:text-slate-400 text-[10px]">
+                {% if request.user.is_authenticated %}
+                    Connecté · {{ request.user.code_patient }}
+                {% else %}
+                    Non connecté
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Chevron -->
+        <div class="text-slate-500 dark:text-slate-400 text-[10px]">
+            <i class="fa-solid" :class="openPatientMenu ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </div>
+    </button>
+
+    <!-- DROPDOWN PATIENT -->
+    <div
+        x-cloak
+        x-show="openPatientMenu"
+        x-transition
+        class="absolute right-0 top-11 w-56 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-soft py-2 text-[12px] z-30"
+    >
+        <!-- En-tête -->
+        <div class="px-3 pb-2 border-b border-slate-100 dark:border-slate-800 mb-1">
+            <p class="text-[11px] font-semibold">
+                {% if request.user.prenoms or request.user.nom %}
+                    {{ request.user.prenoms|title }} {{ request.user.nom|upper }}
+                {% else %}
+                    {{ request.user.code_patient }}
+                {% endif %}
+            </p>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                Identifiant : {{ request.user.code_patient }}
+            </p>
+            {% if request.user.telephone1 %}
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                    Tel : {{ request.user.telephone1 }}
+                </p>
+            {% endif %}
+        </div>
+
+        <!-- Accès rapides -->
+        <a
+            href="{% url 'patient_dashboard' %}"
+            class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200"
+        >
+            <i class="fa-solid fa-gauge-high text-[11px] text-ivoireBlue"></i>
+            <span>Mon tableau de bord</span>
+        </a>
+
+        <a
+            href="{#% url 'patient_change_password' %#}"
+            class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200"
+        >
+            <i class="fa-solid fa-key text-[11px] text-ivoireGreen"></i>
+            <span>Changer mon mot de passe</span>
+        </a>
+
+        <a
+            href="{#% url 'patient_carnet' %#}"
+            class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200"
+        >
+            <i class="fa-solid fa-file-medical text-[11px] text-ivoireOrange"></i>
+            <span>Mon carnet de vaccination</span>
+        </a>
+
+        <a
+            href="{#% url 'patient_rendez_vous' %#}"
+            class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200"
+        >
+            <i class="fa-solid fa-calendar-check text-[11px] text-emerald-500"></i>
+            <span>Mes rendez-vous</span>
+        </a>
+
+        <a
+            href="{#% url 'patient_profil' %#}"
+            class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200"
+        >
+            <i class="fa-solid fa-user-pen text-[11px] text-purple-500"></i>
+            <span>Modifier mon profil</span>
+        </a>
+
+        <!-- Séparateur -->
+        <div class="my-1 border-t border-slate-100 dark:border-slate-800"></div>
+
+        <!-- Déconnexion -->
+        <a href="{% url 'logout' %}" class="flex items-center gap-2 px-3 py-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400">
+            <i class="fa-solid fa-arrow-right-from-bracket text-[11px]"></i>
+            <span>Se déconnecter</span>
+        </a>
+    
+    </div>
+
+</div><div class="h-7 w-40  flex items-center justify-center text-white font-bold ">
+                <img src="{% static 'images/logo/logo-001_0.png' %}" alt="Logo CI">
+            </div>
+           
+           
+            </div>
+        </div>
+    </header>

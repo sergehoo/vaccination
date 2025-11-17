@@ -706,7 +706,7 @@ function checkZwjSupport (zwjEmojisToCheck, baselineEmoji, emojiToDomNode) {
   }
 }
 
-// Measure after style/layout are complete
+// Measure after style/layout_patient are complete
 
 const requestPostAnimationFrame = callback => {
   rAF(() => {

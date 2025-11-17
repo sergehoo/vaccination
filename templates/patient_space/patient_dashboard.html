@@ -1,392 +1,597 @@
-{% extends 'layout/base.html' %}
+{% extends "patient_space/patient_base.html" %}
 {% load static %}
-{% block content %}
+{% block title %}Mon Espace Patient – Vaccination CI{% endblock %}
 
-<div class="nk-main">
-    <!-- wrap @s -->
-    <div class="nk-wrap">
-        <!-- main header @s -->
-        <div class="nk-header nk-header-fixed is-light" style="background: #009A44;">
-            <div class="container-fluid">
-                <div class="nk-header-wrap">
-                    <div class="nk-menu-trigger d-xl-none ml-n1">
-                        <a href="#" class="nk-nav-toggle nk-quick-nav-icon" data-target="sidebarMenu"><em class="icon ni ni-menu text-white"></em></a>
+{% block content %}
+<!-- Bandeau contexte / hero patient -->
+<div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white shadow-soft mb-6">
+    <div class="absolute inset-y-0 right-0 hidden md:block opacity-50">
+        <img src="{% static 'images/hero/banner6.webp' %}" alt="Espace Patient"
+             class="h-full object-contain pointer-events-none">
+    </div>
+
+    <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div class="space-y-3 max-w-xl">
+            <p class="text-[10px] uppercase tracking-[0.32em] text-blue-200/90">
+                Mon Espace Personnel · {{ patient.code_patient }}
+            </p>
+            <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-user-shield text-blue-300"></i>
+                Bienvenue, {{ patient.prenoms|title }} {{ patient.nom|upper }}
+            </h1>
+            <p class="text-[12px] text-blue-200">
+                Gérez votre profil, consultez votre carnet de vaccination et suivez vos prochains rappels.
+            </p>
+            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/30">
+                    <i class="fa-solid fa-id-card text-[9px]"></i>
+                    {{ patient.code_patient }}
+                </span>
+                {% if patient.age %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/30">
+                    <i class="fa-solid fa-cake-candles text-[9px]"></i>
+                    {{ patient.age }} ans
+                </span>
+                {% endif %}
+                {% if patient.telephone1 %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/30">
+                    <i class="fa-solid fa-phone text-[9px]"></i>
+                    {{ patient.telephone1 }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="rounded-2xl bg-white/10 border border-white/20 px-4 py-3 text-[11px] min-w-[220px] space-y-2">
+            <div class="flex items-center justify-between gap-2">
+                <p class="text-white/90 font-medium">
+                    Statut vaccinal
+                </p>
+                <span class="px-2 py-0.5 rounded-full bg-{{ statut_calendrier_color }}-500/20 text-{{ statut_calendrier_color }}-100 border border-{{ statut_calendrier_color }}-300/60 text-[10px]">
+                    {{ statut_calendrier }}
+                </span>
+            </div>
+            <div class="flex gap-3 items-end">
+                <div>
+                    <p class="text-lg font-semibold">{{ vaccinations|length }}</p>
+                    <p class="text-[10px] text-blue-200">
+                        dose(s) administrée(s)
+                    </p>
+                </div>
+                <div class="flex-1 h-10 relative">
+                    <div class="absolute inset-0 rounded-xl bg-gradient-to-tr from-blue-400/40 via-indigo-400/30 to-purple-400/40 opacity-60 blur-[10px]"></div>
+                    <div class="absolute inset-0 border border-dashed border-white/30 rounded-xl"></div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between text-[10px] text-blue-200">
+                <span>Dernière mise à jour : Aujourd'hui</span>
+                <span class="flex items-center gap-1">
+                    <i class="fa-solid fa-circle text-[5px] text-emerald-400 animate-pulse"></i>
+                    à jour
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Statistiques personnelles -->
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+    <!-- Carte : Doses totales -->
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Doses reçues</p>
+                <p class="text-2xl font-semibold">{{ vaccinations|length }}</p>
+            </div>
+            <div class="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                <i class="fa-solid fa-syringe text-lg"></i>
+            </div>
+        </div>
+        <div class="mt-2 text-[10px] text-slate-500 dark:text-slate-400">
+            Toutes vaccinations confondues
+        </div>
+    </div>
+
+    <!-- Carte : Vaccins différents -->
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Vaccins différents</p>
+                <p class="text-2xl font-semibold">{{ vaccins_uniques|length }}</p>
+            </div>
+            <div class="h-10 w-10 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center">
+                <i class="fa-solid fa-shield-virus text-lg"></i>
+            </div>
+        </div>
+        <div class="mt-2 text-[10px] text-slate-500 dark:text-slate-400">
+            Types de vaccins administrés
+        </div>
+    </div>
+
+    <!-- Carte : Prochain rappel -->
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Prochain rappel</p>
+                <p class="text-lg font-semibold">
+                    {% if prochain_rappel %}
+                        {{ prochain_rappel.vaccin.nom|truncatechars:18 }}
+                    {% else %}
+                        Aucun
+                    {% endif %}
+                </p>
+            </div>
+            <div class="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                <i class="fa-solid fa-clock text-lg"></i>
+            </div>
+        </div>
+        <div class="mt-2 text-[10px] text-slate-500 dark:text-slate-400">
+            {% if prochain_rappel %}
+            Prévision : {{ prochain_rappel.date_rappel|date:"d/m/Y" }}
+            {% else %}
+            Toutes vos vaccinations sont à jour
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Carte : Centre actuel -->
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Centre de suivi</p>
+                <p class="text-sm font-semibold">
+                    {% if centre_actuel %}
+                        {{ centre_actuel.name  }}
+                    {% else %}
+                        Non défini
+                    {% endif %}
+                </p>
+            </div>
+            <div class="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                <i class="fa-solid fa-hospital text-lg"></i>
+            </div>
+        </div>
+        <div class="mt-2 text-[10px] text-slate-500 dark:text-slate-400">
+            {% if centre_actuel %}
+                {{ centre_actuel.adresse|default:centre_actuel.district.nom }}
+            {% else %}
+                <a href="{#% url 'patient_profil' %#}" class="text-blue-500 hover:underline">Définir un centre</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<!-- Résumé haut : infos patient + pass vaccinal -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <!-- Carte résumé patient -->
+
+    <div class="lg:col-span-2 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4">
+        <div class="flex items-start gap-3">
+            <div class="h-12 w-12 rounded-2xl gradient-primary flex items-center justify-center text-white font-semibold text-sm">
+                {{ patient.prenoms|slice:":1" }}{{ patient.nom|slice:":1" }}
+            </div>
+            <div class="space-y-1 text-[12px]">
+                <p class="text-sm font-semibold">
+                    {{ patient.prenoms|title }} {{ patient.nom|upper }}
+                </p>
+                <p class="text-slate-500 dark:text-slate-400">
+                    N° Identifiant Santé : {{ patient.code_patient }}
+                </p>
+                <div class="flex flex-wrap gap-2 text-[11px] mt-1">
+                    <span class="px-2.5 py-1 rounded-full bg-{{ statut_calendrier_color }}-100 text-{{ statut_calendrier_color }}-700 dark:bg-{{ statut_calendrier_color }}-500/15 dark:text-{{ statut_calendrier_color }}-300">
+                        Statut : {{ statut_calendrier }}
+                    </span>
+                    {% if vaccinations %}
+                    <span class="px-2.5 py-1 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
+                        Dernier vaccin :
+                        {{ vaccinations.0.vaccin.nom }} ({{ vaccinations.0.date_vaccination|date:"d/m/Y" }})
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+          </div>
+
+    <!-- Pass vaccinal -->
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 flex flex-col justify-between">
+        <div class="space-y-1 text-[12px]">
+            <p class="text-sm font-semibold">
+                Mon pass vaccinal numérique
+            </p>
+            <p class="text-slate-500 dark:text-slate-400">
+                QR Code signé par le Ministère de la Santé.
+            </p>
+        </div>
+        <div class="mt-3 flex flex-col items-center gap-3">
+            <div class="w-28 h-28 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-[10px] text-slate-400 pulse-glow">
+                <i class="fa-solid fa-qrcode text-2xl text-ivoireGreen"></i>
+            </div>
+            <a href="{% url 'patient_carnet_vaccinal_pdf' patient.code_patient %}" class="w-full text-[11px] px-3 py-2 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                Télécharger mon pass (PDF)
+            </a>
+        </div>
+    </div>
+</div>
+<!-- Dernières vaccinations et calendrier -->
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <!-- Dernières vaccinations -->
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-semibold">Dernières vaccinations</h2>
+            <a href="{#% url 'patient_carnet' %#}" class="text-xs text-blue-500 hover:text-blue-600 font-medium">
+                Voir tout →
+            </a>
+        </div>
+
+        <div class="space-y-3">
+            {% for vacc in derniers_vaccinations %}
+            <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700">
+                <div class="h-10 w-10 rounded-lg bg-{{ vacc.couleur }}-100 dark:bg-{{ vacc.couleur }}-900/30 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid {{ vacc.icone }} text-{{ vacc.couleur }}-600 dark:text-{{ vacc.couleur }}-400"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold truncate">{{ vacc.vaccin.nom }}</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">
+                        Dose {{ vacc.dose }}{% if vacc.vaccin.doses_requises %}/{{ vacc.vaccin.doses_requises }}{% endif %} · {{ vacc.date_vaccination|date:"d/m/Y" }}
+                    </p>
+                    {% if vacc.centre %}
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500">
+                        {{ vacc.centre.name }}
+                    </p>
+                    {% endif %}
+                 <a href="{% url 'vaccination_certificat_pdf' vacc.id %}" class="text-[10px] text-slate-900 dark:text-slate-900">
+                       <i class="fa fa-file-pdf"></i>
+                        Télécharger le certificat
+                    </a>
+                </div>
+                <div class="text-right">
+           {% if vacc.id %}
+        <a href="{% url 'patient_mapi_create_with_vaccination' vaccination_id=vacc.id %}"
+           class="inline-flex items-center gap-1 text-[10px] text-red-600 hover:text-red-700 mt-1">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            Signaler un effet indésirable
+        </a>
+    {% endif %}
+                    <span class="inline-block px-2 py-1 rounded-full bg-{{ vacc.couleur }}-100 dark:bg-{{ vacc.couleur }}-900/30 text-{{ vacc.couleur }}-600 dark:text-{{ vacc.couleur }}-400 text-[10px]">
+                        {{ vacc.statut }}
+                    </span>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-8">
+                <i class="fa-solid fa-syringe text-3xl text-slate-300 dark:text-slate-600 mb-3"></i>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Aucune vaccination enregistrée</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Prenez rendez-vous pour votre première vaccination</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Calendrier des rappels -->
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-sm font-semibold">Calendrier des rappels</h2>
+            <button class="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                <i class="fa-solid fa-download"></i> Exporter
+            </button>
+        </div>
+
+        <div class="space-y-3">
+            {% for rappel in rappels_prochains %}
+            <div class="flex items-center gap-3 p-3 rounded-xl {% if rappel.urgent %}bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800{% else %}bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700{% endif %}">
+                <div class="text-center min-w-12">
+                    <div class="text-xs font-bold {% if rappel.urgent %}text-orange-600 dark:text-orange-400{% else %}text-slate-600 dark:text-slate-400{% endif %}">
+                        {{ rappel.date|date:"d" }}
                     </div>
-                    <div class="nk-header-brand d-xl-none">
-                        <a href="#" class="logo-link">
-                            <img class="logo-img" src="{% static 'images/logo-white.png' %}" alt="KENEYA" width="120">
+                    <div class="text-[10px] {% if rappel.urgent %}text-orange-500 dark:text-orange-500{% else %}text-slate-500 dark:text-slate-500{% endif %}">
+                        {{ rappel.date|date:"M" }}
+                    </div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold {% if rappel.urgent %}text-orange-800 dark:text-orange-300{% endif %}">
+                        {{ rappel.vaccin.nom }}
+                    </p>
+                    <p class="text-[10px] {% if rappel.urgent %}text-orange-600 dark:text-orange-400{% else %}text-slate-500 dark:text-slate-400{% endif %}">
+                        Rappel dose {{ rappel.dose }}
+                    </p>
+                </div>
+                <div class="text-right">
+                    {% if rappel.urgent %}
+                    <span class="inline-block px-2 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px]">
+                        Urgent
+                    </span>
+                    {% else %}
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400">
+                        Dans {{ rappel.jours_restants }} jours
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-8">
+                <i class="fa-solid fa-calendar-check text-3xl text-slate-300 dark:text-slate-600 mb-3"></i>
+                <p class="text-sm text-slate-500 dark:text-slate-400">Aucun rappel prévu</p>
+                <p class="text-xs text-slate-400 dark:text-slate-500 mt-1">Tous vos vaccins sont à jour</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Légende -->
+        <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div class="flex items-center gap-4 text-[10px] text-slate-500 dark:text-slate-400">
+                <div class="flex items-center gap-1">
+                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span>À jour</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="w-2 h-2 rounded-full bg-amber-500"></div>
+                    <span>À prévoir</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="w-2 h-2 rounded-full bg-orange-500"></div>
+                    <span>Urgent</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertes et actions rapides -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
+    <!-- Alertes importantes -->
+    <div class="lg:col-span-2 space-y-3">
+        {% if prochain_rappel %}
+        <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4">
+            <div class="flex items-start gap-3">
+                <div class="h-8 w-8 rounded-xl bg-amber-100 dark:bg-amber-800 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-bell text-amber-600 dark:text-amber-400 text-sm"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-amber-800 dark:text-amber-300 text-sm mb-1">
+                        Rappel vaccinal à prévoir
+                    </h3>
+                    <p class="text-amber-700 dark:text-amber-400 text-xs">
+                        Votre prochain rappel pour <strong>{{ prochain_rappel.vaccin.nom }}</strong>
+                        est prévu autour du <strong>{{ prochain_rappel.date_rappel|date:"d/m/Y" }}</strong>.
+                    </p>
+                    <div class="flex gap-2 mt-2">
+                        <button class="text-xs px-3 py-1.5 rounded-full bg-amber-600 text-white hover:bg-amber-700">
+                            Prendre rendez-vous
+                        </button>
+                        <button class="text-xs px-3 py-1.5 rounded-full bg-white text-amber-600 border border-amber-600 hover:bg-amber-50">
+                            Plus d'infos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if must_change_password %}
+        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-4">
+            <div class="flex items-start gap-3">
+                <div class="h-8 w-8 rounded-xl bg-red-100 dark:bg-red-800 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-shield-exclamation text-red-600 dark:text-red-400 text-sm"></i>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold text-red-800 dark:text-red-300 text-sm mb-1">
+                        Sécurité du compte
+                    </h3>
+                    <p class="text-red-700 dark:text-red-400 text-xs">
+                        Pour votre sécurité, vous devez modifier votre mot de passe temporaire.
+                    </p>
+                    <div class="mt-2">
+                        <a href="{% url 'patient_change_password' %}" class="text-xs px-3 py-1.5 rounded-full bg-red-600 text-white hover:bg-red-700 inline-flex items-center gap-1">
+                            <i class="fa-solid fa-key"></i>
+                            Changer mon mot de passe
                         </a>
                     </div>
-                    <div class="nk-header-news d-none d-xl-block">
-                        <div class="nk-news-list">
-                            <a class="nk-news-item text-white" href="#">
-                                <div class="nk-news-icon">
-                                    <em class="icon ni ni-alert text-white"></em>
-                                </div>
-                                <div class="nk-news-text">
-                                    <p class="text-white">KENEYA - Votre santé numérique<span> Plateforme officielle de l'INHP</span></p>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="nk-header-tools">
-                        <ul class="nk-quick-nav">
-                            <li class="dropdown notification-dropdown mr-n1">
-                                <a href="#" class="dropdown-toggle nk-quick-nav-icon" data-toggle="dropdown">
-                                    <div class="icon-status icon-status-info"><em class="icon ni ni-bell text-white"></em></div>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-xl dropdown-menu-right dropdown-menu-s1">
-                                    <div class="dropdown-head">
-                                        <span class="sub-title nk-dropdown-title">Notifications</span>
-                                        <a href="#">Tout marquer comme lu</a>
-                                    </div>
-                                    <div class="dropdown-body">
-                                        <div class="nk-notification">
-                                            {% for notif in notifications %}
-                                            <div class="nk-notification-item dropdown-inner">
-                                                <div class="nk-notification-icon">
-                                                    <em class="icon icon-circle bg-{% if notif.important %}danger{% else %}success{% endif %}-dim ni ni-{% if notif.type == 'vaccin' %}syringe{% else %}calendar{% endif %}"></em>
-                                                </div>
-                                                <div class="nk-notification-content">
-                                                    <div class="nk-notification-text">{{ notif.message }}</div>
-                                                    <div class="nk-notification-time">{{ notif.date|timesince }}</div>
-                                                </div>
-                                            </div>
-                                            {% empty %}
-                                            <div class="nk-notification-item dropdown-inner text-center py-3">
-                                                Aucune nouvelle notification
-                                            </div>
-                                            {% endfor %}
-                                        </div>
-                                    </div>
-                                    <div class="dropdown-foot center">
-                                        <a href="#">Voir tout</a>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="dropdown user-dropdown">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                                    <div class="user-toggle">
-                                        <div class="user-avatar sm bg-orange">
-                                            {{ request.user.nom|first }}{{ request.user.prenoms|first }}
-                                        </div>
-                                        <div class="user-info d-none d-md-block">
-                                            <div class="user-status text-white">Patient</div>
-                                            <div class="user-name dropdown-indicator text-white">{{ request.user.nom }} {{ request.user.prenoms }}</div>
-                                        </div>
-                                    </div>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-md dropdown-menu-right dropdown-menu-s1">
-                                    <div class="dropdown-inner user-card-wrap bg-lighter d-none d-md-block">
-                                        <div class="user-card">
-                                            <div class="user-avatar bg-orange">
-                                                <span>{{ request.user.nom|first }}{{ request.user.prenoms|first }}</span>
-                                            </div>
-                                            <div class="user-info">
-                                                <span class="lead-text">{{ request.user.nom }} {{ request.user.prenoms }}</span>
-                                                <span class="sub-text">{{ request.user.code_patient }}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="dropdown-inner">
-                                        <ul class="link-list">
-                                            <li><a href=""><em class="icon ni ni-user-alt"></em><span>Mon Profil</span></a></li>
-                                            <li><a href=""><em class="icon ni ni-calendar"></em><span>Mes Rendez-vous</span></a></li>
-                                            <li><a href=""><em class="icon ni ni-file-text"></em><span>Mes Documents</span></a></li>
-                                        </ul>
-                                    </div>
-                                    <div class="dropdown-inner">
-                                        <ul class="link-list">
-                                            <li><a href="{% url 'account_logout' %}"><em class="icon ni ni-signout"></em><span>Déconnexion</span></a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>
-        <!-- main header @e -->
+        {% endif %}
 
-        <!-- content @s -->
-        <div class="nk-content" style="background-color: #f8f9fa;">
-            <div class="container-fluid">
-                <div class="nk-content-inner">
-                    <div class="nk-content-body">
-                        <div class="nk-block">
-                            <div class="card card-bordered" style="border-radius: 10px; overflow: hidden;">
-                                <div class="card-aside-wrap">
-                                    <div class="card-inner card-inner-lg">
-                                        <div class="nk-block-head nk-block-head-lg">
-                                            <div class="nk-block-between">
-                                                <div class="nk-block-head-content">
-                                                    <h4 class="nk-block-title">Bonjour {{ request.user.prenoms }} <span class="text-success">👋</span></h4>
-                                                    <div class="nk-block-des">
-                                                        <p>Bienvenue sur votre espace personnel KENEYA. Consultez et gérez vos informations de santé en toute sécurité.</p>
-                                                    </div>
-                                                </div>
-                                                <div class="nk-block-head-content align-self-start d-lg-none">
-                                                    <a href="#" class="toggle btn btn-icon btn-trigger mt-n1" data-target="userAside"><em class="icon ni ni-menu-alt-r"></em></a>
-                                                </div>
-                                            </div>
-                                        </div>
+        <!-- Info MAPI (effets indésirables) -->
 
-                                        <!-- Statistiques rapides -->
-                                        <div class="row g-4 mb-4">
-                                            <div class="col-md-4">
-                                                <div class="card card-bordered bg-light" style="border-left: 4px solid #FF9F0D;">
-                                                    <div class="card-inner">
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="icon-circle bg-orange me-3">
-{#                                                                <em class="ni ni-syringe text-orange"></em>#}
-                                                                <em class="icon ni ni-share-alt"></em>
-                                                            </div>
-                                                            <div>
-                                                                <h5 class="mb-0">{{ vaccins_complets }}2 / {{ vaccins_total }}3</h5>
-                                                                <span class="text-soft">Vaccins complets</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="card card-bordered bg-light" style="border-left: 4px solid #009A44;">
-                                                    <div class="card-inner">
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="icon-circle bg-success me-3">
-                                                                <em class="icon ni ni-calendar-fill"></em>
-                                                            </div>
-                                                            <div>
-                                                                <h5 class="mb-0">{{ rdv_count }}</h5>
-                                                                <span class="text-soft ml-2">Rendez-vous à venir</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="card card-bordered bg-light" style="border-left: 4px solid #0055A4;">
-                                                    <div class="card-inner">
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="icon-circle bg-primary me-3">
-                                                                <em class="icon ni ni-file"></em>
-                                                            </div>
-                                                            <div>
-                                                                <h5 class="mb-0">{{ documents_count }}</h5>
-                                                                <span class="text-soft ml-2">Documents médicaux</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+<div class="bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 text-[12px]">
+    <div class="flex items-center justify-between mb-2">
+        <h3 class="font-semibold text-sm flex items-center gap-1">
+            <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+            Effets indésirables déclarés
+        </h3>
+        <span class="text-xs text-slate-500 dark:text-slate-400">
+            {{ nb_mapi }} déclaration(s)
+        </span>
+    </div>
 
-                                        <!-- Prochains rendez-vous -->
-                                        <div class="card card-bordered mb-4">
-                                            <div class="card-header border-bottom">
-                                                <h5 class="title">Mes prochains rendez-vous <em class="icon ni ni-calendar"></em></h5>
-                                            </div>
-                                            <div class="card-body">
-                                                {% if prochains_rdv %}
-                                                <div class="table-responsive">
-                                                    <table class="table table-striped">
-                                                        <thead class="bg-light">
-                                                            <tr>
-                                                                <th>Date</th>
-                                                                <th>Heure</th>
-                                                                <th>Médecin/Spécialité</th>
-                                                                <th>Centre</th>
-                                                                <th>Actions</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {% for rdv in prochains_rdv %}
-                                                            <tr>
-                                                                <td>{{ rdv.date|date:"d/m/Y" }}</td>
-                                                                <td>{{ rdv.heure|time:"H:i" }}</td>
-                                                                <td>
-                                                                    <div class="d-flex align-items-center">
-                                                                        <em class="icon ni ni-user-alt-fill me-2 text-primary"></em>
-                                                                        <div>
-                                                                            <span class="d-block">{{ rdv.medecin.nom_complet }}</span>
-                                                                            <small class="text-muted">{{ rdv.specialite }}</small>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>{{ rdv.centre.nom }}</td>
-                                                                <td>
-                                                                    <a href="#" class="btn btn-sm btn-outline-primary">Détails</a>
-                                                                    <a href="#" class="btn btn-sm btn-outline-danger">Annuler</a>
-                                                                </td>
-                                                            </tr>
-                                                            {% endfor %}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                {% else %}
-                                                <div class="text-center py-4">
-                                                    <em class="icon ni ni-calendar text-soft" style="font-size: 2rem;"></em>
-                                                    <h5 class="mt-3">Aucun rendez-vous à venir</h5>
-                                                    <p class="text-soft">Prenez rendez-vous avec un professionnel de santé.</p>
-                                                    <a href="" class="btn btn-primary">Prendre rendez-vous</a>
-                                                </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
+    {% if derniers_mapi %}
+        <div class="space-y-2">
+            {% for mapi in derniers_mapi %}
+            <div class="flex items-start gap-2 p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                
+                <!-- Icône -->
+                <div class="h-7 w-7 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <i class="fa-solid fa-exclamation text-red-600 dark:text-red-400 text-xs"></i>
+                </div>
 
-                                        <!-- Vaccinations récentes -->
-                                        <div class="card card-bordered">
-                                            <div class="card-header border-bottom">
-                                                <h5 class="title">Mes dernières vaccinations <em class="icon ni ni-syringe"></em></h5>
-                                            </div>
-                                            <div class="card-body">
-                                                {% if vaccinations_recentes %}
-                                                <div class="table-responsive">
-                                                    <table class="table table-striped">
-                                                        <thead class="bg-light">
-                                                            <tr>
-                                                                <th>Date</th>
-                                                                <th>Vaccin</th>
-                                                                <th>Dose</th>
-                                                                <th>Centre</th>
-                                                                <th>Certificat</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {% for vacc in vaccinations_recentes %}
-                                                            <tr>
-                                                                <td>{{ vacc.date_vaccination|date:"d/m/Y" }}</td>
-                                                                <td>
-                                                                    <div class="d-flex align-items-center">
-                                                                        <em class="icon ni ni-check-circle-fill text-success me-2"></em>
-                                                                        <div>
-                                                                            <span class="d-block">{{ vacc.vaccin.nom }}</span>
-                                                                            <small class="text-muted">{{ vacc.vaccin.fabricant }}</small>
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td>
-                                                                    <span class="badge {% if vacc.dose == 1 %}bg-primary{% else %}bg-success{% endif %}">
-                                                                        {{ vacc.dose }}/{{ vacc.vaccin.doses_requises }}
-                                                                    </span>
-                                                                </td>
-                                                                <td>{{ vacc.centre.nom }}</td>
-                                                                <td>
-                                                                    <a href="{% url 'certificat_vaccination' vacc.id %}" class="btn btn-sm btn-outline-success">
-                                                                        <em class="icon ni ni-download"></em> Télécharger
-                                                                    </a>
-                                                                </td>
-                                                            </tr>
-                                                            {% endfor %}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                <div class="text-center mt-3">
-                                                    <a href="{% url 'mes_vaccins' %}" class="btn btn-outline-primary">Voir tout l'historique</a>
-                                                </div>
-                                                {% else %}
-                                                <div class="text-center py-4">
-                                                    <em class="icon ni ni-syringe text-soft" style="font-size: 2rem;"></em>
-                                                    <h5 class="mt-3">Aucune vaccination enregistrée</h5>
-                                                    <p class="text-soft">Votre historique vaccinal apparaîtra ici après votre première vaccination.</p>
-                                                </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
+                <!-- Contenu -->
+                <div class="flex-1">
+                    <p class="text-xs font-medium text-slate-700 dark:text-slate-200">
+                        {{ mapi.symptome|truncatechars:60 }}
+                    </p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">
+                        Déclaré le {{ mapi.date|date:"d/m/Y à H:i" }}
+                    </p>
 
-                                    <!-- Sidebar -->
-                                    <div class="card-aside card-aside-left user-aside toggle-slide toggle-slide-left toggle-break-lg" data-content="userAside" data-toggle-screen="lg" data-toggle-overlay="true">
-                                        <div class="card-inner-group">
-                                            <div class="card-inner p-0">
-                                                <div class="user-card" style="background: linear-gradient(135deg, #40880e, #98f626);">
-                                                    <div class="user-avatar bg-white text-orange">
-                                                        <span>{{ request.user.nom|first }}{{ request.user.prenoms|first }}</span>
-                                                    </div>
-                                                    <div class="user-info text-white">
-                                                        <span class="lead-text">{{ request.user.nom }} {{ request.user.prenoms }}</span>
-                                                        <span class="sub-text text-white">{{ request.user.code_patient|default:"Patient" }}</span>
-                                                    </div>
-                                                    <div class="user-action">
-                                                        <a href="{" class="btn btn-icon btn-trigger" title="Modifier le profil">
-                                                            <em class="icon ni ni-edit text-white"></em>
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="card-inner p-0">
-                                                <ul class="link-list-menu">
-                                                    <li>
-                                                        <a href="{% url 'patient_dashboard' %}">
-                                                            <em class="icon ni ni-dashboard"></em>
-                                                            <span>Tableau de bord</span>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="{% url 'mes_vaccins' %}">
-                                                            <em class="icon ni ni-syringe"></em>
-                                                            <span>Mes Vaccins</span>
-                                                            <span class="badge badge-pill bg-success">{{ vaccins_total }}</span>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="">
-                                                            <em class="icon ni ni-calendar"></em>
-                                                            <span>Mes Rendez-vous</span>
-                                                            <span class="badge badge-pill bg-primary">{{ rdv_count }}</span>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="">
-                                                            <em class="icon ni ni-file-text"></em>
-                                                            <span>Mes Documents</span>
-                                                            <span class="badge badge-pill bg-info">{{ documents_count }}</span>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="">
-                                                            <em class="icon ni ni-lab"></em>
-                                                            <span>Mes Analyses</span>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="">
-                                                            <em class="icon ni ni-user"></em>
-                                                            <span>Mon Profil</span>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a href="">
-                                                            <em class="icon ni ni-setting"></em>
-                                                            <span>Paramètres</span>
-                                                        </a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                            <div class="card-inner text-center bg-light">
-                                                <div class="p-3">
-                                                    <img src="{% static 'images/logo/logoMSHPCMU.svg' %}" alt="INHP" width="120" class="mb-2">
-                                                    <p class="small text-soft">Ministère de la Santé, </p>
-                                                    <p class="small text-soft">Plateforme KENEYA<br>Institut National d'Hygiène Publique</p>
-                                                    <a href="#" class="btn btn-sm btn-outline-primary">Aide & Support</a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    {% if mapi.vaccination %}
+                    <p class="text-[10px] text-slate-400 dark:text-slate-500">
+                        Vaccin : {{ mapi.vaccination.vaccin.nom }}
+                    </p>
+                    {% endif %}
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+
+    {% else %}
+        <p class="text-slate-500 dark:text-slate-400">
+            Aucune déclaration d'effet indésirable n’est enregistrée pour le moment.
+        </p>
+    {% endif %}
+</div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-4">
+        <h3 class="font-semibold text-sm mb-3">Actions rapides</h3>
+        <div class="space-y-2">
+            <a href="{#% url 'patient_carnet' %#}" class="flex items-center gap-3 p-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                <div class="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-800 flex items-center justify-center">
+                    <i class="fa-solid fa-file-medical text-blue-600 dark:text-blue-400 text-sm"></i>
+                </div>
+                <span class="text-xs font-medium">Mon carnet de vaccination</span>
+            </a>
+
+            <a href="{#% url 'patient_rendez_vous' %#}" class="flex items-center gap-3 p-3 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+                <div class="h-8 w-8 rounded-lg bg-green-100 dark:bg-green-800 flex items-center justify-center">
+                    <i class="fa-solid fa-calendar-check text-green-600 dark:text-green-400 text-sm"></i>
+                </div>
+                <span class="text-xs font-medium">Prendre rendez-vous</span>
+            </a>
+
+            <a href="{#% url 'patient_profil' %#}" class="flex items-center gap-3 p-3 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
+                <div class="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-800 flex items-center justify-center">
+                    <i class="fa-solid fa-user-edit text-purple-600 dark:text-purple-400 text-sm"></i>
+                </div>
+                <span class="text-xs font-medium">Modifier mon profil</span>
+            </a>
+        </div>
+    </div>
+</div>
+{# <div class="flex-1 grid grid-cols-2 gap-3 text-[11px] border-t border-slate-200/70 dark:border-slate-800/70 sm:border-t-0 sm:border-l sm:pl-4 sm:ml-4 pt-3 sm:pt-0">#}
+{#            <div class="space-y-1">#}
+{#                <p class="text-slate-500 dark:text-slate-400">Prochain rappel</p>#}
+{#                <p class="font-semibold text-[12px]">#}
+{#                    {% if prochain_rappel %}#}
+{#                        {{ prochain_rappel.date_rappel|date:"d F Y" }}#}
+{#                    {% else %}#}
+{#                        Aucun rappel planifié#}
+{#                    {% endif %}#}
+{#                </p>#}
+{#                <p class="text-slate-500 dark:text-slate-400">#}
+{#                    {% if prochain_rappel and prochain_rappel.centre %}#}
+{#                        {{ prochain_rappel.centre.name }}#}
+{#                    {% else %}#}
+{#                        {% if centre_actuel %}#}
+{#                            Centre de suivi : {{ centre_actuel.name }}#}
+{#                        {% else %}#}
+{#                            Centre non défini#}
+{#                        {% endif %}#}
+{#                    {% endif %}#}
+{#                </p>#}
+{#            </div>#}
+{#            <div class="space-y-1">#}
+{#                <p class="text-slate-500 dark:text-slate-400">Rappels & infos</p>#}
+{#                <p class="font-semibold text-[12px]">#}
+{#                    {% if rappels_prochains %}#}
+{#                        {{ rappels_prochains|length }} rappel(s) prévu(s)#}
+{#                    {% else %}#}
+{#                        Aucun rappel à venir#}
+{#                    {% endif %}#}
+{#                </p>#}
+{#                <p class="text-slate-500 dark:text-slate-400">#}
+{#                    {% if nb_mapi and nb_mapi > 0 %}#}
+{#                        {{ nb_mapi }} déclaration(s) d'effet indésirable#}
+{#                    {% else %}#}
+{#                        Aucun effet indésirable déclaré#}
+{#                    {% endif %}#}
+{#                </p>#}
+{#            </div>#}
+{#        </div>#}
+{#   #}
+<!-- Documents et ressources -->
+<div class="mt-6 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-5">
+    <h2 class="text-sm font-semibold mb-4">Mes documents</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-[12px]">
+        <a href="{#% url 'patient_carnet_pdf' %#}" class="group p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-file-pdf text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold">Carnet de vaccination</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">PDF officiel</p>
                 </div>
             </div>
-        </div>
-        <!-- content @e -->
+        </a>
 
-        <!-- footer @s -->
-        <div class="nk-footer">
-            <div class="container-fluid">
-                <div class="nk-footer-wrap">
-                    <div class="nk-footer-copyright">
+        <a href="#" class="group p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-qrcode text-green-600 dark:text-green-400"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold">QR Code personnel</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">Pour voyages</p>
+                </div>
+            </div>
+        </a>
 
-                        {% endblock %}
+        <a href="#" class="group p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-passport text-purple-600 dark:text-purple-400"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold">Certificat international</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">Format OMS</p>
+                </div>
+            </div>
+        </a>
+
+        <a href="#" class="group p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
+            <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-lg bg-amber-100 dark:bg-amber-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-book-medical text-amber-600 dark:text-amber-400"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold">Guide vaccination</p>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400">Informations</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation simple des compteurs principaux (doses / vaccins)
+    const counterSelectors = [
+        '.bg-white\\/80 .text-2xl.font-semibold'  // approximation : les 2 premières cards
+    ];
+    const counters = document.querySelectorAll(counterSelectors.join(','));
+
+    counters.forEach(counter => {
+        const target = parseInt(counter.textContent);
+        if (isNaN(target) || target === 0) return;
+
+        let current = 0;
+        const increment = Math.max(1, Math.floor(target / 40));
+
+        const updateCounter = () => {
+            if (current < target) {
+                current += increment;
+                if (current > target) current = target;
+                counter.textContent = current;
+                setTimeout(updateCounter, 25);
+            } else {
+                counter.textContent = target;
+            }
+        };
+        updateCounter();
+    });
+});
+</script>
+{% endblock %}

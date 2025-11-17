@@ -134,7 +134,8 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
                              related_name='utilisateurs_pole')
 
     # Niveau d'accès
-    access_level = models.CharField(max_length=20,null=True, blank=True, choices=AccessLevel.choices, default=AccessLevel.CENTRE)
+    access_level = models.CharField(max_length=20, null=True, blank=True, choices=AccessLevel.choices,
+                                    default=AccessLevel.CENTRE)
 
     # Définition des related_name pour éviter les conflits avec auth.User
     groups = models.ManyToManyField(
@@ -147,10 +148,10 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
         related_name="utilisateur_permissions",
         null=True, blank=True,
     )
-    is_active = models.BooleanField(default=True,null=True, blank=True,)
-    is_staff = models.BooleanField(default=False,null=True, blank=True,)
+    is_active = models.BooleanField(default=True, null=True, blank=True, )
+    is_staff = models.BooleanField(default=False, null=True, blank=True, )
     date_joined = models.DateTimeField(default=timezone.now)
-    active_otp = models.BooleanField(default=True,null=True, blank=True,)
+    active_otp = models.BooleanField(default=True, null=True, blank=True, )
     ip = models.TextField(null=True, blank=True)
     ip_intrus = models.TextField(null=True, blank=True)
     code = models.TextField(null=True, blank=True)
@@ -165,16 +166,34 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
 
 class PatientManager(BaseUserManager):
     def create_user(self, code_patient, password=None, **extra_fields):
+        """
+        - USERNAME_FIELD = code_patient
+        - Si password n'est pas fourni :
+            → on utilise telephone1 comme mot de passe initial
+            → sinon on génère un mot de passe aléatoire
+        """
         if not code_patient:
             raise ValueError("Le code patient est obligatoire")
+
+        # On récupère éventuellement le téléphone passé dans extra_fields
+        telephone = extra_fields.get("telephone1")
+
         user = self.model(code_patient=code_patient, **extra_fields)
-        user.set_password(password or self.make_random_password())
+
+        if password is None:
+            if telephone:
+                # Ici tu peux choisir : téléphone complet ou derniers chiffres
+                password = str(telephone)
+            else:
+                password = self.make_random_password()
+
+        user.set_password(password)
         user.save(using=self._db)
         return user
 
     def create_superuser(self, code_patient, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
         return self.create_user(code_patient, password, **extra_fields)
 
 
@@ -211,6 +230,12 @@ class Patient(AbstractBaseUser, PermissionsMixin):
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
 
+    failed_login_attempts = models.PositiveIntegerField(default=0)
+    last_failed_login = models.DateTimeField(null=True, blank=True)
+    account_locked_until = models.DateTimeField(null=True, blank=True)
+
+    must_change_password = models.BooleanField(default=False)
+    last_password_change = models.DateTimeField(null=True, blank=True)
     groups = models.ManyToManyField(
         Group,
         related_name="patient_groups",
@@ -226,6 +251,11 @@ class Patient(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['nom', 'prenoms', 'date_naissance', 'telephone1']
 
     objects = PatientManager()
+
+    def is_account_locked(self):
+        if self.account_locked_until and timezone.now() < self.account_locked_until:
+            return True
+        return False
 
     @property
     def age(self):
@@ -243,6 +273,7 @@ class Patient(AbstractBaseUser, PermissionsMixin):
             age -= 1
 
         return age
+
     def __str__(self):
         return f"{self.nom} {self.prenoms} ({self.code_patient})"
 
@@ -381,8 +412,8 @@ class Mapi(models.Model):
     date = models.DateTimeField(null=True, blank=True)
     patient = models.ForeignKey('Patient', on_delete=models.CASCADE)
     centre = models.ForeignKey('CentreVaccination', on_delete=models.CASCADE)
-    accination = models.ForeignKey('Vaccination', on_delete=models.CASCADE)
-    utilisateur = models.ForeignKey('Utilisateur', on_delete=models.CASCADE)
+    vaccination = models.ForeignKey('Vaccination', on_delete=models.CASCADE)
+    utilisateur = models.ForeignKey('Utilisateur', on_delete=models.CASCADE,null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
     deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)

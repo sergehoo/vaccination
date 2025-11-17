@@ -23,7 +23,10 @@ from django_prometheus import exports
 import inhp
 from inhp import views
 from inhp.apis.urls import router
-from inhp.views import HomePageView, patient_login_view, patient_dashboard, mes_vaccins, generate_pdf_certificat, \
+from inhp.backends import login_unifie_view, logout_view
+from inhp.patient_views import PatientDashboardView, patient_change_password, patient_password_policy, \
+    patient_mapi_create_view
+from inhp.views import HomePageView, patient_dashboard, mes_vaccins, generate_pdf_certificat, \
     verifier_certificat, LandingView, DashboardView, PatientListView, PatientCreateView, PatientDetailView, \
     PatientUpdateView, PatientDeleteView, MapiListView, MapiCreateView, MapiUpdateView, MapiDetailView, MapiDeleteView, \
     VaccineExtListView, VaccineExtCreateView, VaccineExtDeleteView, VaccineExtUpdateView, VaccineExtDetailView, \
@@ -31,15 +34,24 @@ from inhp.views import HomePageView, patient_login_view, patient_dashboard, mes_
 
 urlpatterns = [
                   path('admin/', admin.site.urls),
-
+                  path("login/", login_unifie_view, name="login"),
+                  path("logout", logout_view, name="logout"),
+                  path(
+                      "patient/change-password/patient_password_policy", patient_password_policy,
+                      name="patient_password_policy",
+                  ),
+                  path(
+                      "patient/change-password/", patient_change_password,
+                      name="patient_change_password",
+                  ),
                   path('', include("django_prometheus.urls")),
                   path('management/', include(inhp.apis.urls)),
                   path('api-auth/', include('rest_framework.urls')),
                   path('accounts/', include('allauth.urls')),
                   path('', LandingView.as_view(), name='landing'),
                   path('home', HomePageView.as_view(), name='home'),
-                  path('connexion/patient/', patient_login_view, name='patient_login'),
-                  path('dashboard/patient/', patient_dashboard, name='patient_dashboard'),
+                  # path('connexion/patient/', patient_login_view, name='patient_login'),
+                  # path('dashboard/patient/', patient_dashboard, name='patient_dashboard'),
                   path('mes-vaccins/', mes_vaccins, name='mes_vaccins'),
                   path('certificat/<int:maladie_id>', generate_pdf_certificat, name='certificat'),
                   path('certificat/verifier_certificat/<int:maladie_id>/<int:patient_id>', verifier_certificat,
@@ -50,7 +62,8 @@ urlpatterns = [
                   path('patients/list', PatientListView.as_view(), name='patient_list'),
                   path('patients/create/', PatientCreateView.as_view(), name='patient-create'),
                   path('patients/<int:pk>/', PatientDetailView.as_view(), name='detail_patient'),
-                  path('vaccination/<int:pk>/certificat/',VaccinationCertificatPDFView.as_view(),  name='vaccination_certificat_pdf'),
+                  path('vaccination/<int:pk>/certificat/', VaccinationCertificatPDFView.as_view(),
+                       name='vaccination_certificat_pdf'),
                   path(
                       "patients/<slug:code_patient>/carnet-vaccinal.pdf",
                       PatientVaccinationCarnetPDFView.as_view(),
@@ -86,6 +99,18 @@ urlpatterns = [
                        name='vaccine-ext-update'),
                   path('vaccine-exts/<int:pk>/delete/', VaccineExtDeleteView.as_view(),
                        name='vaccine-ext-delete'),
+
+                  path('patient/dashboard', PatientDashboardView.as_view(), name='patient_dashboard'),
+                  path(
+                      "espace-patient/mapi/signaler/",
+                      patient_mapi_create_view,
+                      name="patient_mapi_create",
+                  ),
+                  path(
+                      "espace-patient/mapi/signaler/<int:vaccination_id>/",
+                      patient_mapi_create_view,
+                      name="patient_mapi_create_with_vaccination",
+                  ),
 
               ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 if settings.DEBUG:

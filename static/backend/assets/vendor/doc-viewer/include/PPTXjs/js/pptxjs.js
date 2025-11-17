@@ -8019,11 +8019,11 @@
             /**files define the diagram:
              * 1-colors#.xml,
              * 2-data#.xml, 
-             * 3-layout#.xml,
+             * 3-layout_patient#.xml,
              * 4-quickStyle#.xml.
-             * 5-drawing#.xml, which Microsoft added as an extension for persisting diagram layout information.
+             * 5-drawing#.xml, which Microsoft added as an extension for persisting diagram layout_patient information.
              */
-            ///get colors#.xml, data#.xml , layout#.xml , quickStyle#.xml
+            ///get colors#.xml, data#.xml , layout_patient#.xml , quickStyle#.xml
             var order = node["attrs"]["order"];
             var zip = warpObj["zip"];
             var xfrmNode = getTextByPathList(node, ["p:xfrm"]);

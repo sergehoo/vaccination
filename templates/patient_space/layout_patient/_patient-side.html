@@ -1,0 +1,241 @@
+<aside class="hidden md:flex w-64 xl:w-72 flex-col border-r border-white/20 dark:border-slate-800/90 bg-white/70 dark:bg-slate-950/60 backdrop-blur-2xl">
+    <!-- En-tête avec informations patient -->
+    <div class="px-4 pt-4 pb-3 border-b border-white/10 dark:border-slate-800/70">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="relative">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-semibold">
+                    {{ patient.prenoms|first|upper }}{{ patient.nom|first|upper }}
+                </div>
+                <div class="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white dark:border-slate-950"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold truncate">{{ patient.prenoms|title }} {{ patient.nom|upper }}</p>
+                <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ patient.code_patient }}</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center justify-between text-[10px]">
+            <span class="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">
+                <i class="fa-solid fa-circle text-[4px]"></i>
+                Connecté
+            </span>
+            <span class="text-slate-400">{{ "now"|date:"H:i" }}</span>
+        </div>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="px-3 py-3 border-b border-white/10 dark:border-slate-800/70">
+        <div class="grid grid-cols-2 gap-2 text-center">
+            <div class="p-2 rounded-xl bg-blue-50 dark:bg-blue-900/20">
+                <p class="text-sm font-bold text-blue-600 dark:text-blue-400">{{ vaccinations_count }}</p>
+                <p class="text-[9px] text-blue-600 dark:text-blue-400">Doses</p>
+            </div>
+            <div class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+                <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400">{{ vaccins_uniques_count }}</p>
+                <p class="text-[9px] text-emerald-600 dark:text-emerald-400">Vaccins</p>
+            </div>
+        </div>
+        
+        <!-- Prochain rappel -->
+        {% if prochain_rappel %}
+        <div class="mt-2 p-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-bell text-amber-500 text-xs"></i>
+                <div class="flex-1">
+                    <p class="text-[10px] font-semibold text-amber-700 dark:text-amber-300">Rappel bientôt</p>
+                    <p class="text-[9px] text-amber-600 dark:text-amber-400 truncate">{{ prochain_rappel.vaccin.nom|truncatechars:20 }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Navigation principale -->
+    <nav class="flex-1 px-3 py-4 space-y-1 text-[13px] overflow-y-auto">
+        <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-500 mb-2 px-3">
+            Navigation
+        </p>
+
+        <!-- Tableau de bord (actif) -->
+        <a href="{% url 'patient_dashboard' %}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-soft group">
+            <span class="w-8 h-8 rounded-xl bg-white/20 dark:bg-slate-900/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-gauge-high text-xs"></i>
+            </span>
+            <div class="flex flex-col">
+                <span class="font-semibold">Tableau de bord</span>
+                <span class="text-[11px] text-slate-300 dark:text-slate-500">Vue de votre parcours</span>
+            </div>
+        </a>
+
+        <!-- Mes rendez-vous avec badge -->
+        <a href="{#% url 'patient_rendez_vous' %#}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 group relative">
+            <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-calendar-check text-xs"></i>
+            </span>
+            <span>Mes rendez-vous</span>
+            {% if rendez_vous_count %}
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-emerald-500 text-white text-[10px] flex items-center justify-center">
+                {{ rendez_vous_count }}
+            </span>
+            {% endif %}
+        </a>
+
+        <!-- Carnet de vaccination -->
+        <a href="{#% url 'patient_carnet' %#}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 group">
+            <span class="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-notes-medical text-xs"></i>
+            </span>
+            <div class="flex-1 flex items-center justify-between">
+                <span>Mon carnet</span>
+                <span class="text-[10px] text-slate-400">{{ vaccinations_count }} doses</span>
+            </div>
+        </a>
+
+        <!-- Pass vaccinal avec options -->
+        <div class="group">
+            <a href="{#% url 'patient_pass' %#}"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
+                <span class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i class="fa-solid fa-qrcode text-xs"></i>
+                </span>
+                <span>Mon pass vaccinal</span>
+            </a>
+            <!-- Sous-menu pour le pass -->
+            <div class="ml-11 mt-1 space-y-1 hidden group-hover:block">
+                <a href="{#% url 'patient_pass_qr' %#}" class="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 text-[12px] text-slate-600 dark:text-slate-400">
+                    <i class="fa-solid fa-qr text-[10px]"></i>
+                    QR Code
+                </a>
+                <a href="{#% url 'patient_pass_pdf' %#}" class="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 text-[12px] text-slate-600 dark:text-slate-400">
+                    <i class="fa-solid fa-file-pdf text-[10px]"></i>
+                    PDF officiel
+                </a>
+                <a href="{#% url 'patient_pass_international' %#}" class="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 text-[12px] text-slate-600 dark:text-slate-400">
+                    <i class="fa-solid fa-passport text-[10px]"></i>
+                    Certificat OMS
+                </a>
+            </div>
+        </div>
+
+        <!-- Centres de vaccination -->
+        <a href="{#% url 'patient_centres' %#}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 group">
+            <span class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-location-dot text-xs"></i>
+            </span>
+            <div class="flex-1 flex items-center justify-between">
+                <span>Centres à proximité</span>
+                {% if centre_actuel %}
+                <span class="text-[9px] text-slate-400 truncate max-w-[60px]">{{ centre_actuel.nom|truncatechars:10 }}</span>
+                {% endif %}
+            </div>
+        </a>
+
+        <!-- Séparation -->
+        <div class="pt-2">
+            <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-500 mb-2 px-3">
+                Ressources
+            </p>
+        </div>
+
+        <!-- Documents importants -->
+        <a href="{#% url 'patient_documents' %#}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 group">
+            <span class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-folder-open text-xs"></i>
+            </span>
+            <span>Mes documents</span>
+        </a>
+
+        <!-- Informations vaccination -->
+        <a href="{#% url 'patient_infos' %#}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 group">
+            <span class="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-circle-info text-xs"></i>
+            </span>
+            <span>Informations & FAQ</span>
+        </a>
+
+        <!-- Calendrier vaccinal -->
+        <a href="{#% url 'patient_calendrier' %#}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 group">
+            <span class="w-8 h-8 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-calendar-days text-xs"></i>
+            </span>
+            <span>Calendrier vaccinal</span>
+        </a>
+
+        <!-- Sécurité -->
+        <div class="pt-2">
+            <p class="text-[10px] uppercase tracking-[0.22em] text-slate-500 dark:text-slate-500 mb-2 px-3">
+                Compte
+            </p>
+        </div>
+
+        <!-- Profil -->
+        <a href="{#% url 'patient_profil' %#}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 group">
+            <span class="w-8 h-8 rounded-xl bg-slate-500/10 text-slate-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-user-edit text-xs"></i>
+            </span>
+            <span>Mon profil</span>
+        </a>
+
+        <!-- Sécurité -->
+        <a href="{#% url 'patient_securite' %#}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 group">
+            <span class="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-shield-halved text-xs"></i>
+            </span>
+            <div class="flex-1 flex items-center justify-between">
+                <span>Sécurité</span>
+                {% if must_change_password %}
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                {% endif %}
+            </div>
+        </a>
+
+        <!-- Déconnexion -->
+        <a href="{% url 'logout' %}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/20 group mt-4">
+            <span class="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+            </span>
+            <span class="text-red-600 dark:text-red-400">Déconnexion</span>
+        </a>
+    </nav>
+
+    <!-- Pied de page avec informations utiles -->
+    <div class="px-4 py-3 border-t border-white/10 dark:border-slate-800/70">
+        <!-- Assistance -->
+        <div class="mb-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-900/30">
+            <p class="text-[10px] font-semibold text-slate-700 dark:text-slate-300 mb-1">Besoin d'aide ?</p>
+            <div class="space-y-1">
+                <a href="tel:111" class="flex items-center gap-1 text-[9px] text-blue-600 dark:text-blue-400 hover:underline">
+                    <i class="fa-solid fa-phone text-[8px]"></i>
+                    Assistance : 111
+                </a>
+                <a href="mailto:assistance@vaccination.ci" class="flex items-center gap-1 text-[9px] text-blue-600 dark:text-blue-400 hover:underline">
+                    <i class="fa-solid fa-envelope text-[8px]"></i>
+                    Email support
+                </a>
+            </div>
+        </div>
+
+        <!-- Version et statut -->
+        <div class="flex items-center justify-between text-[9px] text-slate-500 dark:text-slate-500">
+            <span>v2.1.0 · Patient</span>
+            <span class="flex items-center gap-1">
+                <i class="fa-solid fa-circle text-[4px] text-emerald-400"></i>
+                En ligne
+            </span>
+        </div>
+        
+        <div class="text-[8px] text-slate-400 dark:text-slate-600 text-center mt-1">
+            © {% now "Y" %} Vaccination CI · Espace patient
+        </div>
+    </div>
+</aside>

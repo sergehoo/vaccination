@@ -1,0 +1,117 @@
+{% extends "patient_space/patient_base.html" %}
+{% load static %}
+{% block title %}Signaler un effet indésirable – Vaccination CI{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <!-- En-tête -->
+    <div class="mb-6">
+        <a href="{% url 'patient_dashboard' %}"
+           class="inline-flex items-center text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 mb-3">
+            <i class="fa-solid fa-arrow-left mr-1"></i> Retour au tableau de bord
+        </a>
+        <h1 class="text-lg font-semibold flex items-center gap-2">
+            <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+            Signaler un effet indésirable (MAPI)
+        </h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Ce formulaire vous permet de déclarer un effet indésirable ressenti après une vaccination.
+            Les informations seront analysées par les équipes de vaccination.
+        </p>
+    </div>
+
+    <!-- Bandeau info -->
+    <div class="mb-4 rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-4 text-xs flex gap-3">
+        <div class="h-7 w-7 rounded-xl bg-amber-100 dark:bg-amber-800 flex items-center justify-center flex-shrink-0">
+            <i class="fa-solid fa-info text-amber-700 dark:text-amber-300 text-sm"></i>
+        </div>
+        <div>
+            <p class="text-amber-800 dark:text-amber-200 font-medium mb-1">
+                Attention : ce formulaire ne remplace pas une consultation médicale
+            </p>
+            <p class="text-amber-700 dark:text-amber-300">
+                En cas de symptôme grave (détresse respiratoire, perte de connaissance, réaction allergique sévère, etc.),
+                contactez immédiatement le <strong>SAMU (185)</strong> ou rendez-vous au service d'urgence le plus proche.
+            </p>
+        </div>
+    </div>
+
+    <!-- Rappel de la vaccination si préselectionnée -->
+    {% if vaccination %}
+    <div class="mb-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-4 text-xs">
+        <p class="font-semibold text-slate-700 dark:text-slate-200 mb-1">
+            Vaccination concernée
+        </p>
+        <p class="text-slate-600 dark:text-slate-300">
+            {{ vaccination.vaccin.nom }} – dose {{ vaccination.dose }}
+            du {{ vaccination.date_vaccination|date:"d/m/Y" }}
+            {% if vaccination.centre %} · {{ vaccination.centre.name }}{% endif %}
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Formulaire -->
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-5 shadow-sm">
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+
+            <!-- Champ vaccination -->
+            <div class="space-y-1 text-xs">
+                <label for="{{ form.vaccination.id_for_label }}" class="font-medium text-slate-700 dark:text-slate-200">
+                    {{ form.vaccination.label }} <span class="text-red-500">*</span>
+                </label>
+                {{ form.vaccination }}
+                {% if form.vaccination.help_text %}
+                <p class="text-slate-500 dark:text-slate-400 mt-1">
+                    {{ form.vaccination.help_text }}
+                </p>
+                {% endif %}
+                {% if form.vaccination.errors %}
+                <p class="text-red-500 text-[11px] mt-1">
+                    {{ form.vaccination.errors|striptags }}
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Symptômes -->
+            <div class="space-y-1 text-xs">
+                <label for="{{ form.symptome.id_for_label }}" class="font-medium text-slate-700 dark:text-slate-200">
+                    {{ form.symptome.label }} <span class="text-red-500">*</span>
+                </label>
+                {{ form.symptome }}
+                {% if form.symptome.errors %}
+                <p class="text-red-500 text-[11px] mt-1">
+                    {{ form.symptome.errors|striptags }}
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Commentaire -->
+            <div class="space-y-1 text-xs">
+                <label for="{{ form.commentaire.id_for_label }}" class="font-medium text-slate-700 dark:text-slate-200">
+                    {{ form.commentaire.label }}
+                </label>
+                {{ form.commentaire }}
+                {% if form.commentaire.errors %}
+                <p class="text-red-500 text-[11px] mt-1">
+                    {{ form.commentaire.errors|striptags }}
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Boutons -->
+            <div class="pt-3 flex flex-wrap gap-2 justify-end text-xs">
+                <a href="{% url 'patient_dashboard' %}"
+                   class="px-4 py-2 rounded-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/60">
+                    Annuler
+                </a>
+                <button type="submit"
+                        class="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane text-[11px]"></i>
+                    Envoyer ma déclaration
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
