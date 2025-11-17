@@ -16,7 +16,10 @@ DATABASES = {
         'PORT': int(os.environ.get('DB_PORT', 5432)),
     }
 }
-
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    "https://santeci.net,https://www.santeci.net"
+).split(",")
 # SECURE_SSL_REDIRECT = True
 # SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # SESSION_COOKIE_SECURE = True
