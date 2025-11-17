@@ -532,7 +532,6 @@ class PatientDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
         """
         return (
             Patient.objects
-            .filter(deleted_at__isnull=True)
             .select_related('centre', 'centre_actuel', 'created_by')
         )
 
@@ -543,7 +542,7 @@ class PatientDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
         # Historique vaccinal interne
         vaccinations = (
             Vaccination.objects
-            .filter(patient=patient, deleted_at__isnull=True)
+            .filter(patient=patient)
             .select_related('centre', 'vaccin', 'lot', 'created_by')
             .order_by('-date_vaccination', '-created_at')
         )
@@ -551,7 +550,7 @@ class PatientDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
         # Vaccins réalisés à l’étranger
         vaccines_ext = (
             VaccineExt.objects
-            .filter(patient=patient, deleted_at__isnull=True)
+            .filter(patient=patient)
             .select_related('vaccin', 'utilisateur')
             .order_by('-date', '-created_at')
         )
@@ -559,7 +558,7 @@ class PatientDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
         # Consultations liées
         consultations = (
             Consultation.objects
-            .filter(patient=patient, deleted_at__isnull=True)
+            .filter(patient=patient)
             .select_related('centre', 'maladie', 'utilisateur')
             .order_by('-created_at')
         )
@@ -567,7 +566,7 @@ class PatientDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
         # MAPI / incidents post-vaccinaux
         mapis = (
             Mapi.objects
-            .filter(patient=patient, deleted_at__isnull=True)
+            .filter(patient=patient)
             .select_related('centre', 'vaccination__vaccin', 'utilisateur')
             .order_by('-date', '-created_at')
         )
