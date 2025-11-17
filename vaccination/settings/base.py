@@ -245,7 +245,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 SITE_ID = 1
 # USE_L10N = True
 
-LOGIN_REDIRECT_URL = "home"
+LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "landing"
 ACCOUNT_LOGOUT_REDIRECT = "account_login"
 ACCOUNT_SIGNUP_REDIRECT_URL = "account_login"
