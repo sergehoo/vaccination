@@ -51,14 +51,14 @@ services:
       - traefik.http.routers.vaccination.service=vaccination-svc
       - traefik.http.services.vaccination-svc.loadbalancer.server.port=8000
       - traefik.http.services.vaccination-svc.loadbalancer.server.scheme=http
-      - traefik.http.routers.vaccination.middlewares=vaccination-headers@docker,vaccination-compress@docker,vaccination-rl@docker
-      - traefik.http.middlewares.vaccination-headers.headers.stsSeconds=31536000
-      - traefik.http.middlewares.vaccination-headers.headers.stsIncludeSubdomains=true
-      - traefik.http.middlewares.vaccination-headers.headers.stsPreload=true
-      - traefik.http.middlewares.vaccination-headers.headers.contentTypeNosniff=true
-      - traefik.http.middlewares.vaccination-headers.headers.frameDeny=true
-      - traefik.http.middlewares.vaccination-headers.headers.referrerPolicy=strict-origin-when-cross-origin
-      - traefik.http.middlewares.vaccination-compress.compress=true
+#      - traefik.http.routers.vaccination.middlewares=vaccination-headers@docker,vaccination-compress@docker,vaccination-rl@docker
+#      - traefik.http.middlewares.vaccination-headers.headers.stsSeconds=31536000
+#      - traefik.http.middlewares.vaccination-headers.headers.stsIncludeSubdomains=true
+#      - traefik.http.middlewares.vaccination-headers.headers.stsPreload=true
+#      - traefik.http.middlewares.vaccination-headers.headers.contentTypeNosniff=true
+#      - traefik.http.middlewares.vaccination-headers.headers.frameDeny=true
+#      - traefik.http.middlewares.vaccination-headers.headers.referrerPolicy=strict-origin-when-cross-origin
+#      - traefik.http.middlewares.vaccination-compress.compress=true
       - traefik.http.middlewares.vaccination-rl.ratelimit.average=100
       - traefik.http.middlewares.vaccination-rl.ratelimit.burst=200
 
