@@ -26,7 +26,7 @@ from xhtml2pdf import pisa
 from inhp.backends import StaffOnlyMixin
 from inhp.forms import VaccinationFilterForm, VaccinationForm
 from inhp.models import Patient, Vaccination, Maladie, Mapi, VaccineExt, Consultation, AccessLevel, Role, Vaccin, \
-    LotVaccin, CentreVaccination
+    LotVaccin, CentreVaccination, Utilisateur
 from django.utils.translation import gettext as _
 
 
@@ -174,162 +174,190 @@ def generate_pdf_certificat(request, maladie_id):
 #------------------------------------------------------For Bakend Part------------------------
 
 
-class DashboardView(StaffOnlyMixin, LoginRequiredMixin, TemplateView):
+class DashboardView(StaffOnlyMixin, TemplateView):
     login_url = '/accounts/login/'
     template_name = "administration/dashboard.html"
 
+    def _apply_scope(self, queryset, user, field_prefix="centre"):
+        """
+        Applique le scope (centre / district / région / pôle / national)
+        sur un queryset qui possède un lien vers centre/district/région/pôle.
+
+        field_prefix: nom du champ de base, ex: "centre" ou "centre__district"
+        """
+        if not isinstance(user, Utilisateur):
+            return queryset
+
+        # Exemples:
+        # field_prefix="centre"        -> centre=...
+        # field_prefix="centre__district" -> centre__district=...
+        # etc.
+        if user.access_level == AccessLevel.CENTRE and user.centre_id:
+            return queryset.filter(**{f"{field_prefix}": user.centre})
+        if user.access_level == AccessLevel.DISTRICT and user.district_id:
+            return queryset.filter(**{f"{field_prefix}__district": user.district})
+        if user.access_level == AccessLevel.REGION and user.region_id:
+            return queryset.filter(**{f"{field_prefix}__district__region": user.region})
+        if user.access_level == AccessLevel.POLE and user.pole_id:
+            return queryset.filter(**{f"{field_prefix}__district__region__poles": user.pole})
+
+        # Niveau national => pas de restriction supplémentaire
+        return queryset
+
+    def _get_scope_label(self, user):
+        if not isinstance(user, Utilisateur):
+            return "National"
+
+        if user.access_level == AccessLevel.CENTRE and user.centre:
+            return f"Centre : {user.centre.name}"
+        if user.access_level == AccessLevel.DISTRICT and user.district:
+            return f"District : {user.district.nom}"
+        if user.access_level == AccessLevel.REGION and user.region:
+            return f"Région : {user.region.name}"
+        if user.access_level == AccessLevel.POLE and user.pole:
+            return f"Pôle : {user.pole.name}"
+        return "National"
+
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        today = datetime.date.today()
+        now = timezone.now()
 
-        # Période de référence (30 derniers jours)
-        today = timezone.now().date()
-        last_30_days = today - datetime.timedelta(days=30)
+        # ---------------------------------------------------------------------
+        # 1) VACCINATIONS (scopées)
+        # ---------------------------------------------------------------------
+        vaccinations_qs = Vaccination.objects.filter(
+            deleted_at__isnull=True
+        ).select_related("centre", "vaccin", "centre__district__region")
 
-        # Statistiques principales
-        total_patients = Patient.objects.count()
-        total_vaccinations = Vaccination.objects.count()
-        total_centres = CentreVaccination.objects.count()
-        total_vaccins = Vaccin.objects.count()
+        vaccinations_qs = self._apply_scope(vaccinations_qs, user, field_prefix="centre")
 
-        # Activité du jour
-        vaccinations_du_jour = Vaccination.objects.filter(
-            date_vaccination=today
-        ).count()
+        # Total doses (toutes périodes)
+        total_doses = vaccinations_qs.count()
 
-        # Statistiques des 30 derniers jours
-        vaccinations_30_jours = Vaccination.objects.filter(
-            date_vaccination__gte=last_30_days
-        ).count()
+        # Doses du jour (pour le hero)
+        total_doses_today = vaccinations_qs.filter(date_vaccination=today).count()
 
-        # Couverture vaccinale (estimation basée sur les patients vaccinés)
-        patients_vaccines = Patient.objects.filter(
-            historique_vaccinations__isnull=False
-        ).distinct().count()
+        # 30 derniers jours (graph + stats)
+        start_30 = today - datetime.timedelta(days=29)
+        vaccinations_30_qs = vaccinations_qs.filter(date_vaccination__gte=start_30)
 
-        couverture_nationale = (patients_vaccines / total_patients * 100) if total_patients > 0 else 0
+        # Groupement par jour pour Chart.js
+        by_day = (
+            vaccinations_30_qs
+            .values("date_vaccination")
+            .annotate(total=Count("id"))
+            .order_by("date_vaccination")
+        )
 
-        # Centres en alerte stock
-        centres_alerte_stock = LotVaccin.objects.filter(
-            quantite_disponible__lt=50,  # Moins de 50 doses
-            date_expiration__gt=today
-        ).values('centre').annotate(
-            alert_count=Count('id')
-        ).count()
+        chart_labels = []
+        chart_data = []
+        for row in by_day:
+            chart_labels.append(row["date_vaccination"].strftime("%d/%m"))
+            chart_data.append(row["total"])
 
-        # Effets indésirables récents
-        effets_indesirables_24h = Mapi.objects.filter(
-            created_at__gte=timezone.now() - datetime.timedelta(hours=24)
-        ).count()
+        # ---------------------------------------------------------------------
+        # 2) Couverture "nationale" (ou scope)
+        #    approche simple: patients vaccinés / patients enregistrés
+        # ---------------------------------------------------------------------
+        patients_qs = Patient.objects.filter(deleted_at__isnull=True)
+        patients_qs = self._apply_scope(patients_qs, user, field_prefix="centre")
 
-        effets_indesirables_graves = Mapi.objects.filter(
-            created_at__gte=timezone.now() - datetime.timedelta(hours=24),
-            symptome__icontains='grave'
-        ).count()
+        total_patients = patients_qs.count()
 
-        # Tendance des vaccinations (30 derniers jours)
-        tendance_vaccinations = Vaccination.objects.filter(
-            date_vaccination__gte=last_30_days
-        ).annotate(
-            jour=TruncDate('date_vaccination')
-        ).values('jour').annotate(
-            total=Count('id')
-        ).order_by('jour')
+        patients_vaccines = (
+            patients_qs.filter(historique_vaccinations__in=vaccinations_qs)
+            .distinct()
+            .count()
+        )
 
-        # Vaccins les plus administrés
-        vaccins_populaires = Vaccination.objects.filter(
-            date_vaccination__gte=last_30_days
-        ).values(
-            'vaccin__nom'
-        ).annotate(
-            total=Count('id')
-        ).order_by('-total')[:5]
+        couverture = 0.0
+        if total_patients > 0:
+            couverture = round((patients_vaccines / total_patients) * 100, 1)
 
-        # Centres les plus actifs
-        centres_actifs = Vaccination.objects.filter(
-            date_vaccination__gte=last_30_days
-        ).values(
-            'centre__name'
-        ).annotate(
-            total=Count('id')
-        ).order_by('-total')[:10]
+        # ---------------------------------------------------------------------
+        # 3) Centres actifs + alertes stock
+        # ---------------------------------------------------------------------
+        centres_qs = CentreVaccination.objects.filter(
+            deleted_at__isnull=True
+        ).select_related("district__region")
 
-        # Alertes stocks critiques
-        stocks_critiques = LotVaccin.objects.filter(
-            quantite_disponible__lt=20,
-            date_expiration__gt=today
-        ).select_related('centre', 'vaccin', 'centre__district', 'centre__district__region')[:10]
+        centres_qs = self._apply_scope(centres_qs, user, field_prefix="id")
 
-        # Campagnes en cours (basé sur les vaccins administrés récemment)
-        campagnes_actives = Vaccin.objects.filter(
-            vaccination__date_vaccination__gte=last_30_days
-        ).distinct().annotate(
-            doses_administrees=Count('vaccination')
-        ).order_by('-doses_administrees')[:5]
+        centres_actifs = centres_qs.count()
 
-        # Synchronisations récentes (simulé - à adapter selon votre logique)
-        synchronisations = [
-            {
-                'region': 'Abidjan 1',
-                'centres': 152,
-                'enregistrements': 23451,
-                'statut': 'success',
-                'derniere_synchro': timezone.now() - datetime.timedelta(hours=2)
-            },
-            {
-                'region': 'Bounkani',
-                'centres': 47,
-                'enregistrements': 3245,
-                'statut': 'warning',
-                'derniere_synchro': timezone.now() - datetime.timedelta(hours=3)
-            },
-            {
-                'region': 'Cavally',
-                'centres': 32,
-                'enregistrements': 0,
-                'statut': 'error',
-                'derniere_synchro': timezone.now() - datetime.timedelta(hours=4)
-            }
-        ]
+        # Lots pour détection des stocks critiques (< 7 jours / quantite basse)
+        lots_qs = LotVaccin.objects.filter(
+            centre__in=centres_qs,
+            quantite_disponible__isnull=False,
+        ).select_related("centre__district__region", "vaccin")
 
-        # Préparation des données pour les graphiques
-        dates_tendance = [item['jour'].strftime('%d/%m') for item in tendance_vaccinations]
-        valeurs_tendance = [item['total'] for item in tendance_vaccinations]
+        centres_stock_alertes = []
+        seuil_quantite = 100   # à ajuster
+        jours_limite = 7       # à ajuster
 
-        noms_vaccins = [item['vaccin__nom'] for item in vaccins_populaires]
-        doses_vaccins = [item['total'] for item in vaccins_populaires]
+        for lot in lots_qs:
+            statut = None
+            nb_jours = None
 
-        context.update({
-            # Statistiques principales
-            'total_patients': total_patients,
-            'total_vaccinations': total_vaccinations,
-            'total_centres': total_centres,
-            'total_vaccins': total_vaccins,
-            'vaccinations_du_jour': vaccinations_du_jour,
-            'vaccinations_30_jours': vaccinations_30_jours,
-            'couverture_nationale': round(couverture_nationale, 1),
-            'centres_alerte_stock': centres_alerte_stock,
-            'effets_indesirables_24h': effets_indesirables_24h,
-            'effets_indesirables_graves': effets_indesirables_graves,
+            if lot.date_expiration:
+                nb_jours = (lot.date_expiration - today).days
 
-            # Données pour graphiques
-            'dates_tendance': dates_tendance,
-            'valeurs_tendance': valeurs_tendance,
-            'noms_vaccins': noms_vaccins,
-            'doses_vaccins': doses_vaccins,
+            # Règles simplifiées
+            if lot.quantite_disponible <= 0 or (nb_jours is not None and nb_jours <= 0):
+                statut = "critique"
+            elif lot.quantite_disponible <= seuil_quantite or (nb_jours is not None and nb_jours <= jours_limite):
+                statut = "alerte"
 
-            # Listes détaillées
-            'centres_actifs': centres_actifs,
-            'stocks_critiques': stocks_critiques,
-            'campagnes_actives': campagnes_actives,
-            'synchronisations': synchronisations,
+            if statut:
+                centres_stock_alertes.append({
+                    "centre": lot.centre,
+                    "region": lot.centre.district.region if lot.centre and lot.centre.district and lot.centre.district.region else None,
+                    "vaccin": lot.vaccin,
+                    "quantite": lot.quantite_disponible,
+                    "jours_restants": nb_jours,
+                    "statut": statut,
+                })
 
-            # Métadonnées
-            'today': today,
-            'last_update': timezone.now(),
+        # on limite l'affichage à 10 lignes
+        centres_stock_alertes = centres_stock_alertes[:10]
+
+        # ---------------------------------------------------------------------
+        # 4) Incidents / MAPI
+        # ---------------------------------------------------------------------
+        mapi_qs = Mapi.objects.filter(
+            deleted_at__isnull=True,
+            vaccination__in=vaccinations_qs,
+        ).select_related("centre", "vaccination", "patient")
+
+        incidents_total = mapi_qs.count()
+        incidents_24h = mapi_qs.filter(date__gte=now - datetime.timedelta(hours=24)).count()
+        incidents_30j = mapi_qs.filter(date__gte=now - datetime.timedelta(days=30)).count()
+
+        # ---------------------------------------------------------------------
+        # 5) Contexte pour le hero + infos
+        # ---------------------------------------------------------------------
+        scope_label = self._get_scope_label(user)
+
+        ctx.update({
+            "scope_label": scope_label,
+            "last_update": now,
+            "total_doses": total_doses,
+            "total_doses_today": total_doses_today,
+            "couverture": couverture,
+            "total_patients": total_patients,
+            "patients_vaccines": patients_vaccines,
+            "centres_actifs": centres_actifs,
+            "centres_stock_alertes": centres_stock_alertes,
+            "incidents_total": incidents_total,
+            "incidents_24h": incidents_24h,
+            "incidents_30j": incidents_30j,
+            # Données pour le graph
+            "chart_vaccinations_labels": chart_labels,
+            "chart_vaccinations_data": chart_data,
         })
-
-        return context
-
+        return ctx
 
 #----------------============================== Patiens ========================== -----------------------------------
 class PatientListView(StaffOnlyMixin,LoginRequiredMixin, ListView):

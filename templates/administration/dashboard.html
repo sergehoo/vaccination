@@ -1,80 +1,79 @@
 {% extends "layout/base.html" %}
 {% load static %}
+{% load humanize %}
 {% block title %}Dashboard Administration – Vaccination CI{% endblock %}
 
 {% block content %}
       <!-- Bandeau contexte / hero -->
                 {% block hero %}
-                    <div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft">
-                        <div class="absolute inset-y-0 right-0 hidden md:block opacity-70">
-                            <img src="{% static 'images/hero/banner5.webp' %}" alt="Vaccination CI"
-                                 class="h-full  object-contain pointer-events-none">
-                        </div>
+<div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft">
+    <div class="absolute inset-y-0 right-0 hidden md:block opacity-70">
+        <img src="{% static 'images/hero/banner5.webp' %}" alt="Vaccination CI"
+             class="h-full object-contain pointer-events-none">
+    </div>
 
-                        <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-                            <div class="space-y-2 max-w-xl">
-                                <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90">
-                                    Côte d’Ivoire · Programme Élargi de Vaccination
-                                </p>
-                                <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
-                                    {% block hero_title %}Pilotage temps réel des campagnes vaccinales{% endblock %}
-                                </h1>
-                                <p class="text-[12px] text-slate-300">
-                                    {% block hero_subtitle %}
-                                        Suivez la couverture, les stocks et les incidents à l’échelle nationale.
-                                        Synchronisation directe avec DHIS2, PNLS, PEV et les systèmes nationaux.
-                                    {% endblock %}
-                                </p>
-                                <div class="flex flex-wrap items-center gap-2 text-[11px]">
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
-                                    <i class="fa-solid fa-shield-virus text-[9px]"></i>
-                                    COVID-19
-                                </span>
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">
-                                    <i class="fa-solid fa-baby text-[9px]"></i>
-                                    Vaccination infantile
-                                </span>
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/40">
-                                    <i class="fa-solid fa-syringe text-[9px]"></i>
-                                    PEV de routine
-                                </span>
-                                </div>
-                            </div>
+    <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div class="space-y-2 max-w-xl">
+            <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90">
+                {{ scope_label }} · Programme Élargi de Vaccination
+            </p>
+            <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
+                Pilotage temps réel des campagnes vaccinales
+            </h1>
+            <p class="text-[12px] text-slate-300">
+                Suivez la couverture, les stocks et les incidents sur votre périmètre.
+                Données issues des centres de vaccination et des déclarations MAPI.
+            </p>
+            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
+                    <i class="fa-solid fa-shield-virus text-[9px]"></i>
+                    COVID-19
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">
+                    <i class="fa-solid fa-baby text-[9px]"></i>
+                    Vaccination infantile
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/40">
+                    <i class="fa-solid fa-syringe text-[9px]"></i>
+                    PEV de routine
+                </span>
+            </div>
+        </div>
 
-                            <div class="rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-[11px] min-w-[220px] space-y-2">
-                                <div class="flex items-center justify-between gap-2">
-                                    <p class="text-slate-200/90 font-medium">
-                                        {% block hero_card_title %}Activité nationale (jour){% endblock %}
-                                    </p>
-                                    <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">
-                                    Synchro · OK
-                                </span>
-                                </div>
-                                <div class="flex gap-3 items-end">
-                                    <div>
-                                        <p class="text-lg font-semibold">
-                                            {% block hero_card_value %}12 548{% endblock %}
-                                        </p>
-                                        <p class="text-[10px] text-slate-300">
-                                            {% block hero_card_label %}doses enregistrées{% endblock %}
-                                        </p>
-                                    </div>
-                                    <div class="flex-1 h-10 relative">
-                                        <div class="absolute inset-0 rounded-xl bg-gradient-to-tr from-emerald-500/40 via-sky-500/30 to-amber-400/40 opacity-60 blur-[10px]"></div>
-                                        <div class="absolute inset-0 border border-dashed border-slate-500/40 rounded-xl"></div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-between text-[10px] text-slate-300">
-                                    <span>Dernière mise à jour : 13/11/2025 · 10:32</span>
-                                    <span class="flex items-center gap-1">
-                                    <i class="fa-solid fa-circle text-[5px] text-emerald-400 animate-pulse"></i>
-                                    temps réel
-                                </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endblock hero %}
+        <div class="rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-[11px] min-w-[220px] space-y-2">
+            <div class="flex items-center justify-between gap-2">
+                <p class="text-slate-200/90 font-medium">
+                    Activité {{ scope_label|lower }}
+                </p>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">
+                    Synchro · OK
+                </span>
+            </div>
+            <div class="flex gap-3 items-end">
+                <div>
+                    <p class="text-lg font-semibold">
+                        {{ total_doses_today|default:0|intcomma }}
+                    </p>
+                    <p class="text-[10px] text-slate-300">
+                        doses enregistrées aujourd’hui
+                    </p>
+                </div>
+                <div class="flex-1 h-10 relative">
+                    <div class="absolute inset-0 rounded-xl bg-gradient-to-tr from-emerald-500/40 via-sky-500/30 to-amber-400/40 opacity-60 blur-[10px]"></div>
+                    <div class="absolute inset-0 border border-dashed border-slate-500/40 rounded-xl"></div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between text-[10px] text-slate-300">
+                <span>Dernière mise à jour : {{ last_update|date:"d/m/Y · H:i" }}</span>
+                <span class="flex items-center gap-1">
+                    <i class="fa-solid fa-circle text-[5px] text-emerald-400 animate-pulse"></i>
+                    temps quasi réel
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock hero %}
    <!-- Quick actions + filtres -->
                     <div class="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
                         <div class="flex flex-wrap gap-2 text-[11px]">
@@ -106,75 +105,82 @@
                     </div>
 
                     <!-- Stats & Graph -->
-                    <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
-                        <!-- 4 cards -->
-                        <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2 shadow-soft/40">
-                            <div class="flex items-center justify-between">
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
-                                    Doses administrées
-                                </p>
-                                <span class="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                                    <i class="fa-solid fa-syringe text-xs"></i>
-                                </span>
-                            </div>
-                            <p class="text-2xl font-semibold">2 345 870</p>
-                            <p class="text-[11px] text-emerald-600 dark:text-emerald-400">
-                                +12,3 % vs période précédente
-                            </p>
-                            <div class="mt-1 h-10 rounded-xl bg-gradient-to-r from-emerald-500/20 via-sky-500/10 to-amber-500/20 border border-dashed border-emerald-500/40"></div>
-                        </div>
+                    <div class="grid grid-cols-1 xl:grid-cols-4 gap-4 mt-4">
+    <!-- Doses administrées -->
+    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2 shadow-soft/40">
+        <div class="flex items-center justify-between">
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
+                Doses administrées (cumulées)
+            </p>
+            <span class="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                <i class="fa-solid fa-syringe text-xs"></i>
+            </span>
+        </div>
+        <p class="text-2xl font-semibold">{{ total_doses|default:0|intcomma }}</p>
+        <p class="text-[11px] text-emerald-600 dark:text-emerald-400">
+            {{ total_doses_today|default:0|intcomma }} doses aujourd’hui
+        </p>
+        <div class="mt-1 h-10 rounded-xl bg-gradient-to-r from-emerald-500/20 via-sky-500/10 to-amber-500/20 border border-dashed border-emerald-500/40"></div>
+    </div>
 
-                        <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
-                            <div class="flex items-center justify-between">
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
-                                    Couverture nationale
-                                </p>
-                                <span class="h-8 w-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
-                                    <i class="fa-solid fa-globe-africa text-xs"></i>
-                                </span>
-                            </div>
-                            <p class="text-2xl font-semibold">78,4 %</p>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                                Objectif OMS : 90 % · 7 régions &lt; 70 %
-                            </p>
-                            <div class="mt-1 flex items-center gap-2 text-[10px]">
-                                <div class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                                    <div class="h-full w-[78%] bg-emerald-500"></div>
-                                </div>
-                                <span>78%</span>
-                            </div>
-                        </div>
+    <!-- Couverture -->
+    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
+        <div class="flex items-center justify-between">
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
+                Couverture sur population enregistrée
+            </p>
+            <span class="h-8 w-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+                <i class="fa-solid fa-globe-africa text-xs"></i>
+            </span>
+        </div>
+        <p class="text-2xl font-semibold">
+            {% if couverture %}{{ couverture }} %{% else %}–{% endif %}
+        </p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            {{ patients_vaccines|intcomma }} patient(s) vacciné(s) / {{ total_patients|intcomma }} enregistré(s)
+        </p>
+        <div class="mt-1 flex items-center gap-2 text-[10px]">
+            <div class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                <div class="h-full bg-emerald-500" style="width: {{ couverture|default:0 }}%;"></div>
+            </div>
+            <span>
+                {% if couverture %}{{ couverture }} %{% else %}0 %{% endif %}
+            </span>
+        </div>
+    </div>
 
-                        <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
-                            <div class="flex items-center justify-between">
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
-                                    Centres actifs
-                                </p>
-                                <span class="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                                    <i class="fa-solid fa-hospital text-xs"></i>
-                                </span>
-                            </div>
-                            <p class="text-2xl font-semibold">1 243</p>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                                85 en alerte stock · 12 hors ligne
-                            </p>
-                        </div>
+    <!-- Centres actifs -->
+    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
+        <div class="flex items-center justify-between">
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
+                Centres actifs
+            </p>
+            <span class="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                <i class="fa-solid fa-hospital text-xs"></i>
+            </span>
+        </div>
+        <p class="text-2xl font-semibold">{{ centres_actifs|default:0|intcomma }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            Centres de vaccination dans votre périmètre
+        </p>
+    </div>
 
-                        <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
-                            <div class="flex items-center justify-between">
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
-                                    Incidents & effets indésirables
-                                </p>
-                                <span class="h-8 w-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
-                                    <i class="fa-solid fa-triangle-exclamation text-xs"></i>
-                                </span>
-                            </div>
-                            <p class="text-2xl font-semibold">12</p>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                                2 cas graves à investiguer · 24h
-                            </p>
-                        </div>
-                    </div>
+    <!-- Incidents & MAPI -->
+    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
+        <div class="flex items-center justify-between">
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
+                Incidents &amp; effets indésirables
+            </p>
+            <span class="h-8 w-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+                <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+            </span>
+        </div>
+        <p class="text-2xl font-semibold">{{ incidents_30j|default:0|intcomma }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            Déclarations MAPI sur les 30 derniers jours · {{ incidents_24h|default:0|intcomma }} sur les dernières 24h
+        </p>
+    </div>
+</div>
 
                     <!-- Graph & listes -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -194,11 +200,8 @@
                                 </button>
                             </div>
                             <div class="mt-2 h-64 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-[11px] text-slate-400 dark:text-slate-500">
-                                <span>
-                                    Zone graphique — intègre ici Chart.js ou ApexCharts
-                                    (courbe multi-séries, filtres par vaccin, région, type de campagne…)
-                                </span>
-                            </div>
+    <canvas id="vaccinationTrendsChart" class="w-full h-full"></canvas>
+</div>
                         </div>
 
                         <!-- Campagnes -->
@@ -290,40 +293,45 @@
                                     </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                                    <tr>
-                                        <td class="py-2 pr-3">CHU Treichville</td>
-                                        <td class="py-2 pr-3">Abidjan 1</td>
-                                        <td class="py-2 pr-3">Penta 3</td>
-                                        <td class="py-2 pr-3">120 doses</td>
-                                        <td class="py-2">
-                                            <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 text-[10px]">
-                                                À réapprovisionner
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-2 pr-3">Hôpital Général de Bouaké</td>
-                                        <td class="py-2 pr-3">Gbêkê</td>
-                                        <td class="py-2 pr-3">COVID-19 (Pfizer)</td>
-                                        <td class="py-2 pr-3">45 doses</td>
-                                        <td class="py-2">
-                                            <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300 text-[10px]">
-                                                Critique
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="py-2 pr-3">CS Urbain de Man</td>
-                                        <td class="py-2 pr-3">Tonkpi</td>
-                                        <td class="py-2 pr-3">Rougeole-Rubéole</td>
-                                        <td class="py-2 pr-3">230 doses</td>
-                                        <td class="py-2">
-                                            <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 text-[10px]">
-                                                Surveiller
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    </tbody>
+    {% for alert in centres_stock_alertes %}
+        <tr>
+            <td class="py-2 pr-3">
+                {{ alert.centre.name }}
+            </td>
+            <td class="py-2 pr-3">
+                {% if alert.region %}{{ alert.region.name }}{% else %}-{% endif %}
+            </td>
+            <td class="py-2 pr-3">
+                {{ alert.vaccin.nom }}
+            </td>
+            <td class="py-2 pr-3">
+                {{ alert.quantite|default:"0"|intcomma }} dose(s)
+                {% if alert.jours_restants is not None %}
+                    <span class="text-[10px] text-slate-500 dark:text-slate-400">
+                        · {{ alert.jours_restants }} j restants
+                    </span>
+                {% endif %}
+            </td>
+            <td class="py-2">
+                {% if alert.statut == "critique" %}
+                    <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300 text-[10px]">
+                        Critique
+                    </span>
+                {% else %}
+                    <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 text-[10px]">
+                        À réapprovisionner
+                    </span>
+                {% endif %}
+            </td>
+        </tr>
+    {% empty %}
+        <tr>
+            <td colspan="5" class="py-4 text-center text-[11px] text-slate-500 dark:text-slate-400">
+                Aucun centre en alerte stock selon les critères définis.
+            </td>
+        </tr>
+    {% endfor %}
+</tbody>
                                 </table>
                             </div>
                         </div>
@@ -384,5 +392,59 @@
                             </div>
                         </div>
                     </div>
+{{ chart_vaccinations_labels|json_script:"chart-vacc-labels" }}
+    {{ chart_vaccinations_data|json_script:"chart-vacc-data" }}
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const labelsEl = document.getElementById('chart-vacc-labels');
+            const dataEl = document.getElementById('chart-vacc-data');
+            if (!labelsEl || !dataEl) return;
+
+            const labels = JSON.parse(labelsEl.textContent);
+            const data = JSON.parse(dataEl.textContent);
+
+            const canvas = document.getElementById('vaccinationTrendsChart');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Doses administrées (30 derniers jours)',
+                        data: data,
+                        tension: 0.3,
+                        fill: true,
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.parsed.y.toLocaleString('fr-FR') + ' dose(s)';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                        },
+                        y: {
+                            beginAtZero: true,
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 {% endblock %}
