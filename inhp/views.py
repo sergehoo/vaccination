@@ -450,7 +450,7 @@ class PatientVaccinationCarnetPDFView(StaffOnlyMixin,LoginRequiredMixin, View):
         mapis = (
             Mapi.objects
             .filter(patient=patient, deleted_at__isnull=True)
-            .select_related('centre', 'accination__vaccin', 'utilisateur')
+            .select_related('centre', 'vaccination__vaccin', 'utilisateur')
             .order_by('-date', '-created_at')
         )
 
@@ -567,7 +567,7 @@ class PatientDetailView(StaffOnlyMixin,LoginRequiredMixin, DetailView):
         mapis = (
             Mapi.objects
             .filter(patient=patient, deleted_at__isnull=True)
-            .select_related('centre', 'accination__vaccin', 'utilisateur')
+            .select_related('centre', 'vaccination__vaccin', 'utilisateur')
             .order_by('-date', '-created_at')
         )
 
@@ -755,7 +755,7 @@ class VaccinationDetailView(StaffOnlyMixin,LoginRequiredMixin, DetailView):
         context['effets_secondaires'] = (
             Mapi.objects
             .filter(
-                accination=vaccination,
+                vaccination=vaccination,
                 deleted_at__isnull=True,
             )
             .select_related('utilisateur')
