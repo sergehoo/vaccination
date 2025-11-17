@@ -89,64 +89,25 @@ class VaccinationPagination(PageNumberPagination):
 
 class VaccinationViewSet(viewsets.ModelViewSet):
     """
-    ViewSet pour la gestion des vaccinations avec statistiques avancées
+    API Vaccinations avec filtrage avancé & statistiques.
     """
     queryset = Vaccination.objects.filter(deleted_at__isnull=True)
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
     pagination_class = VaccinationPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
 
+    # DjangoFilterBackend remplacé par get_queryset custom
     filterset_fields = ['centre', 'vaccin', 'dose']
     search_fields = ['patient__nom', 'patient__prenoms', 'vaccin__nom', 'centre__name']
     ordering_fields = ['date_vaccination', 'date_rappel', 'created_at', 'dose']
     ordering = ['-date_vaccination']
 
-    # def get_queryset(self):
-    #     qs = Vaccination.objects.filter(deleted_at__isnull=True).select_related(
-    #         'patient', 'centre', 'vaccin', 'lot', 'created_by'
-    #     )
-    #
-    #     request = self.request
-    #     params = request.query_params
-    #
-    #     # 🔹 Filtre patient texte (code, nom, prénom, téléphone)
-    #     patient_value = params.get('patient')
-    #     if patient_value:
-    #         qs = qs.filter(
-    #             Q(patient__code_patient__icontains=patient_value) |
-    #             Q(patient__nom__icontains=patient_value) |
-    #             Q(patient__prenoms__icontains=patient_value) |
-    #             Q(patient__telephone1__icontains=patient_value)
-    #         )
-    #
-    #     # 🔹 Filtre dates
-    #     date_debut = params.get('date_debut')
-    #     date_fin = params.get('date_fin')
-    #
-    #     if not date_debut and not date_fin:
-    #         # si aucune date fournie => 90 derniers jours par défaut
-    #         default_start = timezone.now().date() - timedelta(days=90)
-    #         qs = qs.filter(date_vaccination__gte=default_start)
-    #     else:
-    #         if date_debut:
-    #             qs = qs.filter(date_vaccination__gte=date_debut)
-    #         if date_fin:
-    #             qs = qs.filter(date_vaccination__lte=date_fin)
-    #
-    #     return qs
-
     def get_queryset(self):
         qs = Vaccination.objects.select_related(
             'patient', 'centre', 'vaccin', 'lot', 'created_by'
+        ).filter(
+            deleted_at__isnull=True
         )
-
-        # Soft delete
-        # qs = qs.filter(
-        #     Q(deleted_at__isnull=True) |
-        #     Q(deleted_at='') |
-        #     Q(deleted_at='1900-01-01') |
-        #     Q(deleted_at='1900-01-01 00:00:00+00')
-        # )
 
         params = self.request.query_params
 
@@ -160,7 +121,7 @@ class VaccinationViewSet(viewsets.ModelViewSet):
                 Q(patient__telephone1__icontains=patient_value)
             )
 
-        # 🔹 Filtre centre, vaccin, dose (remplace DjangoFilterBackend)
+        # 🔹 Filtre centre, vaccin, dose
         centre_id = (params.get('centre') or '').strip()
         if centre_id:
             qs = qs.filter(centre_id=centre_id)
@@ -173,7 +134,7 @@ class VaccinationViewSet(viewsets.ModelViewSet):
         if dose:
             qs = qs.filter(dose=dose)
 
-        # 🔹 Nettoyage des dates : on enlève TOUS les espaces (y compris \xa0)
+        # 🔹 Filtre dates (en nettoyant les espaces & \xa0)
         raw_debut = (params.get('date_debut') or '').replace('\xa0', ' ').strip()
         raw_fin = (params.get('date_fin') or '').replace('\xa0', ' ').strip()
 
@@ -186,11 +147,13 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             if date_fin:
                 qs = qs.filter(date_vaccination__lte=date_fin)
         else:
-            # pour le moment : pas de limite → tu vois bien si les données s'affichent
-            # Quand tout sera OK, tu pourras remettre un filtre type "90 derniers jours"
+            # Si tu veux limiter par défaut à 90 jours :
+            # default_start = timezone.now().date() - timedelta(days=90)
+            # qs = qs.filter(date_vaccination__gte=default_start)
             pass
 
         return qs
+
     def get_serializer_class(self):
         if self.action == 'list':
             return VaccinationListSerializer
@@ -245,10 +208,8 @@ class VaccinationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def statistiques(self, request):
-        # Période de référence (6 mois)
         six_months_ago = timezone.now().date() - timedelta(days=180)
 
-        # Vaccinations par mois (6 derniers mois)
         vaccinations_par_mois = Vaccination.objects.filter(
             deleted_at__isnull=True,
             date_vaccination__gte=six_months_ago
@@ -258,7 +219,6 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             total=Count('id')
         ).order_by('mois')
 
-        # Vaccinations par semaine (12 dernières semaines)
         vaccinations_par_semaine = Vaccination.objects.filter(
             deleted_at__isnull=True,
             date_vaccination__gte=timezone.now().date() - timedelta(days=84)
@@ -268,34 +228,47 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             total=Count('id')
         ).order_by('semaine')
 
-        # Statistiques par vaccin
-        vaccinations_par_vaccin = Vaccination.objects.filter(
+        # Total global pour les % (par vaccin / centre)
+        total_global = Vaccination.objects.filter(deleted_at__isnull=True).count() or 1
+
+        vaccinations_par_vaccin_raw = Vaccination.objects.filter(
             deleted_at__isnull=True
         ).values(
             'vaccin__nom', 'vaccin__id'
         ).annotate(
-            total=Count('id'),
-            pourcentage=Count('id') * 100.0 / Count('id', filter=Q(deleted_at__isnull=True))
+            total=Count('id')
         ).order_by('-total')
 
-        # Statistiques par centre
-        vaccinations_par_centre = Vaccination.objects.filter(
+        vaccinations_par_vaccin = [
+            {
+                **row,
+                'pourcentage': (row['total'] * 100.0) / total_global
+            }
+            for row in vaccinations_par_vaccin_raw
+        ]
+
+        vaccinations_par_centre_raw = Vaccination.objects.filter(
             deleted_at__isnull=True
         ).values(
             'centre__name', 'centre__id'
         ).annotate(
-            total=Count('id'),
-            pourcentage=Count('id') * 100.0 / Count('id', filter=Q(deleted_at__isnull=True))
+            total=Count('id')
         ).order_by('-total')
 
-        # Statistiques par dose
+        vaccinations_par_centre = [
+            {
+                **row,
+                'pourcentage': (row['total'] * 100.0) / total_global
+            }
+            for row in vaccinations_par_centre_raw
+        ]
+
         vaccinations_par_dose = Vaccination.objects.filter(
             deleted_at__isnull=True
         ).values('dose').annotate(
             total=Count('id')
         ).order_by('dose')
 
-        # Rappels
         rappels_prochains = Vaccination.objects.filter(
             deleted_at__isnull=True,
             date_rappel__isnull=False,
@@ -309,27 +282,23 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             date_rappel__lt=date.today()
         ).count()
 
-        # Vaccinations aujourd'hui
         vaccinations_aujourdhui = Vaccination.objects.filter(
             deleted_at__isnull=True,
             date_vaccination=date.today()
         ).count()
 
-        # Vaccinations cette semaine
         debut_semaine = date.today() - timedelta(days=date.today().weekday())
         vaccinations_semaine = Vaccination.objects.filter(
             deleted_at__isnull=True,
             date_vaccination__gte=debut_semaine
         ).count()
 
-        # Vaccinations ce mois
         debut_mois = date.today().replace(day=1)
         vaccinations_mois = Vaccination.objects.filter(
             deleted_at__isnull=True,
             date_vaccination__gte=debut_mois
         ).count()
 
-        # Tendance (comparaison avec mois précédent)
         mois_precedent_debut = (debut_mois - timedelta(days=1)).replace(day=1)
         mois_precedent_fin = debut_mois - timedelta(days=1)
 
@@ -343,28 +312,32 @@ class VaccinationViewSet(viewsets.ModelViewSet):
         if vaccinations_mois_precedent > 0:
             evolution_mois = ((vaccinations_mois - vaccinations_mois_precedent) / vaccinations_mois_precedent) * 100
 
+        total_rappels = rappels_prochains + rappels_manques
+        taux_rappel = (rappels_prochains * 100.0 / total_rappels) if total_rappels > 0 else 0
+
         return Response({
             'periodes': {
                 'vaccinations_par_mois': list(vaccinations_par_mois),
                 'vaccinations_par_semaine': list(vaccinations_par_semaine),
             },
             'repartition': {
-                'par_vaccin': list(vaccinations_par_vaccin),
-                'par_centre': list(vaccinations_par_centre),
+                'par_vaccin': vaccinations_par_vaccin,
+                'par_centre': vaccinations_par_centre,
                 'par_dose': list(vaccinations_par_dose),
             },
             'kpis': {
-                'total_vaccinations': Vaccination.objects.filter(deleted_at__isnull=True).count(),
+                'total_vaccinations': total_global,
                 'vaccinations_aujourdhui': vaccinations_aujourdhui,
                 'vaccinations_semaine': vaccinations_semaine,
                 'vaccinations_mois': vaccinations_mois,
                 'evolution_mois': round(evolution_mois, 1),
                 'rappels_prochains': rappels_prochains,
                 'rappels_manques': rappels_manques,
-                'taux_rappel': round((rappels_prochains / (rappels_prochains + rappels_manques)) * 100, 1) if (
-                                                                                                                          rappels_prochains + rappels_manques) > 0 else 0,
+                'taux_rappel': round(taux_rappel, 1),
             }
         })
+
+
 # class VaccinationViewSet(viewsets.ModelViewSet):
 #     """
 #     ViewSet pour la gestion des vaccinations

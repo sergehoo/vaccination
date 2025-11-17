@@ -66,7 +66,7 @@ class FicheRetroSerializer(serializers.ModelSerializer):
 class CentreVaccinationSerializer(serializers.ModelSerializer):
     class Meta:
         model = CentreVaccination
-        fields = ['id', 'nom', 'adresse', 'ville', 'telephone']
+        fields = ['id', 'name', 'adresse', 'district']
 
 
 class LotVaccinSerializer(serializers.ModelSerializer):
@@ -74,13 +74,13 @@ class LotVaccinSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LotVaccin
-        fields = ['id', 'numero_lot', 'vaccin', 'vaccin_nom', 'date_expiration', 'stock']
+        fields = ['id', 'numero_lot', 'vaccin', 'vaccin_nom', 'date_expiration', 'quantite_initiale']
 
 
 class VaccinationListSerializer(serializers.ModelSerializer):
     patient_nom = serializers.CharField(source='patient.nom', read_only=True)
     patient_prenoms = serializers.CharField(source='patient.prenoms', read_only=True)
-    centre_nom = serializers.CharField(source='centre.nom', read_only=True)
+    centre_name = serializers.CharField(source='centre.name', read_only=True)
     vaccin_nom = serializers.CharField(source='vaccin.nom', read_only=True)
     lot_numero = serializers.CharField(source='lot.numero_lot', read_only=True)
     created_by_nom = serializers.CharField(source='created_by.get_full_name', read_only=True)
@@ -88,7 +88,7 @@ class VaccinationListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vaccination
         fields = [
-            'id', 'patient', 'patient_nom', 'patient_prenoms', 'centre', 'centre_nom',
+            'id', 'patient', 'patient_nom', 'patient_prenoms', 'centre', 'centre_name',
             'date_vaccination', 'vaccin', 'vaccin_nom', 'lot', 'lot_numero', 'dose',
             'date_rappel', 'created_by', 'created_by_nom', 'created_at', 'updated_at'
         ]

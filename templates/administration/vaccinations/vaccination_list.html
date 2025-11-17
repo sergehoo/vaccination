@@ -56,7 +56,7 @@
                             <i class="fa-solid fa-plus text-[10px]"></i>
                             <span>Nouvelle vaccination</span>
                         </a>
-                        <button onclick="toggleStatsSection()"
+                        <button type="button" onclick="toggleStatsSection()"
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/5 border border-white/15 text-[11px] hover:bg-white/10 transition">
                             <i class="fa-solid fa-chart-bar text-[10px]"></i>
                             <span>Voir les statistiques</span>
@@ -114,7 +114,7 @@
             <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-5">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-lg font-semibold">📊 Tableau de bord des vaccinations</h2>
-                    <button onclick="toggleStatsSection()"
+                    <button type="button" onclick="toggleStatsSection()"
                             class="px-3 py-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-sm">
                         <i class="fa-solid fa-times"></i>
                     </button>
@@ -177,26 +177,20 @@
                     <!-- Répartition par vaccin -->
                     <div class="border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
                         <h3 class="text-sm font-semibold mb-4">Répartition par vaccin</h3>
-                        <div id="stats-vaccins-repartition" class="space-y-2">
-                            <!-- Rempli dynamiquement -->
-                        </div>
+                        <div id="stats-vaccins-repartition" class="space-y-2"></div>
                     </div>
 
                     <!-- Répartition par centre -->
                     <div class="border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
                         <h3 class="text-sm font-semibold mb-4">Top centres de vaccination</h3>
-                        <div id="stats-centres-repartition" class="space-y-2">
-                            <!-- Rempli dynamiquement -->
-                        </div>
+                        <div id="stats-centres-repartition" class="space-y-2"></div>
                     </div>
                 </div>
 
                 <!-- Évolution mensuelle -->
                 <div class="mt-6 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
                     <h3 class="text-sm font-semibold mb-4">Évolution sur 6 mois</h3>
-                    <div id="stats-evolution-mensuelle" class="h-48 flex items-end justify-between gap-2">
-                        <!-- Graphique en barres simple -->
-                    </div>
+                    <div id="stats-evolution-mensuelle" class="h-48 flex items-end justify-between gap-2"></div>
                 </div>
             </div>
         </div>
@@ -217,7 +211,7 @@
                         <i class="fa-solid fa-plus text-[11px]"></i>
                         <span>Nouvelle vaccination</span>
                     </a>
-                    <button onclick="toggleStatsSection()"
+                    <button type="button" onclick="toggleStatsSection()"
                             class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 text-xs hover:bg-slate-50 dark:hover:bg-slate-800">
                         <i class="fa-solid fa-chart-bar text-[11px]"></i>
                         <span>Statistiques</span>
@@ -309,7 +303,6 @@
                     </tr>
                     </thead>
                     <tbody id="vaccination-table-body" class="divide-y divide-slate-200 dark:divide-slate-800">
-                    <!-- Rempli dynamiquement par JS -->
                     </tbody>
                 </table>
             </div>
@@ -337,7 +330,6 @@
     </div>
 
     <script>
-        // Fonction pour basculer l'affichage des statistiques
         function toggleStatsSection() {
             const statsSection = document.getElementById('stats-section');
             statsSection.classList.toggle('hidden');
@@ -347,7 +339,6 @@
             }
         }
 
-        // Chargement des statistiques
         async function loadStatistics() {
             const statsUrl = document.getElementById('vaccination-page').dataset.statsUrl;
 
@@ -355,64 +346,74 @@
                 const response = await fetch(statsUrl);
                 const data = await response.json();
 
-                // Mise à jour des KPIs
+                const kpis = data.kpis || {};
+                const repartition = data.repartition || {};
+                const periodes = data.periodes || {};
+
                 document.getElementById('stats-total-vaccinations').textContent =
-                    data.kpis.total_vaccinations?.toLocaleString() || '0';
+                    (kpis.total_vaccinations ?? 0).toLocaleString('fr-FR');
+
                 document.getElementById('stats-vaccinations-mois').textContent =
-                    data.kpis.vaccinations_mois?.toLocaleString() || '0';
+                    (kpis.vaccinations_mois ?? 0).toLocaleString('fr-FR');
+
                 document.getElementById('stats-rappels-prochains').textContent =
-                    data.kpis.rappels_prochains?.toLocaleString() || '0';
-                document.getElementById('stats-taux-rappel').textContent =
-                    data.kpis.taux_rappel + '%' || '0%';
+                    (kpis.rappels_prochains ?? 0).toLocaleString('fr-FR');
 
-                // Évolution du mois
+                const tauxRappel = kpis.taux_rappel ?? 0;
+                document.getElementById('stats-taux-rappel').textContent = tauxRappel + '%';
+
                 const evolutionElem = document.getElementById('stats-evolution-mois');
-                const evolution = data.kpis.evolution_mois || 0;
+                const evolution = kpis.evolution_mois ?? 0;
                 evolutionElem.textContent = (evolution > 0 ? '+' : '') + evolution + '%';
-                evolutionElem.className = evolution >= 0 ?
-                    'text-[10px] text-green-500' : 'text-[10px] text-rose-500';
+                evolutionElem.className = evolution >= 0
+                    ? 'text-[10px] text-green-500'
+                    : 'text-[10px] text-rose-500';
 
-                // Répartition par vaccin
                 const vaccinsContainer = document.getElementById('stats-vaccins-repartition');
-                vaccinsContainer.innerHTML = data.repartition.par_vaccin.map(vaccin => `
+                vaccinsContainer.innerHTML = (repartition.par_vaccin || []).map(vaccin => `
                     <div class="flex items-center justify-between text-xs">
                         <span>${vaccin.vaccin__nom || 'Non spécifié'}</span>
                         <div class="flex items-center gap-2">
                             <span class="font-medium">${vaccin.total}</span>
-                            <span class="text-slate-400 text-[10px]">${vaccin.pourcentage?.toFixed(1) || '0'}%</span>
+                            <span class="text-slate-400 text-[10px]">${(vaccin.pourcentage ?? 0).toFixed(1)}%</span>
                         </div>
                     </div>
                 `).join('');
 
-                // Répartition par centre
                 const centresContainer = document.getElementById('stats-centres-repartition');
-                centresContainer.innerHTML = data.repartition.par_centre.slice(0, 5).map(centre => `
+                centresContainer.innerHTML = (repartition.par_centre || []).slice(0, 5).map(centre => `
                     <div class="flex items-center justify-between text-xs">
                         <span class="truncate flex-1">${centre.centre__name || 'Non spécifié'}</span>
                         <div class="flex items-center gap-2 ml-2">
                             <span class="font-medium">${centre.total}</span>
-                            <span class="text-slate-400 text-[10px]">${centre.pourcentage?.toFixed(1) || '0'}%</span>
+                            <span class="text-slate-400 text-[10px]">${(centre.pourcentage ?? 0).toFixed(1)}%</span>
                         </div>
                     </div>
                 `).join('');
 
-                // Graphique d'évolution mensuelle
                 const evolutionContainer = document.getElementById('stats-evolution-mensuelle');
-                const maxValue = Math.max(...data.periodes.vaccinations_par_mois.map(m => m.total));
+                const series = periodes.vaccinations_par_mois || [];
+                if (series.length === 0) {
+                    evolutionContainer.innerHTML = '<p class="text-xs text-slate-400">Aucune donnée disponible</p>';
+                    return;
+                }
 
-                evolutionContainer.innerHTML = data.periodes.vaccinations_par_mois.map(mois => {
-                    const height = maxValue > 0 ? (mois.total / maxValue) * 100 : 0;
-                    const date = new Date(mois.mois);
-                    const monthName = date.toLocaleDateString('fr-FR', { month: 'short' });
+                const maxValue = Math.max(...series.map(m => m.total || 0));
+
+                evolutionContainer.innerHTML = series.map(mois => {
+                    const value = mois.total || 0;
+                    const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
+                    const dateObj = new Date(mois.mois);
+                    const monthName = dateObj.toLocaleDateString('fr-FR', { month: 'short' });
 
                     return `
                         <div class="flex flex-col items-center gap-1 flex-1">
                             <div class="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-lg transition-all hover:from-blue-600 hover:to-blue-500"
                                  style="height: ${height}%"
-                                 title="${mois.total} vaccinations">
+                                 title="${value} vaccinations">
                             </div>
                             <span class="text-[10px] text-slate-500">${monthName}</span>
-                            <span class="text-[10px] font-medium">${mois.total}</span>
+                            <span class="text-[10px] font-medium">${value}</span>
                         </div>
                     `;
                 }).join('');
@@ -422,7 +423,6 @@
             }
         }
 
-        // Le reste du code JavaScript existant pour le chargement des vaccinations...
         document.addEventListener('DOMContentLoaded', function () {
             const pageRoot = document.getElementById('vaccination-page');
             if (!pageRoot) return;
@@ -437,7 +437,6 @@
             const countInfo = document.getElementById('vaccination-count');
             const filterForm = document.querySelector('form[method="get"]');
 
-            // éléments du hero à mettre à jour
             const heroTotalTop = document.getElementById('hero-total-vaccinations');
             const heroTotalBottom = document.getElementById('hero-total-vaccinations-bottom');
             const heroRappelsProchains = document.getElementById('hero-rappels-prochains-nb');
@@ -455,14 +454,15 @@
                 if (!filterForm) return params.toString();
 
                 const formData = new FormData(filterForm);
-                for (const [key, value] of formData.entries()) {
-                    if (value) {
-                        if (key === 'patient') params.set('patient', value);
-                        else if (key === 'centre') params.set('centre', value);
-                        else if (key === 'vaccin') params.set('vaccin', value);
-                        else if (key === 'date_debut') params.set('date_debut', value);
-                        else if (key === 'date_fin') params.set('date_fin', value);
-                    }
+                for (const [key, valueRaw] of formData.entries()) {
+                    const value = (valueRaw || '').trim();
+                    if (!value) continue;
+
+                    if (key === 'patient') params.set('patient', value);
+                    else if (key === 'centre') params.set('centre', value);
+                    else if (key === 'vaccin') params.set('vaccin', value);
+                    else if (key === 'date_debut') params.set('date_debut', value);
+                    else if (key === 'date_fin') params.set('date_fin', value);
                 }
                 return params.toString();
             }
@@ -491,15 +491,13 @@
                     totalCount = data.count || 0;
                     const results = data.results || [];
 
-                    // Mise à jour des compteurs dans le hero
                     if (heroTotalTop) {
-                        heroTotalTop.textContent = totalCount + ' vaccinations enregistrées';
+                        heroTotalTop.textContent = `${totalCount.toLocaleString('fr-FR')} vaccinations enregistrées`;
                     }
                     if (heroTotalBottom) {
-                        heroTotalBottom.textContent = 'Total vaccinations : ' + totalCount;
+                        heroTotalBottom.textContent = `Total vaccinations : ${totalCount.toLocaleString('fr-FR')}`;
                     }
 
-                    // Charger les stats de rappels si disponibles
                     await loadRappelsStats();
 
                     if (!results.length) {
@@ -513,29 +511,28 @@
                         const baseDetailUrl = "{% url 'vaccination_detail' 0 %}";
 
                         const rows = results.map(vaccination => {
-                            const patientNomComplet = (vaccination.patient_nom || '') + ' ' + (vaccination.patient_prenoms || '');
-                            const patientCode = vaccination.patient_code || '';
-                            const centreNom = vaccination.centre_nom || '-';
+                            const patientNomComplet = `${vaccination.patient_nom || ''} ${vaccination.patient_prenoms || ''}`.trim();
+                            const codePatient = vaccination.code_patient || '';
+                            const centreNom = vaccination.centre_name || '-';
                             const vaccinNom = vaccination.vaccin_nom || '-';
                             const lotNumero = vaccination.lot_numero || '-';
                             const dose = vaccination.dose ?? '-';
                             const dateVaccination = vaccination.date_vaccination || '-';
                             const dateRappel = vaccination.date_rappel || '-';
 
-                             let detailUrl = '#';
-                        if (vaccination.id !== undefined && vaccination.id !== null) {
-                            // remplace le "0" final de /vaccination/0/ par l'id réel
-                            detailUrl = baseDetailUrl.replace(/0\/?$/, vaccination.id + '/');
-                        }
+                            let detailUrl = '#';
+                            if (vaccination.id !== undefined && vaccination.id !== null) {
+                                detailUrl = baseDetailUrl.replace(/0\/?$/, vaccination.id + '/');
+                            }
 
                             return `
                                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40">
                                     <td class="py-2 pr-3">
                                         <div class="flex flex-col">
-                                            <span class="font-medium text-[12px]">${patientNomComplet}</span>
+                                            <span class="font-medium text-[12px]">${patientNomComplet || '-'}</span>
                                         </div>
                                     </td>
-                                    <td class="py-2 pr-3 text-slate-500 dark:text-slate-400">${patientCode}</td>
+                                    <td class="py-2 pr-3 text-slate-500 dark:text-slate-400">${codePatient || '_'}</td>
                                     <td class="py-2 pr-3 text-slate-500 dark:text-slate-400">${centreNom}</td>
                                     <td class="py-2 pr-3">
                                         <div class="flex flex-col">
@@ -559,7 +556,7 @@
                                         <a href="${detailUrl}"
                                            class="inline-flex items-center gap-1 px-2 py-1 rounded-2xl bg-slate-100 dark:bg-slate-900/70 text-[11px]">
                                             <i class="fa-solid fa-eye text-[10px]"></i>
-                                            Détails patient
+                                            Détails Vaccination
                                         </a>
                                     </td>
                                 </tr>
@@ -569,20 +566,19 @@
                         tableBody.innerHTML = rows;
                     }
 
-                    // Pagination
                     currentPage = page;
                     const pageSizeUsed = data.results ? data.results.length : pageSize;
-                    const start = (currentPage - 1) * pageSize + 1;
-                    const end = (currentPage - 1) * pageSize + pageSizeUsed;
+                    const start = totalCount ? (currentPage - 1) * pageSize + 1 : 0;
+                    const end = totalCount ? (currentPage - 1) * pageSize + pageSizeUsed : 0;
 
                     countInfo.textContent = totalCount
-                        ? `Enregistrements ${start} – ${end} sur ${totalCount}`
+                        ? `Enregistrements ${start} – ${end} sur ${totalCount.toLocaleString('fr-FR')}`
                         : '';
 
                     btnPrev.disabled = !data.previous;
                     btnNext.disabled = !data.next;
 
-                    const totalPages = totalCount ? Math.ceil(totalCount / pageSize) : '?';
+                    const totalPages = totalCount ? Math.ceil(totalCount / pageSize) : 1;
                     pageInfo.textContent = totalCount ? `Page ${currentPage} / ${totalPages}` : '';
 
                     pagination.classList.remove('hidden');
@@ -600,25 +596,24 @@
                 }
             }
 
-            // Charger les statistiques de rappels
             async function loadRappelsStats() {
                 try {
                     const statsUrl = document.getElementById('vaccination-page').dataset.statsUrl;
                     const response = await fetch(statsUrl);
                     const data = await response.json();
+                    const kpis = data.kpis || {};
 
                     if (heroRappelsProchains) {
-                        heroRappelsProchains.textContent = data.kpis.rappels_prochains || '0';
+                        heroRappelsProchains.textContent = (kpis.rappels_prochains ?? 0).toLocaleString('fr-FR');
                     }
                     if (heroRappelsManques) {
-                        heroRappelsManques.textContent = data.kpis.rappels_manques || '0';
+                        heroRappelsManques.textContent = (kpis.rappels_manques ?? 0).toLocaleString('fr-FR');
                     }
                 } catch (error) {
                     console.error('Erreur chargement stats rappels:', error);
                 }
             }
 
-            // Navigation pagination
             btnPrev?.addEventListener('click', function () {
                 if (currentPage > 1) {
                     loadVaccinations(currentPage - 1);
@@ -629,7 +624,6 @@
                 loadVaccinations(currentPage + 1);
             });
 
-            // Soumission des filtres
             if (filterForm) {
                 filterForm.addEventListener('submit', function (e) {
                     e.preventDefault();
@@ -637,7 +631,6 @@
                 });
             }
 
-            // Premier chargement
             loadVaccinations(1);
         });
     </script>
