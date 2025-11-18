@@ -73,6 +73,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -86,7 +87,6 @@ MIDDLEWARE = [
 
     'django_prometheus.middleware.PrometheusAfterMiddleware',
     'corsheaders.middleware.CorsMiddleware'
-
 
 ]
 
@@ -153,8 +153,6 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-
-
 
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -227,7 +225,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static']  # vérifie que le dossier existe
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # 📦 Fichiers statiques compressés (optionnel, prod)
-# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # 🔍 Recherche de fichiers statiques
 STATICFILES_FINDERS = [
