@@ -47,6 +47,7 @@ COPY package*.json ./
 COPY tailwind.config.js postcss.config.js ./
 # Si tu as un fichier source dédié : ex : static/src/keneya.css
 # adapte au besoin :
+COPY static_src ./static_src
 COPY static ./static
 
 RUN npm install --production=false
