@@ -29,10 +29,10 @@ services:
 #    ports:
 #      - "1105:8000"
     volumes:
-      - .:/app
-      - static_volume:/app/static
-      - staticfiles_volume:/app/staticfiles
-      - media_volume:/app/media
+      - .:/
+      - static_volume:/static
+      - staticfiles_volume:/staticfiles
+      - media_volume:/media
     env_file: [ .env ]
     depends_on:
       - vaccinationdb
