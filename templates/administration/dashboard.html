@@ -5,11 +5,10 @@
 
 {% block content %}
       <!-- Bandeau contexte / hero -->
-                {% block hero %}
+{% block hero %}
 <div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft">
     <div class="absolute inset-y-0 right-0 hidden md:block opacity-70">
-        <img src="{% static 'images/banner5.webp' %}" alt="Vaccination CI"
-             class="h-full object-contain pointer-events-none">
+        <img src="{% static 'images/banner5.webp' %}" alt="Vaccination CI"  class="h-full object-contain pointer-events-none">
     </div>
 
     <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">

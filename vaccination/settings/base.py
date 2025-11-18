@@ -15,7 +15,7 @@ from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -95,7 +95,7 @@ PROMETHEUS_LATENCY_BUCKETS = (0.01, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10)
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR.parent / 'templates'],  # ← Chemin corrigé
+        'DIRS': [BASE_DIR / 'templates'],  # ← Chemin corrigé
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -217,25 +217,23 @@ LEAFLET_CONFIG = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-BASE_DIR = Path(__file__).resolve().parent.parent.parent  # déjà correct
-
 # 📂 Dossiers statiques
+# STATIC & MEDIA
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']  # vérifie que le dossier existe
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'staticfiles'     # /app/staticfiles
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',                   # /app/static
+]
 
-# 📦 Fichiers statiques compressés (optionnel, prod)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# 🔍 Recherche de fichiers statiques
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-# 📁 Médias uploadés par les utilisateurs
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = BASE_DIR / 'media'            # /app/media
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

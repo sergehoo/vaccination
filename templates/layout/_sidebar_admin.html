@@ -1,263 +1,330 @@
 {% load static %}
-<aside class="hidden md:flex w-64 xl:w-72 flex-col border-r border-white/20 dark:border-slate-800/90 bg-white/70 dark:bg-slate-950/60 backdrop-blur-2xl">
+<aside class="hidden md:flex w-60 xl:w-64 flex-col border-r border-white/20 dark:border-slate-800/90 bg-gradient-to-b from-white/95 to-slate-50/90 dark:from-slate-900/95 dark:to-slate-950/90 backdrop-blur-2xl shadow-soft-xl">
 
-    <div class="mx-1 mb-4 p-6 rounded-2xl gradient-primary-soft text-white">
-        <p class="text-[10px] uppercase tracking-[0.22em] text-white ">
-            Navigation
-        </p>
-        <div class="text-[11px] text-slate-900 dark:text-slate-900 flex items-center gap-2">
-            <i class="fa-solid fa-circle text-[5px] text-emerald-400 animate-pulse"></i>
-            <span>Mode <span class="font-semibold">Administration</span></span>
+    {# ================== BLOC UTILISATEUR (AMÉLIORÉ) ================== #}
+   <div class="mx-3 mt-3 mb-2 rounded-2xl bg-gradient-to-r from-ivoireBlue to-keneyaSecondary text-white shadow-sm">
+        <!-- Effet de brillance -->
+        <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl"></div>
+        
+        <div class="px-4 pt-4 pb-3 flex items-center justify-between text-xs relative z-10">
+            <div class="flex items-center gap-2">
+                <div class="relative">
+                    <i class="fa-solid fa-circle text-[6px] text-emerald-300 animate-pulse"></i>
+                    <div class="absolute inset-0 animate-ping">
+                        <i class="fa-solid fa-circle text-[6px] text-emerald-300/70"></i>
+                    </div>
+                </div>
+                {% if request.user.is_staff %}
+                    <span>Mode <span class="font-bold">Administration</span></span>
+                {% else %}
+                    <span>Mode <span class="font-bold">Patient</span></span>
+                {% endif %}
+            </div>
+
+            {% if request.user.is_authenticated %}
+                <span class="px-2 py-1 rounded-full bg-white/20 text-[10px] flex items-center gap-1 backdrop-blur-sm border border-white/30">
+                    <i class="fa-solid fa-user-check text-[9px]"></i> Connecté
+                </span>
+            {% endif %}
         </div>
+
+        {% if request.user.is_authenticated %}
+            <div class="px-4 pb-4 flex items-center gap-3 relative z-10">
+                <!-- Avatar avec effet de halo -->
+                <div class="relative">
+                    <div class="absolute -inset-1 bg-white/30 rounded-full blur-sm opacity-70"></div>
+                    <div class="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold relative backdrop-blur-sm border border-white/30">
+                        {% if request.user.first_name %}
+                            {{ request.user.first_name|slice:":1" }}{{ request.user.last_name|slice:":1" }}
+                        {% else %}
+                            {{ request.user.username|slice:":2" }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Infos utilisateur -->
+                <div class="flex-1 leading-tight text-xs">
+                    <p class="font-bold truncate">
+                        {% if request.user.first_name %}
+                            {{ request.user.first_name }} {{ request.user.last_name|upper }}
+                        {% else %}
+                            {{ request.user.username }}
+                        {% endif %}
+                    </p>
+                    <p class="text-white/90 truncate">
+                        {{ request.user.email|default:"Aucun email" }}
+                    </p>
+                </div>
+
+                <!-- Logout icône avec effet hover -->
+                <a href="{% url 'logout' %}"
+                   class="h-9 w-9 rounded-full bg-white/15 flex items-center justify-center hover:bg-white/25 transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white/20"
+                   title="Se déconnecter">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                </a>
+            </div>
+        {% else %}
+            <div class="px-4 pb-4 relative z-10">
+                <p class="text-xs mb-2 opacity-90">Vous n'êtes pas connecté.</p>
+                <a href="{% url 'login' %}"
+                   class="w-full text-center px-4 py-2 rounded-xl bg-white text-ivoireBlue font-bold text-xs shadow-lg hover:bg-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
+                    Se connecter
+                </a>
+            </div>
+        {% endif %}
     </div>
 
+    {# ================== MENU PRINCIPAL (AMÉLIORÉ) ================== #}
+    <nav class="flex-1 px-3 pb-4 space-y-2 text-sm overflow-y-auto text-slate-700 dark:text-slate-200 scrollbar-thin">
 
-    <nav class="flex-1 px-3 pb-4 space-y-3 text-[13px] overflow-y-auto">
-        <!-- ================== BLOC EXISTANT ================== -->
-
-        <!-- Dashboard -->
+        {# Dashboard #}
         <a href="{% url 'dashboard' %}"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl {% if request.resolver_match.url_name == 'admin_dashboard' %}bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-soft{% else %}hover:bg-slate-900/5 dark:hover:bg-slate-50/5{% endif %}">
-            <span class="w-8 h-8 rounded-xl bg-slate-900/10 text-slate-900 dark:bg-slate-900/5 flex items-center justify-center">
+           class="group flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-300
+                  {% if request.resolver_match.url_name == 'dashboard' %}
+                      bg-gradient-to-r from-ivoireBlue/10 to-keneyaSecondary/10 text-ivoireBlue border border-ivoireBlue/20 shadow-soft
+                  {% else %}
+                      hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1
+                  {% endif %}">
+            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-900/10 to-slate-900/5 text-slate-900 dark:from-slate-900/5 dark:to-slate-900/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <i class="fa-solid fa-chart-line text-xs"></i>
             </span>
             <div class="flex flex-col">
                 <span class="font-semibold">Tableau de bord</span>
-                <span class="text-[11px] text-slate-400 dark:text-slate-500">Vue nationale</span>
+                <span class="text-xs text-slate-400 dark:text-slate-500">Vue nationale</span>
             </div>
         </a>
-        <!-- Rapports & Statistiques -->
+
+        {# Rapports & Statistiques #}
         <div x-data="{ open: false }" class="space-y-1">
             <button @click="open = !open"
-                    class="w-full flex items-center justify-between px-3 py-2 text-left text-slate-600 dark:text-slate-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 rounded-2xl">
+                    class="group w-full flex items-center justify-between px-3 py-3 text-left rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
                 <span class="flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-xl bg-fuchsia-500/10 text-fuchsia-500 flex items-center justify-center">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-fuchsia-500/10 to-fuchsia-500/5 text-fuchsia-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                         <i class="fa-solid fa-chart-pie text-xs"></i>
                     </span>
                     <span>Rapports & statistiques</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-[10px]" x-bind:class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
             </button>
-            <div x-show="open" class="pl-10 space-y-1 text-[12px]">
-                <a href="#" class="block py-1.5">Rapport global</a>
-                <a href="#" class="block py-1.5">Par région</a>
-                <a href="#" class="block py-1.5">Par tranche d'âge</a>
+            <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Rapport global</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Par région</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Par tranche d'âge</a>
             </div>
         </div>
-        <!-- Séparateur logique -->
-        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 text-[10px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+
+        {# ==== Gestion clinique ==== #}
+        <div class="pt-3 pb-1 px-3 text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold flex items-center">
+            <span class="flex-1 h-px bg-gradient-to-r from-transparent to-slate-300 dark:to-slate-700 mr-2"></span>
             Gestion clinique
+            <span class="flex-1 h-px bg-gradient-to-l from-transparent to-slate-300 dark:to-slate-700 ml-2"></span>
         </div>
 
-        <!-- Patients -->
+        {# Patients #}
         <div x-data="{ open: false }" class="space-y-1">
             <button @click="open = !open"
-                    class="w-full flex items-center justify-between px-3 py-2 text-left
-                   text-slate-600 dark:text-slate-300 hover:bg-slate-900/5
-                   dark:hover:bg-slate-50/5 rounded-2xl">
-        <span class="flex items-center gap-2">
-            <span class="w-8 h-8 rounded-xl bg-slate-500/10 text-slate-600
-                         dark:text-slate-300 flex items-center justify-center">
-                <i class="fa-solid fa-users text-xs"></i>
-            </span>
-            <span>Patients</span>
-        </span>
-                <i class="fa-solid fa-chevron-down text-[10px]"
-                   :class="open ? 'rotate-180' : ''"></i>
+                    class="group w-full flex items-center justify-between px-3 py-3 text-left rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
+                <span class="flex items-center gap-2">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-500/10 to-slate-500/5 text-slate-600 dark:text-slate-300 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                        <i class="fa-solid fa-users text-xs"></i>
+                    </span>
+                    <span>Patients</span>
+                </span>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
             </button>
-
-            <div x-show="open" class="pl-10 space-y-1 text-[12px]">
-                <a href="{% url 'patient_list' %}" class="block py-1.5">Liste des patients</a>
-                <a href="{#% url 'patient_add' %#}" class="block py-1.5">Ajouter un patient</a>
-                <a href="{#% url 'patient_detail' patient_id=1 %#}" class="block py-1.5">Détails patient</a>
+            <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
+                <a href="{% url 'patient_list' %}" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste des patients</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Ajouter un patient</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Détails patient</a>
             </div>
         </div>
 
-        <!-- Vaccinations -->
+        {# Vaccinations #}
         <div x-data="{ open: false }" class="space-y-1">
             <button @click="open = !open"
-                    class="w-full flex items-center justify-between px-3 py-2 text-left text-slate-600 dark:text-slate-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 rounded-2xl">
+                    class="group w-full flex items-center justify-between px-3 py-3 text-left rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
                 <span class="flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                         <i class="fa-solid fa-syringe text-xs"></i>
                     </span>
                     <span>Vaccinations</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-[10px]" x-bind:class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
             </button>
-            <div x-show="open" class="pl-10 space-y-1 text-[12px]">
-                <a href="{% url 'vaccination_list' %}" class="block py-1.5">Liste Vaccination</a>
-                <a href="#" class="block py-1.5">Historique vaccinal</a>
-                <a href="#" class="block py-1.5">Nouvelle vaccination</a>
+            <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
+                <a href="{% url 'vaccination_list' %}" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste Vaccination</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Historique vaccinal</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Nouvelle vaccination</a>
             </div>
         </div>
 
-        <!-- Vaccins -->
+        {# Vaccins #}
         <div x-data="{ open: false }" class="space-y-1">
             <button @click="open = !open"
-                    class="w-full flex items-center justify-between px-3 py-2 text-left text-slate-600 dark:text-slate-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 rounded-2xl">
+                    class="group w-full flex items-center justify-between px-3 py-3 text-left rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
                 <span class="flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500/10 to-indigo-500/5 text-indigo-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                         <i class="fa-solid fa-capsules text-xs"></i>
                     </span>
                     <span>Vaccins</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-[10px]" x-bind:class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
             </button>
-            <div x-show="open" class="pl-10 space-y-1 text-[12px]">
-                <a href="#" class="block py-1.5">Liste des vaccins</a>
-                <a href="#" class="block py-1.5">Ajouter un vaccin</a>
+            <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste des vaccins</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Ajouter un vaccin</a>
             </div>
         </div>
 
-
-        <!-- Séparateur logique -->
-        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 text-[10px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
-            Gestion Campagnes
+        {# ==== Campagnes ==== #}
+        <div class="pt-3 pb-1 px-3 text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold flex items-center">
+            <span class="flex-1 h-px bg-gradient-to-r from-transparent to-slate-300 dark:to-slate-700 mr-2"></span>
+            Gestion campagnes
+            <span class="flex-1 h-px bg-gradient-to-l from-transparent to-slate-300 dark:to-slate-700 ml-2"></span>
         </div>
 
-        <!-- Campagnes -->
+        {# Campagnes & PEV #}
         <div x-data="{ open: true }" class="space-y-1">
             <button @click="open = !open"
-                    class="w-full flex items-center justify-between px-3 py-2 text-left text-slate-600 dark:text-slate-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 rounded-2xl">
+                    class="group w-full flex items-center justify-between px-3 py-3 text-left rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
                 <span class="flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                         <i class="fa-solid fa-syringe text-xs"></i>
                     </span>
                     <span>Campagnes & PEV</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-[10px]" x-bind:class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
             </button>
-            <div x-show="open" class="pl-10 space-y-1 text-[12px]">
-                <a href="{#% url 'admin_campagnes' %#}"
-                   class="block py-1.5 text-slate-600 dark:text-slate-300 hover:text-ivoireBlue">
-                    Liste des campagnes
-                </a>
-                <a href="#" class="block py-1.5 text-slate-600 dark:text-slate-300 hover:text-ivoireBlue">
-                    Planification
-                </a>
-                <a href="#" class="block py-1.5 text-slate-600 dark:text-slate-300 hover:text-ivoireBlue">
-                    Couverture par district
-                </a>
+            <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste des campagnes</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Planification</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Couverture par district</a>
             </div>
         </div>
 
-        <!-- Centres & régions -->
+        {# Centres & Régions #}
         <div x-data="{ open: false }" class="space-y-1">
             <button @click="open = !open"
-                    class="w-full flex items-center justify-between px-3 py-2 text-left text-slate-600 dark:text-slate-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 rounded-2xl">
+                    class="group w-full flex items-center justify-between px-3 py-3 text-left rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
                 <span class="flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500/10 to-sky-500/5 text-sky-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                         <i class="fa-solid fa-hospital text-xs"></i>
                     </span>
                     <span>Centres & Régions</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-[10px]" x-bind:class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
             </button>
-            <div x-show="open" class="pl-10 space-y-1 text-[12px]">
-                <a href="#" class="block py-1.5">Carte interactive</a>
-                <a href="#" class="block py-1.5">Liste des centres</a>
-                <a href="#" class="block py-1.5">Performance par région</a>
+            <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Carte interactive</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste des centres</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Performance par région</a>
             </div>
         </div>
 
-        <!-- Stocks -->
-        <a href="{#% url 'admin_stocks' %#}"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
-            <span class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+        {# Stocks #}
+        <a href="#"
+           class="group flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
+            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-500/5 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <i class="fa-solid fa-boxes-stacked text-xs"></i>
             </span>
             <span>Stocks & chaîne du froid</span>
         </a>
 
-        <!-- Rapports -->
+        {# Rapports DHIS2 #}
         <a href="#"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
-            <span class="w-8 h-8 rounded-xl bg-pink-500/10 text-pink-500 flex items-center justify-center">
+           class="group flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
+            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-pink-500/10 to-pink-500/5 text-pink-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <i class="fa-solid fa-file-waveform text-xs"></i>
             </span>
             <span>Rapports, DHIS2, OMS</span>
         </a>
 
-        <!-- Incidents -->
+        {# Incidents #}
         <a href="#"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
-            <span class="w-8 h-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+           class="group flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
+            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-red-500/10 to-red-500/5 text-red-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <i class="fa-solid fa-triangle-exclamation text-xs"></i>
             </span>
             <span>Pharmacovigilance & incidents</span>
         </a>
 
-        <!-- =============== NOUVELLES RUBRIQUES =============== -->
-
-
-        <!-- ================= ADMINISTRATION ================= -->
-
-        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-800/80 text-[10px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+        {# ==== Administration ==== #}
+        <div class="pt-3 pb-1 px-3 text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold flex items-center">
+            <span class="flex-1 h-px bg-gradient-to-r from-transparent to-slate-300 dark:to-slate-700 mr-2"></span>
             Administration
+            <span class="flex-1 h-px bg-gradient-to-l from-transparent to-slate-300 dark:to-slate-700 ml-2"></span>
         </div>
 
-        <!-- Utilisateurs -->
+        {# Utilisateurs #}
         <div x-data="{ open: false }" class="space-y-1">
             <button @click="open = !open"
-                    class="w-full flex items-center justify-between px-3 py-2 text-left text-slate-600 dark:text-slate-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 rounded-2xl">
+                    class="group w-full flex items-center justify-between px-3 py-3 text-left rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
                 <span class="flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-xl bg-slate-500/10 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-500/10 to-slate-500/5 text-slate-600 dark:text-slate-300 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                         <i class="fa-solid fa-user-gear text-xs"></i>
                     </span>
                     <span>Utilisateurs</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-[10px]" x-bind:class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
             </button>
-            <div x-show="open" class="pl-10 space-y-1 text-[12px]">
-                <a href="#" class="block py-1.5">Liste des utilisateurs</a>
-                <a href="#" class="block py-1.5">Rôles & permissions</a>
-                <a href="#" class="block py-1.5">Profil</a>
+            <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste des utilisateurs</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Rôles & permissions</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Profil</a>
             </div>
         </div>
 
-        <!-- Paramètres -->
+        {# Paramètres #}
         <a href="#"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5">
-            <span class="w-8 h-8 rounded-xl bg-slate-500/10 text-slate-600 dark:text-slate-300 flex items-center justify-center">
+           class="group flex items-center gap-3 px-3 py-3 rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
+            <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-500/10 to-slate-500/5 text-slate-600 dark:text-slate-300 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <i class="fa-solid fa-gear text-xs"></i>
             </span>
             <span>Paramètres du système</span>
         </a>
 
-        <!-- Authentification -->
+        {# Authentification #}
         <div x-data="{ open: false }" class="space-y-1">
             <button @click="open = !open"
-                    class="w-full flex items-center justify-between px-3 py-2 text-left text-slate-600 dark:text-slate-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 rounded-2xl">
+                    class="group w-full flex items-center justify-between px-3 py-3 text-left rounded-2xl transition-all duration-300 hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:translate-x-1">
                 <span class="flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-500 flex items-center justify-center">
+                    <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500/10 to-teal-500/5 text-teal-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                         <i class="fa-solid fa-right-to-bracket text-xs"></i>
                     </span>
                     <span>Authentification</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-[10px]" x-bind:class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
             </button>
-            <div x-show="open" class="pl-10 space-y-1 text-[12px]">
-                <a href="#" class="block py-1.5">Connexion</a>
-                <a href="#" class="block py-1.5">Inscription</a>
-                <a href="#" class="block py-1.5">Mot de passe oublié</a>
+            <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Connexion</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Inscription</a>
+                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Mot de passe oublié</a>
             </div>
         </div>
-
     </nav>
 
-    <div class="mx-3 mb-4 p-4 rounded-2xl gradient-primary text-white">
-        <div class="flex items-center justify-between mb-2">
-            <h3 class="font-semibold text-sm">Progression nationale</h3>
-            <span class="text-xs bg-white/20 px-2 py-1 rounded-full">78%</span>
+    {# ================== CARTE PROGRESSION (AMÉLIORÉE) ================== #}
+    <div class="mx-3 mb-3 p-4 rounded-2xl bg-gradient-to-br from-ivoireBlue via-keneyaSecondary to-ivoireBlue text-white shadow-lg relative overflow-hidden">
+        <!-- Effet de brillance -->
+        <div class="absolute bottom-0 left-0 w-20 h-20 bg-white/10 rounded-full -translate-x-1/2 translate-y-1/2 blur-xl"></div>
+        
+        <div class="flex items-center justify-between mb-2 relative z-10">
+            <h3 class="font-bold text-sm">Progression nationale</h3>
+            <span class="text-xs bg-white/20 px-2 py-1 rounded-full backdrop-blur-sm border border-white/30">78%</span>
         </div>
-        <div class="w-full bg-white/30 rounded-full h-2 mb-2">
-            <div class="bg-white h-2 rounded-full" style="width: 78%"></div>
+        <div class="w-full bg-white/30 rounded-full h-2 mb-2 relative z-10">
+            <div class="bg-white h-2 rounded-full transition-all duration-1000 ease-out" style="width: 78%"></div>
         </div>
-        <p class="text-xs opacity-90">Objectif: 90% de couverture vaccinale</p>
+        <p class="text-xs opacity-90 relative z-10">Objectif : 90% de couverture vaccinale</p>
     </div>
 
-    <div class="px-4 py-3 border-t border-white/10 dark:border-slate-800/70 text-[10px] text-slate-500 dark:text-slate-500">
-        © Vaccination CI · v2.0
+    {# ================== FOOTER (AMÉLIORÉ) ================== #}
+    <div class="px-4 py-3 border-t border-slate-200/60 dark:border-slate-800/70 text-xs text-slate-500 dark:text-slate-500 flex items-center justify-between">
+        <span>© Vaccination CI · v2.0</span>
+        <div class="flex gap-1">
+            <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+            <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+            <div class="w-2 h-2 rounded-full bg-ivoireBlue"></div>
+        </div>
     </div>
 </aside>

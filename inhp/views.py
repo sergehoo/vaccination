@@ -181,30 +181,46 @@ class DashboardView(StaffOnlyMixin, TemplateView):
     login_url = '/accounts/login/'
     template_name = "administration/dashboard.html"
 
-    def _apply_scope(self, queryset, user, field_prefix="centre"):
+    def _apply_scope(self, queryset, user, centre_field="centre"):
         """
         Applique le scope (centre / district / région / pôle / national)
-        sur un queryset qui possède un lien vers centre/district/région/pôle.
+        sur un queryset lié à CentreVaccination.
 
-        Field_prefix : nom du champ de base, ex : "centre" ou "centre__district"
+        - centre_field = "centre" pour les modèles qui ont un FK direct vers CentreVaccination
+        - centre_field = "" (chaine vide) quand le queryset est déjà sur CentreVaccination
+          (dans ce cas, on filtre directement sur les champs du centre).
         """
         if not isinstance(user, Utilisateur):
             return queryset
 
-        # Exemples:
-        # field_prefix="centre"        -> centre=...
-        # field_prefix="centre__district" -> centre__district=...
-        # etc.
+        # Niveau CENTRE
         if user.access_level == AccessLevel.CENTRE and user.centre_id:
-            return queryset.filter(**{f"{field_prefix}": user.centre})
-        if user.access_level == AccessLevel.DISTRICT and user.district_id:
-            return queryset.filter(**{f"{field_prefix}__district": user.district})
-        if user.access_level == AccessLevel.REGION and user.region_id:
-            return queryset.filter(**{f"{field_prefix}__district__region": user.region})
-        if user.access_level == AccessLevel.POLE and user.pole_id:
-            return queryset.filter(**{f"{field_prefix}__district__region__poles": user.pole})
+            if centre_field:
+                return queryset.filter(**{centre_field: user.centre})
+            # queryset déjà sur CentreVaccination
+            return queryset.filter(pk=user.centre_id)
 
-        # Niveau national > pas de restriction supplémentaire
+        # Niveau DISTRICT
+        if user.access_level == AccessLevel.DISTRICT and user.district_id:
+            if centre_field:
+                # ex : centre__district = user.district
+                return queryset.filter(**{f"{centre_field}__district": user.district})
+            # queryset sur CentreVaccination
+            return queryset.filter(district=user.district)
+
+        # Niveau REGION
+        if user.access_level == AccessLevel.REGION and user.region_id:
+            if centre_field:
+                return queryset.filter(**{f"{centre_field}__district__region": user.region})
+            return queryset.filter(district__region=user.region)
+
+        # Niveau POLE
+        if user.access_level == AccessLevel.POLE and user.pole_id:
+            if centre_field:
+                return queryset.filter(**{f"{centre_field}__district__region__poles": user.pole})
+            return queryset.filter(district__region__poles=user.pole)
+
+        # Niveau NATIONAL ou autre → pas de restriction
         return queryset
 
     def _get_scope_label(self, user):
@@ -230,9 +246,13 @@ class DashboardView(StaffOnlyMixin, TemplateView):
         # ---------------------------------------------------------------------
         # 1) VACCINATIONS (scopées)
         # ---------------------------------------------------------------------
-        vaccinations_qs = Vaccination.objects.all().select_related("centre", "vaccin", "centre__district__region")
+        vaccinations_qs = (
+            Vaccination.objects
+            .select_related("centre", "vaccin", "centre__district__region")
+        )
 
-        vaccinations_qs = self._apply_scope(vaccinations_qs, user, field_prefix="centre")
+        vaccinations_qs = self._apply_scope(vaccinations_qs, user, centre_field="centre")
+
 
         # Total doses (toutes périodes)
         total_doses = vaccinations_qs.count()
@@ -263,7 +283,8 @@ class DashboardView(StaffOnlyMixin, TemplateView):
         #    approche simple : patients vaccinés / patients enregistrés
         # ---------------------------------------------------------------------
         patients_qs = Patient.objects.all()
-        patients_qs = self._apply_scope(patients_qs, user, field_prefix="centre")
+        patients_qs = self._apply_scope(patients_qs, user, centre_field="centre")
+
 
         total_patients = patients_qs.count()
 
@@ -282,7 +303,7 @@ class DashboardView(StaffOnlyMixin, TemplateView):
         # ---------------------------------------------------------------------
         centres_qs = CentreVaccination.objects.all().select_related("district__region")
 
-        centres_qs = self._apply_scope(centres_qs, user, field_prefix="id")
+        centres_qs = self._apply_scope(centres_qs, user, centre_field="")
 
         centres_actifs = centres_qs.count()
 
