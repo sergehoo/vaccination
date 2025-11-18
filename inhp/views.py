@@ -529,6 +529,7 @@ class PatientVaccinationCarnetPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
         response["Content-Disposition"] = f'attachment; filename=\"{filename}\"'
         return response
 
+
 class PatientDetailView(StaffOnlyMixin, LoginRequiredMixin, DetailView):
     model = Patient
     template_name = 'administration/patient_detail.html'
