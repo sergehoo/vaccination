@@ -3,3 +3,20 @@
 @tailwind utilities;
 
 /* Ensuite tu peux ajouter tes styles custom ici si tu veux */
+@layer utilities {
+  .gradient-primary {
+    background: linear-gradient(135deg, #1A57A1 0%, #18A999 100%);
+  }
+  .gradient-secondary {
+    background: linear-gradient(135deg, #18A999 0%, #F59E0B 100%);
+  }
+  .gradient-hero {
+    background: linear-gradient(135deg, rgba(26, 87, 161, 0.95) 0%, rgba(24, 169, 153, 0.95) 100%);
+  }
+  .gradient-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  }
+  .dark .gradient-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+}
