@@ -73,8 +73,9 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -86,7 +87,7 @@ MIDDLEWARE = [
     'inhp.middleware.BlockPatientAdminMiddleware',
 
     'django_prometheus.middleware.PrometheusAfterMiddleware',
-    'corsheaders.middleware.CorsMiddleware'
+
 
 ]
 

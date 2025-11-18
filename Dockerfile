@@ -44,8 +44,14 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
+
+
 RUN npm install --production=false
 RUN npm run build:css
+
+RUN python manage.py collectstatic --noinput
+RUN chmod -R 755 /app/staticfiles
+RUN chmod -R 755 /app/media
 EXPOSE 8000
 
 CMD ["gunicorn", "vaccination.wsgi:application", "--bind", "0.0.0.0:8000"]
