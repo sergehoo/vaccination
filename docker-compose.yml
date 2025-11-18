@@ -30,7 +30,7 @@ services:
 #      - "1105:8000"
     volumes:
       - .:/app
-#      - static_volume:/app/static
+      - static_volume:/app/static
       - staticfiles_volume:/app/staticfiles
       - media_volume:/app/media
     env_file: [ .env ]
