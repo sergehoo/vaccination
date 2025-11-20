@@ -144,6 +144,13 @@
     <!-- Icônes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 
+    {{ block.super }}
+    <!-- CSS Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+    <!-- Theme pour mieux matcher ton design -->
+    <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css" rel="stylesheet"/>
+
+
     <style>
         [x-cloak] { display: none !important; }
 
@@ -874,8 +881,7 @@
 </script>
 
 <!-- Toast global -->
-<div
-    x-data
+<div x-data
     x-show="$store.ui.toastVisible"
     x-transition.opacity.duration.300ms
     @mouseenter="$store.ui.freezeToast()"
@@ -934,5 +940,24 @@
         </button>
     </div>
 </div>
+
+
+    <!-- jQuery + Select2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (window.jQuery && $.fn.select2) {
+            $('.select2-field').select2({
+                theme: 'bootstrap4',
+                width: '100%',
+                placeholder: function () {
+                    return $(this).data('placeholder') || 'Sélectionner...';
+                },
+                allowClear: true
+            });
+        }
+    });
+</script>
 </body>
 </html>

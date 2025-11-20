@@ -35,25 +35,25 @@
                 <!-- Texte principal -->
                 <div class="space-y-2 max-w-xl">
                     <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90">
-                Côte d’Ivoire · Plateforme national de gestion de la vaccination {% if request.user.is_staff %}
-       
+                        Côte d’Ivoire · Plateforme national de gestion de la vaccination {% if request.user.is_staff %}
 
-            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/10 text-yellow-300 border border-yellow-400/40">
+
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/10 text-yellow-300 border border-yellow-400/40">
                                     <i class="fa-solid fa-map-marker text-[12px]"></i>
-                    {% if request.user.access_level == "pole" and request.user.pole %}
-                        {{ request.user.pole }}
-                    {% elif request.user.access_level == "region" and request.user.region %}
-                        {{ request.user.region }}
-                    {% elif request.user.access_level == "district" and request.user.district %}
-                        {{ request.user.district }}
-                    {% elif request.user.access_level == "centre" and request.user.centre %}
-                        {{ request.user.centre }}
-                    {% elif request.user.access_level == "national" %}
-                        National
-                    {% endif %}
+                            {% if request.user.access_level == "pole" and request.user.pole %}
+                                {{ request.user.pole }}
+                            {% elif request.user.access_level == "region" and request.user.region %}
+                                {{ request.user.region }}
+                            {% elif request.user.access_level == "district" and request.user.district %}
+                                {{ request.user.district }}
+                            {% elif request.user.access_level == "centre" and request.user.centre %}
+                                {{ request.user.centre }}
+                            {% elif request.user.access_level == "national" %}
+                                National
+                            {% endif %}
                 </span>
-        {% endif %}
-            </p>
+                    {% endif %}
+                    </p>
                     <h1 class="text-xl sm:text-2xl font-semibold flex flex-wrap items-center gap-2">
                         <span>Historique des vaccinations</span>
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">
@@ -188,13 +188,71 @@
                         </div>
                     </div>
                 </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <!-- Centres actifs -->
+                    <div class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/20 dark:to-slate-800/20 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-2xl font-bold" id="stats-centres-actifs">0</p>
+                                <p class="text-xs text-slate-600 dark:text-slate-300">Centres actifs</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center">
+                                <i class="fa-solid fa-hospital text-white text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
 
+                    <!-- Patients vaccinés -->
+                    <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border border-emerald-200 dark:border-emerald-700 rounded-2xl p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-2xl font-bold" id="stats-patients-vaccines">0</p>
+                                <p class="text-xs text-emerald-700 dark:text-emerald-300">Patients vaccinés</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center">
+                                <i class="fa-solid fa-user-shield text-white text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activité 7 jours -->
+                    <div class="bg-gradient-to-br from-sky-50 to-sky-100 dark:from-sky-900/20 dark:to-sky-800/20 border border-sky-200 dark:border-sky-700 rounded-2xl p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-2xl font-bold" id="stats-vaccinations-7j">0</p>
+                                <p class="text-xs text-sky-700 dark:text-sky-300">7 derniers jours</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-sky-500 flex items-center justify-center">
+                                <i class="fa-solid fa-calendar-week text-white text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activité 30 jours -->
+                    <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-900/20 dark:to-indigo-800/20 border border-indigo-200 dark:border-indigo-700 rounded-2xl p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-2xl font-bold" id="stats-vaccinations-30j">0</p>
+                                <p class="text-xs text-indigo-700 dark:text-indigo-300">30 derniers jours</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center">
+                                <i class="fa-solid fa-chart-line text-white text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <!-- Graphiques et répartitions -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Répartition par vaccin -->
                     <div class="border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
                         <h3 class="text-sm font-semibold mb-4">Répartition par vaccin</h3>
                         <div id="stats-vaccins-repartition" class="space-y-2"></div>
+                        <hr class="my-4 border-slate-200 dark:border-slate-700">
+
+                        <h4 class="text-xs font-semibold mb-2 text-slate-600 dark:text-slate-300">
+                            Répartition par dose
+                        </h4>
+                        <div id="stats-dose-repartition" class="space-y-2"></div>
                     </div>
 
                     <!-- Répartition par centre -->
@@ -357,88 +415,141 @@
         }
 
         async function loadStatistics() {
-            const statsUrl = document.getElementById('vaccination-page').dataset.statsUrl;
+    const statsUrl = document.getElementById('vaccination-page').dataset.statsUrl;
 
-            try {
-                const response = await fetch(statsUrl);
-                const data = await response.json();
-
-                const kpis = data.kpis || {};
-                const repartition = data.repartition || {};
-                const periodes = data.periodes || {};
-
-                document.getElementById('stats-total-vaccinations').textContent =
-                    (kpis.total_vaccinations ?? 0).toLocaleString('fr-FR');
-
-                document.getElementById('stats-vaccinations-mois').textContent =
-                    (kpis.vaccinations_mois ?? 0).toLocaleString('fr-FR');
-
-                document.getElementById('stats-rappels-prochains').textContent =
-                    (kpis.rappels_prochains ?? 0).toLocaleString('fr-FR');
-
-                const tauxRappel = kpis.taux_rappel ?? 0;
-                document.getElementById('stats-taux-rappel').textContent = tauxRappel + '%';
-
-                const evolutionElem = document.getElementById('stats-evolution-mois');
-                const evolution = kpis.evolution_mois ?? 0;
-                evolutionElem.textContent = (evolution > 0 ? '+' : '') + evolution + '%';
-                evolutionElem.className = evolution >= 0
-                    ? 'text-[10px] text-green-500'
-                    : 'text-[10px] text-rose-500';
-
-                const vaccinsContainer = document.getElementById('stats-vaccins-repartition');
-                vaccinsContainer.innerHTML = (repartition.par_vaccin || []).map(vaccin => `
-                    <div class="flex items-center justify-between text-xs">
-                        <span>${vaccin.vaccin__nom || 'Non spécifié'}</span>
-                        <div class="flex items-center gap-2">
-                            <span class="font-medium">${vaccin.total}</span>
-                            <span class="text-slate-400 text-[10px]">${(vaccin.pourcentage ?? 0).toFixed(1)}%</span>
-                        </div>
-                    </div>
-                `).join('');
-
-                const centresContainer = document.getElementById('stats-centres-repartition');
-                centresContainer.innerHTML = (repartition.par_centre || []).slice(0, 5).map(centre => `
-                    <div class="flex items-center justify-between text-xs">
-                        <span class="truncate flex-1">${centre.centre__name || 'Non spécifié'}</span>
-                        <div class="flex items-center gap-2 ml-2">
-                            <span class="font-medium">${centre.total}</span>
-                            <span class="text-slate-400 text-[10px]">${(centre.pourcentage ?? 0).toFixed(1)}%</span>
-                        </div>
-                    </div>
-                `).join('');
-
-                const evolutionContainer = document.getElementById('stats-evolution-mensuelle');
-                const series = periodes.vaccinations_par_mois || [];
-                if (series.length === 0) {
-                    evolutionContainer.innerHTML = '<p class="text-xs text-slate-400">Aucune donnée disponible</p>';
-                    return;
-                }
-
-                const maxValue = Math.max(...series.map(m => m.total || 0));
-
-                evolutionContainer.innerHTML = series.map(mois => {
-                    const value = mois.total || 0;
-                    const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
-                    const dateObj = new Date(mois.mois);
-                    const monthName = dateObj.toLocaleDateString('fr-FR', { month: 'short' });
-
-                    return `
-                        <div class="flex flex-col items-center gap-1 flex-1">
-                            <div class="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-lg transition-all hover:from-blue-600 hover:to-blue-500"
-                                 style="height: ${height}%"
-                                 title="${value} vaccinations">
-                            </div>
-                            <span class="text-[10px] text-slate-500">${monthName}</span>
-                            <span class="text-[10px] font-medium">${value}</span>
-                        </div>
-                    `;
-                }).join('');
-
-            } catch (error) {
-                console.error('Erreur chargement statistiques:', error);
-            }
+    try {
+        const response = await fetch(statsUrl);
+        if (!response.ok) {
+            console.error('Erreur API stats:', response.status, await response.text());
+            return;
         }
+
+        const data = await response.json();
+
+        const kpis = data.kpis || {};
+        const repartition = data.repartition || {};
+        const periodes = data.periodes || {};
+
+        // --- KPIs existants ---
+        document.getElementById('stats-total-vaccinations').textContent =
+            (kpis.total_vaccinations ?? 0).toLocaleString('fr-FR');
+
+        document.getElementById('stats-vaccinations-mois').textContent =
+            (kpis.vaccinations_mois ?? 0).toLocaleString('fr-FR');
+
+        document.getElementById('stats-rappels-prochains').textContent =
+            (kpis.rappels_prochains ?? 0).toLocaleString('fr-FR');
+
+        const tauxRappel = kpis.taux_rappel ?? 0;
+        document.getElementById('stats-taux-rappel').textContent = tauxRappel + '%';
+
+        const evolutionElem = document.getElementById('stats-evolution-mois');
+        const evolution = kpis.evolution_mois ?? 0;
+        evolutionElem.textContent = (evolution > 0 ? '+' : '') + evolution + '%';
+        evolutionElem.className = evolution >= 0
+            ? 'text-[10px] text-green-500'
+            : 'text-[10px] text-rose-500';
+
+        // --- NOUVEAUX KPIs ---
+        const centresActifsEl = document.getElementById('stats-centres-actifs');
+        if (centresActifsEl) {
+            centresActifsEl.textContent = (kpis.centres_actifs ?? 0).toLocaleString('fr-FR');
+        }
+
+        const patientsVaccinesEl = document.getElementById('stats-patients-vaccines');
+        if (patientsVaccinesEl) {
+            patientsVaccinesEl.textContent = (kpis.patients_vaccines ?? 0).toLocaleString('fr-FR');
+        }
+
+        const vacc7jEl = document.getElementById('stats-vaccinations-7j');
+        if (vacc7jEl) {
+            vacc7jEl.textContent = (kpis.vaccinations_7j ?? 0).toLocaleString('fr-FR');
+        }
+
+        const vacc30jEl = document.getElementById('stats-vaccinations-30j');
+        if (vacc30jEl) {
+            vacc30jEl.textContent = (kpis.vaccinations_30j ?? 0).toLocaleString('fr-FR');
+        }
+
+        // --- Répartition par vaccin ---
+        const vaccinsContainer = document.getElementById('stats-vaccins-repartition');
+        vaccinsContainer.innerHTML = (repartition.par_vaccin || []).map(vaccin => `
+            <div class="flex items-center justify-between text-xs">
+                <span>${vaccin.vaccin__nom || 'Non spécifié'}</span>
+                <div class="flex items-center gap-2">
+                    <span class="font-medium">${vaccin.total}</span>
+                    <span class="text-slate-400 text-[10px]">${(vaccin.pourcentage ?? 0).toFixed(1)}%</span>
+                </div>
+            </div>
+        `).join('');
+
+        // --- Répartition par dose ---
+        const dosesContainer = document.getElementById('stats-dose-repartition');
+        if (dosesContainer) {
+            dosesContainer.innerHTML = (repartition.par_dose_detaille || []).map(doseRow => {
+                const doseLabel = doseRow.dose || 'Non spécifié';
+                const pourc = doseRow.pourcentage ?? 0;
+                return `
+                    <div class="flex items-center justify-between text-xs">
+                        <div class="flex-1 mr-2">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-slate-600 dark:text-slate-300">Dose ${doseLabel}</span>
+                                <span class="text-[10px] text-slate-400">${doseRow.total} doses</span>
+                            </div>
+                            <div class="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                                <div class="h-full bg-emerald-500" style="width: ${pourc.toFixed(1)}%"></div>
+                            </div>
+                        </div>
+                        <span class="w-10 text-right text-[10px] font-semibold">${pourc.toFixed(1)}%</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- Répartition par centre ---
+        const centresContainer = document.getElementById('stats-centres-repartition');
+        centresContainer.innerHTML = (repartition.par_centre || []).slice(0, 5).map(centre => `
+            <div class="flex items-center justify-between text-xs">
+                <span class="truncate flex-1">${centre.centre__name || 'Non spécifié'}</span>
+                <div class="flex items-center gap-2 ml-2">
+                    <span class="font-medium">${centre.total}</span>
+                    <span class="text-slate-400 text-[10px]">${(centre.pourcentage ?? 0).toFixed(1)}%</span>
+                </div>
+            </div>
+        `).join('');
+
+        // --- Évolution mensuelle (6 mois) ---
+        const evolutionContainer = document.getElementById('stats-evolution-mensuelle');
+        const series = periodes.vaccinations_par_mois || [];
+        if (series.length === 0) {
+            evolutionContainer.innerHTML = '<p class="text-xs text-slate-400">Aucune donnée disponible</p>';
+            return;
+        }
+
+        const maxValue = Math.max(...series.map(m => m.total || 0));
+
+        evolutionContainer.innerHTML = series.map(mois => {
+            const value = mois.total || 0;
+            const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
+            const dateObj = new Date(mois.mois);
+            const monthName = dateObj.toLocaleDateString('fr-FR', {month: 'short'});
+
+            return `
+                <div class="flex flex-col items-center gap-1 flex-1">
+                    <div class="w-full bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-lg transition-all hover:from-blue-600 hover:to-blue-500"
+                         style="height: ${height}%"
+                         title="${value} vaccinations">
+                    </div>
+                    <span class="text-[10px] text-slate-500">${monthName}</span>
+                    <span class="text-[10px] font-medium">${value}</span>
+                </div>
+            `;
+        }).join('');
+
+    } catch (error) {
+        console.error('Erreur chargement statistiques:', error);
+    }
+}
 
         document.addEventListener('DOMContentLoaded', function () {
             const pageRoot = document.getElementById('vaccination-page');
@@ -561,13 +672,13 @@
                                     <td class="py-2 pr-3 text-slate-500 dark:text-slate-400">${dateVaccination}</td>
                                     <td class="py-2 pr-3">
                                         ${dateRappel && dateRappel !== '-'
-                                            ? `<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 text-[10px]">
+                                ? `<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 text-[10px]">
                                                    ${dateRappel}
                                                </span>`
-                                            : `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300 text-[10px]">
+                                : `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300 text-[10px]">
                                                    Aucun rappel
                                                </span>`
-                                        }
+                            }
                                     </td>
                                     <td class="py-2 pr-3 text-right">
                                         <a href="${detailUrl}"
@@ -652,462 +763,3 @@
         });
     </script>
 {% endblock %}
-
-{#{% extends "layout_patient/base.html" %}#}
-{#{% load static %}#}
-{##}
-{#{% block title %}Vaccinations – Plateforme Vaccination CI{% endblock %}#}
-{##}
-{#{% block content %}#}
-{#    <div id="vaccination-page"#}
-{#         class="space-y-6"#}
-{#         data-api-url="{% url 'vaccination-list' %}"> {# URL DRF router: /api/.../vaccinations/ #}
-{##}
-        {# ===== HERO / BANDEAU VACCINATIONS ===== #}
-{#        <div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft">#}
-{##}
-{#            <!-- Aura décorative à droite -->#}
-{#            <div class="absolute inset-y-0 right-0 hidden lg:flex items-center pr-10 pointer-events-none">#}
-{#                <div class="relative w-44 h-44 rounded-full bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-center">#}
-{#                    <div class="w-24 h-24 rounded-2xl bg-slate-900/80 flex items-center justify-center border border-white/10 shadow-soft">#}
-{#                        <i class="fa-solid fa-syringe text-2xl text-emerald-300"></i>#}
-{#                    </div>#}
-{#                    <div class="absolute -bottom-2 -left-4 px-3 py-1.5 rounded-2xl bg-white/10 border border-white/20 text-[10px] backdrop-blur-sm">#}
-{#                        <span id="hero-total-vaccinations">#}
-{#                            {{ total_vaccinations|default:0 }} vaccinations enregistrées#}
-{#                        </span>#}
-{#                    </div>#}
-{#                    <div class="absolute -top-2 -right-2 px-3 py-1.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 text-[10px] flex items-center gap-1">#}
-{#                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>#}
-{#                        <span id="hero-rappels-prochains">#}
-{#                            {{ rappels_prochains|default:0 }} rappels à venir#}
-{#                        </span>#}
-{#                    </div>#}
-{#                </div>#}
-{#            </div>#}
-{##}
-{#            <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">#}
-{#                <!-- Texte principal -->#}
-{#                <div class="space-y-2 max-w-xl">#}
-{#                    <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90">#}
-{#                        Côte d’Ivoire · Programme Élargi de Vaccination#}
-{#                    </p>#}
-{#                    <h1 class="text-xl sm:text-2xl font-semibold flex flex-wrap items-center gap-2">#}
-{#                        <span>Historique des vaccinations</span>#}
-{#                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">#}
-{#                            <i class="fa-solid fa-shield-virus text-[9px]"></i>#}
-{#                            Traçabilité complète par patient#}
-{#                        </span>#}
-{#                    </h1>#}
-{#                    <p class="text-[12px] text-slate-300">#}
-{#                        Consultez toutes les vaccinations enregistrées : vaccin, lot, dose, centre et rappels programmés#}
-{#                        pour chaque patient de la plateforme.#}
-{#                    </p>#}
-{##}
-{#                    <!-- Tags de contexte -->#}
-{#                    <div class="flex flex-wrap items-center gap-2 text-[11px] pt-1">#}
-{#                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">#}
-{#                            <i class="fa-solid fa-id-card-clip text-[9px]"></i>#}
-{#                            Lié à l’identifiant unique patient#}
-{#                        </span>#}
-{#                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">#}
-{#                            <i class="fa-solid fa-hospital text-[9px]"></i>#}
-{#                            Centres & régions sanitaires#}
-{#                        </span>#}
-{#                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/40">#}
-{#                            <i class="fa-solid fa-bell text-[9px]"></i>#}
-{#                            Suivi des rappels#}
-{#                        </span>#}
-{#                    </div>#}
-{##}
-{#                    <!-- Actions rapides -->#}
-{#                    <div class="flex flex-wrap gap-2 pt-2">#}
-{#                        <a href="#"#}
-{#                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white text-slate-900 text-[11px] shadow-soft hover:scale-[1.01] transition">#}
-{#                            <i class="fa-solid fa-plus text-[10px]"></i>#}
-{#                            <span>Nouvelle vaccination</span>#}
-{#                        </a>#}
-{#                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/5 border border-white/15 text-[11px]">#}
-{#                            <i class="fa-solid fa-magnifying-glass text-[10px]"></i>#}
-{#                            <span>Filtrez par patient, centre, vaccin, période</span>#}
-{#                        </span>#}
-{#                    </div>#}
-{#                </div>#}
-{##}
-{#                <!-- Carte chiffres rappels -->#}
-{#                <div class="rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-[11px] min-w-[230px] space-y-2">#}
-{#                    <div class="flex items-center justify-between gap-2">#}
-{#                        <p class="text-slate-200/90 font-medium">#}
-{#                            Suivi des rappels#}
-{#                        </p>#}
-{#                        <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">#}
-{#                            Synchronisation · OK#}
-{#                        </span>#}
-{#                    </div>#}
-{#                    <div class="flex gap-4 items-end">#}
-{#                        <div>#}
-{#                            <p class="text-lg font-semibold" id="hero-rappels-prochains-nb">#}
-{#                                {{ rappels_prochains|default:0 }}#}
-{#                            </p>#}
-{#                            <p class="text-[10px] text-slate-300">#}
-{#                                rappels dans les 30 prochains jours#}
-{#                            </p>#}
-{#                        </div>#}
-{#                        <div>#}
-{#                            <p class="text-lg font-semibold text-amber-300" id="hero-rappels-manques-nb">#}
-{#                                {{ rappels_manques|default:0 }}#}
-{#                            </p>#}
-{#                            <p class="text-[10px] text-slate-300">#}
-{#                                rappels manqués#}
-{#                            </p>#}
-{#                        </div>#}
-{#                    </div>#}
-{#                    <div class="flex-1 h-10 relative mt-1">#}
-{#                        <div class="absolute inset-0 rounded-xl bg-gradient-to-tr from-emerald-500/40 via-sky-500/30 to-amber-400/40 opacity-60 blur-[10px]"></div>#}
-{#                        <div class="absolute inset-0 border border-dashed border-slate-500/40 rounded-xl"></div>#}
-{#                    </div>#}
-{#                    <div class="flex items-center justify-between text-[10px] text-slate-300 pt-1">#}
-{#                        <span id="hero-total-vaccinations-bottom">#}
-{#                            Total vaccinations : {{ total_vaccinations|default:0 }}#}
-{#                        </span>#}
-{#                        <span class="flex items-center gap-1">#}
-{#                            <i class="fa-solid fa-circle text-[5px] text-emerald-400 animate-pulse"></i>#}
-{#                            données à jour#}
-{#                        </span>#}
-{#                    </div>#}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
-{##}
-        {# ===== BARRE D’ACTIONS + FILTRES ===== #}
-{#        <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5">#}
-{#            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">#}
-{#                <div class="space-y-1">#}
-{#                    <h2 class="text-sm font-semibold">Liste des vaccinations</h2>#}
-{#                    <p class="text-[12px] text-slate-500 dark:text-slate-400">#}
-{#                        Utilisez les filtres pour cibler un patient, un centre, un vaccin ou une période précise.#}
-{#                    </p>#}
-{#                </div>#}
-{##}
-{#                <div class="flex flex-wrap gap-2 justify-end">#}
-{#                    <a href="#"#}
-{#                       class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-ivoireBlue text-white text-xs shadow-soft hover:scale-[1.01] transition">#}
-{#                        <i class="fa-solid fa-plus text-[11px]"></i>#}
-{#                        <span>Nouvelle vaccination</span>#}
-{#                    </a>#}
-{#                    <a href="#"#}
-{#                       class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 text-xs">#}
-{#                        <i class="fa-solid fa-download text-[11px]"></i>#}
-{#                        <span>Exporter les données</span>#}
-{#                    </a>#}
-{#                </div>#}
-{#            </div>#}
-{##}
-            {# Formulaire de filtres #}
-{#            <form method="get" class="mt-4 grid grid-cols-1 md:grid-cols-5 gap-3">#}
-{#                <!-- Patient -->#}
-{#                <div class="md:col-span-2">#}
-{#                    <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">#}
-{#                        Patient#}
-{#                    </label>#}
-{#                    {{ filter_form.patient }}#}
-{#                </div>#}
-{##}
-{#                <!-- Centre -->#}
-{#                <div>#}
-{#                    <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">#}
-{#                        Centre de vaccination#}
-{#                    </label>#}
-{#                    {{ filter_form.centre }}#}
-{#                </div>#}
-{##}
-{#                <!-- Vaccin -->#}
-{#                <div>#}
-{#                    <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">#}
-{#                        Vaccin#}
-{#                    </label>#}
-{#                    {{ filter_form.vaccin }}#}
-{#                </div>#}
-{##}
-{#                <!-- Période -->#}
-{#                <div class="md:col-span-5 grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">#}
-{#                    <div>#}
-{#                        <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">#}
-{#                            Date de début#}
-{#                        </label>#}
-{#                        {{ filter_form.date_debut }}#}
-{#                    </div>#}
-{#                    <div>#}
-{#                        <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">#}
-{#                            Date de fin#}
-{#                        </label>#}
-{#                        {{ filter_form.date_fin }}#}
-{#                    </div>#}
-{#                    <div class="flex items-end gap-2">#}
-{#                        <button type="submit"#}
-{#                                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs">#}
-{#                            <i class="fa-solid fa-filter text-[11px]"></i>#}
-{#                            <span>Filtrer</span>#}
-{#                        </button>#}
-{#                        <a href="{% url 'vaccination_list' %}"#}
-{#                           class="inline-flex items-center justify-center px-3 py-2 rounded-2xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 text-[11px]">#}
-{#                            Réinitialiser#}
-{#                        </a>#}
-{#                    </div>#}
-{#                </div>#}
-{#            </form>#}
-{#        </div>#}
-{##}
-        {# ===== TABLEAU DES VACCINATIONS ===== #}
-{#        <div id="vaccinations-table"#}
-{#             class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 mt-6">#}
-{##}
-{#            <div id="vaccination-table-loader"#}
-{#                 class="text-center py-6 text-sm text-slate-500 dark:text-slate-400 hidden">#}
-{#                Chargement des vaccinations...#}
-{#            </div>#}
-{##}
-{#            <div class="overflow-x-auto">#}
-{#                <table class="w-full text-[12px]">#}
-{#                    <thead class="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">#}
-{#                    <tr class="text-left">#}
-{#                        <th class="py-2 pr-3">Patient</th>#}
-{#                        <th class="py-2 pr-3">Identifiant</th>#}
-{#                        <th class="py-2 pr-3">Centre</th>#}
-{#                        <th class="py-2 pr-3">Vaccin</th>#}
-{#                        <th class="py-2 pr-3">Dose</th>#}
-{#                        <th class="py-2 pr-3">Date vaccination</th>#}
-{#                        <th class="py-2 pr-3">Rappel</th>#}
-{#                        <th class="py-2 pr-3 text-right">Actions</th>#}
-{#                    </tr>#}
-{#                    </thead>#}
-{#                    <tbody id="vaccination-table-body" class="divide-y divide-slate-200 dark:divide-slate-800">#}
-{#                    <!-- Rempli dynamiquement par JS -->#}
-{#                    </tbody>#}
-{#                </table>#}
-{#            </div>#}
-{##}
-{#            <!-- Pagination -->#}
-{#            <div id="vaccination-pagination"#}
-{#                 class="mt-4 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 hidden">#}
-{#                <div>#}
-{#                    <span id="vaccination-count"></span>#}
-{#                </div>#}
-{#                <div class="flex items-center gap-2">#}
-{#                    <button id="vaccination-prev"#}
-{#                            class="px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 disabled:opacity-40 disabled:cursor-not-allowed">#}
-{#                        Précédent#}
-{#                    </button>#}
-{#                    <span id="vaccination-page-info"></span>#}
-{#                    <button id="vaccination-next"#}
-{#                            class="px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 disabled:opacity-40 disabled:cursor-not-allowed">#}
-{#                        Suivant#}
-{#                    </button>#}
-{#                </div>#}
-{#            </div>#}
-{#        </div>#}
-{##}
-{#    </div>#}
-{##}
-{#  <script>#}
-{#    document.addEventListener('DOMContentLoaded', function () {#}
-{#        const pageRoot = document.getElementById('vaccination-page');#}
-{#        if (!pageRoot) return;#}
-{##}
-{#        const apiUrl = pageRoot.dataset.apiUrl;  // ex: /api/v1/vaccinations/#}
-{#        const tableBody = document.getElementById('vaccination-table-body');#}
-{#        const loader = document.getElementById('vaccination-table-loader');#}
-{#        const pagination = document.getElementById('vaccination-pagination');#}
-{#        const btnPrev = document.getElementById('vaccination-prev');#}
-{#        const btnNext = document.getElementById('vaccination-next');#}
-{#        const pageInfo = document.getElementById('vaccination-page-info');#}
-{#        const countInfo = document.getElementById('vaccination-count');#}
-{#        const filterForm = document.querySelector('form[method="get"]');#}
-{##}
-{#        // éléments du hero à mettre à jour#}
-{#        const heroTotalTop = document.getElementById('hero-total-vaccinations');#}
-{#        const heroTotalBottom = document.getElementById('hero-total-vaccinations-bottom');#}
-{##}
-{#        let currentPage = 1;#}
-{#        let pageSize = 20;#}
-{#        let totalCount = 0;#}
-{##}
-{#        // URL de base vers le détail vaccination avec un ID factice (0) à remplacer#}
-{#        // Assure-toi que ton URLconf contient bien :#}
-{#        // path('vaccination/<int:pk>/', views.VaccinationDetailView.as_view(), name='vaccination_detail')#}
-{#        const baseDetailUrl = "{% url 'vaccination_detail' 0 %}";#}
-{##}
-{#        function buildQueryParams(page) {#}
-{#            const params = new URLSearchParams();#}
-{#            params.set('page', page);#}
-{#            params.set('page_size', pageSize);#}
-{##}
-{#            if (!filterForm) return params.toString();#}
-{##}
-{#            const formData = new FormData(filterForm);#}
-{#            for (const [key, value] of formData.entries()) {#}
-{#                if (value) {#}
-{#                    if (key === 'patient') params.set('patient', value);#}
-{#                    else if (key === 'centre') params.set('centre', value);#}
-{#                    else if (key === 'vaccin') params.set('vaccin', value);#}
-{#                    else if (key === 'date_debut') params.set('date_debut', value);#}
-{#                    else if (key === 'date_fin') params.set('date_fin', value);#}
-{#                }#}
-{#            }#}
-{#            return params.toString();#}
-{#        }#}
-{##}
-{#        async function loadVaccinations(page = 1) {#}
-{#            loader.classList.remove('hidden');#}
-{#            pagination.classList.add('hidden');#}
-{#            tableBody.innerHTML = '';#}
-{##}
-{#            const query = buildQueryParams(page);#}
-{#            const url = apiUrl + (apiUrl.includes('?') ? '&' : '?') + query;#}
-{##}
-{#            try {#}
-{#                const response = await fetch(url, {#}
-{#                    headers: {#}
-{#                        'Accept': 'application/json',#}
-{#                        'X-Requested-With': 'XMLHttpRequest'#}
-{#                    }#}
-{#                });#}
-{#                if (!response.ok) {#}
-{#                    throw new Error('Erreur serveur ' + response.status);#}
-{#                }#}
-{##}
-{#                const data = await response.json();#}
-{##}
-{#                totalCount = data.count || 0;#}
-{#                const results = data.results || [];#}
-{##}
-{#                // Mise à jour des compteurs dans le hero#}
-{#                if (heroTotalTop) {#}
-{#                    heroTotalTop.textContent = totalCount + ' vaccinations enregistrées';#}
-{#                }#}
-{#                if (heroTotalBottom) {#}
-{#                    heroTotalBottom.textContent = 'Total vaccinations : ' + totalCount;#}
-{#                }#}
-{##}
-{#                if (!results.length) {#}
-{#                    tableBody.innerHTML = `#}
-{#                        <tr>#}
-{#                            <td colspan="8" class="py-4 text-center text-slate-400">#}
-{#                                Aucune vaccination trouvée pour ces critères.#}
-{#                            </td>#}
-{#                        </tr>`;#}
-{#                } else {#}
-{#                    const rows = results.map(vaccination => {#}
-{#                        const patientNomComplet = (vaccination.patient_nom || '') + ' ' + (vaccination.patient_prenoms || '');#}
-{#                        const patientCode = vaccination.patient_code || '';#}
-{#                        const centreNom = vaccination.centre_nom || '-';#}
-{#                        const vaccinNom = vaccination.vaccin_nom || '-';#}
-{#                        const lotNumero = vaccination.lot_numero || '-';#}
-{#                        const dose = vaccination.dose ?? '-';#}
-{#                        const dateVaccination = vaccination.date_vaccination || '-';#}
-{#                        const dateRappel = vaccination.date_rappel || '-';#}
-{##}
-{#                        // Construit l'URL détail vaccination à partir de l'id retourné par l'API#}
-{#                        let detailUrl = '#';#}
-{#                        if (vaccination.id !== undefined && vaccination.id !== null) {#}
-{#                            // remplace le "0" final de /vaccination/0/ par l'id réel#}
-{#                            detailUrl = baseDetailUrl.replace(/0\/?$/, vaccination.id + '/');#}
-{#                        }#}
-{##}
-{#                        return `#}
-{#                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40">#}
-{#                                <td class="py-2 pr-3">#}
-{#                                    <div class="flex flex-col">#}
-{#                                        <span class="font-medium text-[12px]">${patientNomComplet}</span>#}
-{#                                    </div>#}
-{#                                </td>#}
-{#                                <td class="py-2 pr-3 text-slate-500 dark:text-slate-400">${patientCode}</td>#}
-{#                                <td class="py-2 pr-3 text-slate-500 dark:text-slate-400">${centreNom}</td>#}
-{#                                <td class="py-2 pr-3">#}
-{#                                    <div class="flex flex-col">#}
-{#                                        <span>${vaccinNom}</span>#}
-{#                                        <span class="text-[10px] text-slate-400">Lot : ${lotNumero}</span>#}
-{#                                    </div>#}
-{#                                </td>#}
-{#                                <td class="py-2 pr-3 text-slate-500 dark:text-slate-400">${dose}</td>#}
-{#                                <td class="py-2 pr-3 text-slate-500 dark:text-slate-400">${dateVaccination}</td>#}
-{#                                <td class="py-2 pr-3">#}
-{#                                    ${dateRappel && dateRappel !== '-'#}
-{#                                        ? `<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 text-[10px]">#}
-{#                                               ${dateRappel}#}
-{#                                           </span>`#}
-{#                                        : `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300 text-[10px]">#}
-{#                                               Aucun rappel#}
-{#                                           </span>`#}
-{#                                    }#}
-{#                                </td>#}
-{#                                <td class="py-2 pr-3 text-right">#}
-{#                                    <a href="${detailUrl}"#}
-{#                                       class="inline-flex items-center gap-1 px-2 py-1 rounded-2xl bg-slate-100 dark:bg-slate-900/70 text-[11px]">#}
-{#                                        <i class="fa-solid fa-eye text-[10px]"></i>#}
-{#                                        Détails vaccination#}
-{#                                    </a>#}
-{#                                </td>#}
-{#                            </tr>#}
-{#                        `;#}
-{#                    }).join('');#}
-{##}
-{#                    tableBody.innerHTML = rows;#}
-{#                }#}
-{##}
-{#                // Pagination (PageNumberPagination DRF)#}
-{#                currentPage = page;#}
-{#                const pageSizeUsed = data.results ? data.results.length : pageSize;#}
-{#                const start = (currentPage - 1) * pageSize + 1;#}
-{#                const end = (currentPage - 1) * pageSize + pageSizeUsed;#}
-{##}
-{#                countInfo.textContent = totalCount#}
-{#                    ? `Enregistrements ${start} – ${end} sur ${totalCount}`#}
-{#                    : '';#}
-{##}
-{#                // Boutons suivant / précédent#}
-{#                btnPrev.disabled = !data.previous;#}
-{#                btnNext.disabled = !data.next;#}
-{##}
-{#                const totalPages = totalCount ? Math.ceil(totalCount / pageSize) : '?';#}
-{#                pageInfo.textContent = totalCount ? `Page ${currentPage} / ${totalPages}` : '';#}
-{##}
-{#                pagination.classList.remove('hidden');#}
-{##}
-{#            } catch (e) {#}
-{#                console.error(e);#}
-{#                tableBody.innerHTML = `#}
-{#                    <tr>#}
-{#                        <td colspan="8" class="py-4 text-center text-rose-500">#}
-{#                            Une erreur est survenue lors du chargement des vaccinations.#}
-{#                        </td>#}
-{#                    </tr>`;#}
-{#            } finally {#}
-{#                loader.classList.add('hidden');#}
-{#            }#}
-{#        }#}
-{##}
-{#        // Navigation pagination#}
-{#        btnPrev?.addEventListener('click', function () {#}
-{#            if (currentPage > 1) {#}
-{#                loadVaccinations(currentPage - 1);#}
-{#            }#}
-{#        });#}
-{##}
-{#        btnNext?.addEventListener('click', function () {#}
-{#            loadVaccinations(currentPage + 1);#}
-{#        });#}
-{##}
-{#        // Soumission des filtres#}
-{#        if (filterForm) {#}
-{#            filterForm.addEventListener('submit', function (e) {#}
-{#                e.preventDefault();#}
-{#                loadVaccinations(1);#}
-{#            });#}
-{#        }#}
-{##}
-{#        // Premier chargement#}
-{#        loadVaccinations(1);#}
-{#    });#}
-{#</script>#}
-{#{% endblock %}#}

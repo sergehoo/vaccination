@@ -550,19 +550,33 @@ class PatientListView(StaffOnlyMixin, LoginRequiredMixin, ListView):
 
     # --- ⬇️ Fonction centrale : filtre selon l’accès utilisateur --- #
     def filter_by_access_level(self, queryset, user):
-        if user.access_level == AccessLevel.CENTRE and user.centre:
+        """
+        Filtre les patients en fonction du périmètre de l'utilisateur.
+        Si l'utilisateur n'a pas d'access_level (ex: vieux User ou Patient), aucun filtre.
+        """
+        from inhp.models import Utilisateur  # si besoin, sinon import en haut de fichier
+
+        # Si ce n'est pas un Utilisateur (pro), on ne filtre pas
+        if not isinstance(user, Utilisateur):
+            return queryset
+
+        access_level = getattr(user, "access_level", None)
+        if not access_level:
+            return queryset
+
+        if access_level == AccessLevel.CENTRE and user.centre:
             return queryset.filter(centre=user.centre)
 
-        if user.access_level == AccessLevel.DISTRICT and user.district:
+        if access_level == AccessLevel.DISTRICT and user.district:
             return queryset.filter(centre__district=user.district)
 
-        if user.access_level == AccessLevel.REGION and user.region:
+        if access_level == AccessLevel.REGION and user.region:
             return queryset.filter(centre__district__region=user.region)
 
-        if user.access_level == AccessLevel.POLE and user.pole:
+        if access_level == AccessLevel.POLE and user.pole:
             return queryset.filter(centre__district__region__poles=user.pole)
 
-        # NATIONAL → aucun filtre
+        # NATIONAL ou autre valeur → aucun filtre supplémentaire
         return queryset
 
     # --- ⬇️ GET QUERYSET --- #
@@ -632,7 +646,6 @@ class PatientListView(StaffOnlyMixin, LoginRequiredMixin, ListView):
             }
         })
         return context
-
 class PatientVaccinationCarnetPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
     """
     Génère le carnet de vaccination complet d'un patient en PDF.
@@ -875,7 +888,7 @@ class VaccinationListView(StaffOnlyMixin, LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Formulaire uniquement pour les champs (patient, centre, vaccin, dates)
-        context['filter_form'] = VaccinationFilterForm(self.request.GET or None)
+        context['filter_form'] = VaccinationFilterForm(self.request.GET or None,user=self.request.user, )
         # Le JS mettra ces valeurs à jour à partir de l'API
         context['total_vaccinations'] = 0
         context['rappels_prochains'] = 0

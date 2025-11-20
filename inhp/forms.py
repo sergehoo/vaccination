@@ -1,6 +1,6 @@
 from django import forms
 
-from inhp.models import Vaccination, LotVaccin, Patient, CentreVaccination, Vaccin, Mapi
+from inhp.models import Vaccination, LotVaccin, Patient, CentreVaccination, Vaccin, Mapi, AccessLevel
 from django.utils.translation import gettext_lazy as _
 
 
@@ -37,35 +37,99 @@ class VaccinationForm(forms.ModelForm):
             self.fields['lot'].queryset = LotVaccin.objects.none()
 
 
+# forms.py
+
+
 class VaccinationFilterForm(forms.Form):
-    patient_code = forms.CharField(
+    # 🔹 Champ texte patient (code, nom, téléphone…)
+    patient = forms.CharField(
         required=False,
-        label="Code patient",
+        label="Patient",
         widget=forms.TextInput(attrs={
-            "class": "w-full rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 px-3 py-2 text-[12px]",
-            "placeholder": "Code ou nom du patient…",
+            "class": "w-full rounded-2xl bg-slate-50 dark:bg-slate-900/80 "
+                     "border border-slate-200/70 dark:border-slate-700/70 "
+                     "px-3 py-2 text-[12px] focus:outline-none focus:ring-1 "
+                     "focus:ring-ivoireBlue/70 focus:border-ivoireBlue/70",
+            "placeholder": "Code, nom, prénom ou téléphone…",
         })
     )
+
     centre = forms.ModelChoiceField(
-        queryset=CentreVaccination.objects.all(),
+        queryset=CentreVaccination.objects.none(),  # ⚠️ important : on override dans __init__
         required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
+        label="Centre de vaccination",
+        widget=forms.Select(attrs={
+            "class": "select2-field w-full rounded-2xl bg-slate-50 dark:bg-slate-900/80 "
+                     "border border-slate-200/70 dark:border-slate-700/70 "
+                     "px-3 py-2 text-[12px]",
+            "data-placeholder": "Tous les centres",
+        })
     )
+
     vaccin = forms.ModelChoiceField(
         queryset=Vaccin.objects.all(),
         required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
+        label="Vaccin",
+        widget=forms.Select(attrs={
+            "class": "select2-field w-full rounded-2xl bg-slate-50 dark:bg-slate-900/80 "
+                     "border border-slate-200/70 dark:border-slate-700/70 "
+                     "px-3 py-2 text-[12px]",
+            "data-placeholder": "Tous les vaccins",
+        })
     )
+
     date_debut = forms.DateField(
         required=False,
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+        label="Date de début",
+        widget=forms.DateInput(attrs={
+            "type": "date",
+            "class": "w-full rounded-2xl bg-slate-50 dark:bg-slate-900/80 "
+                     "border border-slate-200/70 dark:border-slate-700/70 "
+                     "px-3 py-2 text-[12px]",
+        })
     )
+
     date_fin = forms.DateField(
         required=False,
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+        label="Date de fin",
+        widget=forms.DateInput(attrs={
+            "type": "date",
+            "class": "w-full rounded-2xl bg-slate-50 dark:bg-slate-900/80 "
+                     "border border-slate-200/70 dark:border-slate-700/70 "
+                     "px-3 py-2 text-[12px]",
+        })
     )
 
+    def __init__(self, *args, user=None, **kwargs):
+        """
+        On passe user depuis la vue pour restreindre les centres selon son access_level.
+        """
+        super().__init__(*args, **kwargs)
 
+        qs = CentreVaccination.objects.all()
+
+        if user is not None and hasattr(user, "access_level"):
+            # from .choices import AccessLevel  # adapte l'import si besoin
+
+            # CENTRE : uniquement son centre
+            if user.access_level == AccessLevel.CENTRE and getattr(user, "centre_id", None):
+                qs = qs.filter(id=user.centre_id)
+
+            # DISTRICT : tous les centres du district
+            elif user.access_level == AccessLevel.DISTRICT and getattr(user, "district_id", None):
+                qs = qs.filter(district_id=user.district_id)
+
+            # REGION : tous les centres de la région
+            elif user.access_level == AccessLevel.REGION and getattr(user, "region_id", None):
+                qs = qs.filter(district__region_id=user.region_id)
+
+            # POLE : tous les centres des régions du pôle
+            elif user.access_level == AccessLevel.POLE and getattr(user, "pole_id", None):
+                qs = qs.filter(district__region__poles_id=user.pole_id)
+
+            # NATIONAL : on garde tous les centres (qs initial)
+
+        self.fields["centre"].queryset = qs.order_by("name")
 class MapiPatientForm(forms.ModelForm):
     """
     Formulaire simplifié pour déclaration de MAPI par le patient.

@@ -1,7 +1,7 @@
 from datetime import timedelta, date
 
 from dateutil.relativedelta import relativedelta
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Min, Max
 from django.db.models.functions import TruncMonth, TruncWeek
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -293,13 +293,19 @@ class VaccinationViewSet(viewsets.ModelViewSet):
     # ---------------------------------------------------
     @action(detail=False, methods=['get'])
     def statistiques(self, request):
+        """
+        Statistiques filtrées par access_level :
+        - périodes (mois / semaine / 30j)
+        - répartitions (vaccin / centre / dose)
+        - KPIs (rappels, activité récente, couverture de patients, centres actifs, etc.)
+        """
         base_qs = Vaccination.objects.filter(deleted_at__isnull=True)
         base_qs = self._apply_access_level_scope(base_qs)
 
         today = date.today()
         six_months_ago = today - timedelta(days=180)
 
-        # Par mois (6 derniers mois)
+        # --- PÉRIODES ---------------------------------------------
         vaccinations_par_mois = (
             base_qs.filter(date_vaccination__gte=six_months_ago)
             .annotate(mois=TruncMonth('date_vaccination'))
@@ -308,7 +314,6 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             .order_by('mois')
         )
 
-        # Par semaine (12 dernières semaines)
         vaccinations_par_semaine = (
             base_qs.filter(date_vaccination__gte=today - timedelta(days=84))
             .annotate(semaine=TruncWeek('date_vaccination'))
@@ -317,7 +322,27 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             .order_by('semaine')
         )
 
-        # Total global pour les % (par vaccin / centre)
+        # Série journalière sur 30 jours (pour mini-barres ou analyse fine)
+        vaccinations_30j_series = (
+            base_qs.filter(date_vaccination__gte=today - timedelta(days=30))
+            .values('date_vaccination')
+            .annotate(total=Count('id'))
+            .order_by('date_vaccination')
+        )
+
+        # Rappels planifiés sur les 30 prochains jours
+        rappels_par_jour = (
+            base_qs.filter(
+                date_rappel__isnull=False,
+                date_rappel__gte=today,
+                date_rappel__lte=today + timedelta(days=30),
+            )
+            .values('date_rappel')
+            .annotate(total=Count('id'))
+            .order_by('date_rappel')
+        )
+
+        # --- RÉPARTITIONS -----------------------------------------
         total_global = base_qs.count() or 1
 
         vaccinations_par_vaccin_raw = (
@@ -326,7 +351,6 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             .annotate(total=Count('id'))
             .order_by('-total')
         )
-
         vaccinations_par_vaccin = [
             {
                 **row,
@@ -341,7 +365,6 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             .annotate(total=Count('id'))
             .order_by('-total')
         )
-
         vaccinations_par_centre = [
             {
                 **row,
@@ -350,14 +373,21 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             for row in vaccinations_par_centre_raw
         ]
 
-        vaccinations_par_dose = (
+        vaccinations_par_dose_raw = (
             base_qs
             .values('dose')
             .annotate(total=Count('id'))
             .order_by('dose')
         )
+        vaccinations_par_dose = [
+            {
+                **row,
+                'pourcentage': (row['total'] * 100.0) / total_global
+            }
+            for row in vaccinations_par_dose_raw
+        ]
 
-        # KPIs (toujours sur base_qs = périmètre utilisateur)
+        # --- KPIs GLOBAUX ----------------------------------------
         rappels_prochains = base_qs.filter(
             date_rappel__isnull=False,
             date_rappel__gte=today,
@@ -401,15 +431,38 @@ class VaccinationViewSet(viewsets.ModelViewSet):
         total_rappels = rappels_prochains + rappels_manques
         taux_rappel = (rappels_prochains * 100.0 / total_rappels) if total_rappels > 0 else 0
 
+        # Centres actifs (ayant au moins une vaccination dans le scope)
+        centres_actifs = base_qs.values('centre_id').distinct().count()
+
+        # Patients uniques vaccinés (dans le scope)
+        patients_vaccines = base_qs.values('patient_id').distinct().count()
+
+        # Activité récente
+        vaccinations_7j = base_qs.filter(
+            date_vaccination__gte=today - timedelta(days=7)
+        ).count()
+        vaccinations_30j = base_qs.filter(
+            date_vaccination__gte=today - timedelta(days=30)
+        ).count()
+
+        # Plage d’historique
+        agg_dates = base_qs.aggregate(
+            premiere_vaccination=Min('date_vaccination'),
+            derniere_vaccination=Max('date_vaccination'),
+        )
+
         return Response({
             'periodes': {
                 'vaccinations_par_mois': list(vaccinations_par_mois),
                 'vaccinations_par_semaine': list(vaccinations_par_semaine),
+                'vaccinations_30j_series': list(vaccinations_30j_series),
+                'rappels_par_jour': list(rappels_par_jour),
             },
             'repartition': {
                 'par_vaccin': vaccinations_par_vaccin,
                 'par_centre': vaccinations_par_centre,
-                'par_dose': list(vaccinations_par_dose),
+                'par_dose': list(vaccinations_par_dose_raw),
+                'par_dose_detaille': vaccinations_par_dose,
             },
             'kpis': {
                 'total_vaccinations': total_global,
@@ -420,6 +473,12 @@ class VaccinationViewSet(viewsets.ModelViewSet):
                 'rappels_prochains': rappels_prochains,
                 'rappels_manques': rappels_manques,
                 'taux_rappel': round(taux_rappel, 1),
+                'centres_actifs': centres_actifs,
+                'patients_vaccines': patients_vaccines,
+                'vaccinations_7j': vaccinations_7j,
+                'vaccinations_30j': vaccinations_30j,
+                'premiere_vaccination': agg_dates['premiere_vaccination'],
+                'derniere_vaccination': agg_dates['derniere_vaccination'],
             }
         })
 
