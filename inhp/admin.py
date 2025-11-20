@@ -3,6 +3,7 @@ from datetime import timezone
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.forms import ReadOnlyPasswordHashField, AdminPasswordChangeForm
 from django.contrib.gis.admin import GISModelAdmin
 from django.contrib.gis.geos import Point
 from django.shortcuts import render
@@ -569,18 +570,34 @@ class UtilisateurCreationForm(forms.ModelForm):
 
 class UtilisateurChangeForm(forms.ModelForm):
     """
-    Formulaire de modification (on laisse Django gérer la zone password).
+    Formulaire de modification utilisé dans l'admin.
+
+    - Affiche le mot de passe en lecture seule
+    - Laisse Django gérer la vue "changer le mot de passe"
     """
+    password = ReadOnlyPasswordHashField(
+        label=_("Mot de passe"),
+        help_text=_(
+            "Les mots de passe bruts ne sont pas stockés, donc il n'est pas possible "
+            "de voir ce mot de passe, mais vous pouvez le modifier via le "
+            "<a href=\"../password/\">formulaire de changement de mot de passe</a>."
+        ),
+    )
 
     class Meta:
         model = Utilisateur
         fields = "__all__"
+
+    def clean_password(self):
+        # On renvoie simplement la valeur initiale
+        return self.initial.get("password")
 
 
 @admin.register(Utilisateur)
 class UtilisateurAdmin(BaseUserAdmin):
     add_form = UtilisateurCreationForm
     form = UtilisateurChangeForm
+    change_password_form = AdminPasswordChangeForm  # <-- pour la vue /password/
     model = Utilisateur
 
     list_display = ("email", "first_name", "last_name", "role", "access_level", "is_staff", "is_active")
@@ -590,10 +607,18 @@ class UtilisateurAdmin(BaseUserAdmin):
     search_fields = ("email", "first_name", "last_name")
 
     fieldsets = (
-        (_("Identité"), {"fields": ("email", "first_name", "last_name", "phone")}),
-        (_("Affectation"), {"fields": ("centre", "district", "region", "pole", "access_level", "role")}),
-        (_("Permissions"), {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
-        (_("Infos sécurité"), {"fields": ("last_login",)}),
+        (_("Identité"), {
+            "fields": ("email", "first_name", "last_name", "phone", "password")
+        }),
+        (_("Affectation"), {
+            "fields": ("centre", "district", "region", "pole", "access_level", "role")
+        }),
+        (_("Permissions"), {
+            "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")
+        }),
+        (_("Infos sécurité"), {
+            "fields": ("last_login",)
+        }),
     )
 
     add_fieldsets = (
@@ -610,7 +635,6 @@ class UtilisateurAdmin(BaseUserAdmin):
             "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions"),
         }),
     )
-
 
 @admin.register(Patient)
 class PatientAdmin(UserAdmin):
