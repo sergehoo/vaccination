@@ -18,8 +18,31 @@ from rest_framework.views import APIView
 from inhp.apis.serializers import UtilisateurSerializer, PatientSerializer, VaccinSerializer, MapiSerializer, \
     VaccineExtSerializer, VaccinationSerializer, FicheRetroSerializer, VaccinationListSerializer, \
     VaccinationDetailSerializer, VaccinationCreateSerializer, VaccinationUpdateSerializer
+from inhp.backends import StaffOnlyMixin
 from inhp.models import Utilisateur, Patient, CentreBasedPermission, Vaccin, Vaccination, Mapi, VaccineExt, \
-    CentreVaccination, FicheRetro, LotVaccin
+    CentreVaccination, FicheRetro, LotVaccin, AccessLevel
+from inhp.views import DashboardStatsMixin
+
+
+class DashboardStatsAPIView(StaffOnlyMixin, DashboardStatsMixin, APIView):
+    """
+    API JSON pour recharger le dashboard côté front (Alpine/JS)
+    en fonction :
+    - de la période (30d / quarter / year)
+    - de la maladie (disease_id)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        period = request.query_params.get("period", "30d")
+        disease_id = request.query_params.get("disease_id", None)
+
+        data = self._build_dashboard_data(
+            user=request.user,
+            period=period,
+            disease_id=disease_id,
+        )
+        return Response(data)
 
 
 class MeAPIView(APIView):
@@ -89,9 +112,9 @@ class VaccinationPagination(PageNumberPagination):
 
 class VaccinationViewSet(viewsets.ModelViewSet):
     """
-    API Vaccinations avec filtrage avancé & statistiques.
+    API Vaccinations avec filtrage avancé, statistiques
+    ET scope par access_level (centre / district / région / pôle / national).
     """
-    queryset = Vaccination.objects.filter(deleted_at__isnull=True)
     permission_classes = [IsAuthenticated, DjangoModelPermissions]
     pagination_class = VaccinationPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -102,10 +125,52 @@ class VaccinationViewSet(viewsets.ModelViewSet):
     ordering_fields = ['date_vaccination', 'date_rappel', 'created_at', 'dose']
     ordering = ['-date_vaccination']
 
+    # ---------------------------------------------------
+    # 1) Scope par access_level
+    # ---------------------------------------------------
+    def _apply_access_level_scope(self, qs):
+        """
+        Limite le queryset au périmètre de l'utilisateur connecté
+        selon access_level : centre / district / région / pôle / national.
+        """
+        user = self.request.user
+
+        # Si pas d'access_level (cas admin technique, scripts, etc.) -> on ne restreint pas.
+        if not hasattr(user, "access_level"):
+            return qs
+
+        # CENTRE
+        if user.access_level == AccessLevel.CENTRE and getattr(user, "centre_id", None):
+            return qs.filter(centre=user.centre)
+
+        # DISTRICT
+        if user.access_level == AccessLevel.DISTRICT and getattr(user, "district_id", None):
+            return qs.filter(centre__district=user.district)
+
+        # REGION
+        if user.access_level == AccessLevel.REGION and getattr(user, "region_id", None):
+            return qs.filter(centre__district__region=user.region)
+
+        # POLE
+        if user.access_level == AccessLevel.POLE and getattr(user, "pole_id", None):
+            return qs.filter(centre__district__region__poles=user.pole)
+
+        # NATIONAL -> pas de restriction
+        # (AccessLevel.NATIONAL)
+        return qs
+
+    # ---------------------------------------------------
+    # 2) Queryset principal avec filtres GET
+    # ---------------------------------------------------
     def get_queryset(self):
-        qs = Vaccination.objects.select_related(
-            'patient', 'centre', 'vaccin', 'lot', 'created_by'
+        qs = (
+            Vaccination.objects
+            .filter(deleted_at__isnull=True)
+            .select_related('patient', 'centre', 'vaccin', 'lot', 'created_by')
         )
+
+        # 🔒 Scope access_level
+        qs = self._apply_access_level_scope(qs)
 
         params = self.request.query_params
 
@@ -145,13 +210,16 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             if date_fin:
                 qs = qs.filter(date_vaccination__lte=date_fin)
         else:
-            # Si tu veux limiter par défaut à 90 jours :
+            # Si tu veux limiter par défaut à 90 jours, décommente :
             # default_start = timezone.now().date() - timedelta(days=90)
             # qs = qs.filter(date_vaccination__gte=default_start)
             pass
 
         return qs
 
+    # ---------------------------------------------------
+    # 3) Serializers
+    # ---------------------------------------------------
     def get_serializer_class(self):
         if self.action == 'list':
             return VaccinationListSerializer
@@ -170,72 +238,94 @@ class VaccinationViewSet(viewsets.ModelViewSet):
         instance.deleted_at = timezone.now()
         instance.save()
 
+    # ---------------------------------------------------
+    # 4) Rappels (prochains / manqués) → scoping aussi
+    # ---------------------------------------------------
     @action(detail=False, methods=['get'])
     def rappels_prochains(self, request):
         date_limit = timezone.now().date() + timedelta(days=30)
-        vaccinations = Vaccination.objects.filter(
-            deleted_at__isnull=True,
-            date_rappel__isnull=False,
-            date_rappel__gte=timezone.now().date(),
-            date_rappel__lte=date_limit
-        ).select_related('patient', 'vaccin', 'centre').order_by('date_rappel')
 
-        page = self.paginate_queryset(vaccinations)
+        qs = (
+            Vaccination.objects
+            .filter(
+                deleted_at__isnull=True,
+                date_rappel__isnull=False,
+                date_rappel__gte=timezone.now().date(),
+                date_rappel__lte=date_limit,
+            )
+            .select_related('patient', 'vaccin', 'centre')
+        )
+
+        qs = self._apply_access_level_scope(qs)
+
+        page = self.paginate_queryset(qs)
         if page is not None:
             serializer = VaccinationListSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = VaccinationListSerializer(vaccinations, many=True)
+        serializer = VaccinationListSerializer(qs, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'])
     def rappels_manques(self, request):
-        vaccinations = Vaccination.objects.filter(
-            deleted_at__isnull=True,
-            date_rappel__isnull=False,
-            date_rappel__lt=timezone.now().date()
-        ).select_related('patient', 'vaccin', 'centre').order_by('date_rappel')
+        qs = (
+            Vaccination.objects
+            .filter(
+                deleted_at__isnull=True,
+                date_rappel__isnull=False,
+                date_rappel__lt=timezone.now().date(),
+            )
+            .select_related('patient', 'vaccin', 'centre')
+        )
 
-        page = self.paginate_queryset(vaccinations)
+        qs = self._apply_access_level_scope(qs)
+
+        page = self.paginate_queryset(qs)
         if page is not None:
             serializer = VaccinationListSerializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = VaccinationListSerializer(vaccinations, many=True)
+        serializer = VaccinationListSerializer(qs, many=True)
         return Response(serializer.data)
 
+    # ---------------------------------------------------
+    # 5) Statistiques → TOUT passe par le qs scoppé
+    # ---------------------------------------------------
     @action(detail=False, methods=['get'])
     def statistiques(self, request):
-        six_months_ago = timezone.now().date() - timedelta(days=180)
+        base_qs = Vaccination.objects.filter(deleted_at__isnull=True)
+        base_qs = self._apply_access_level_scope(base_qs)
 
-        vaccinations_par_mois = Vaccination.objects.filter(
-            deleted_at__isnull=True,
-            date_vaccination__gte=six_months_ago
-        ).annotate(
-            mois=TruncMonth('date_vaccination')
-        ).values('mois').annotate(
-            total=Count('id')
-        ).order_by('mois')
+        today = date.today()
+        six_months_ago = today - timedelta(days=180)
 
-        vaccinations_par_semaine = Vaccination.objects.filter(
-            deleted_at__isnull=True,
-            date_vaccination__gte=timezone.now().date() - timedelta(days=84)
-        ).annotate(
-            semaine=TruncWeek('date_vaccination')
-        ).values('semaine').annotate(
-            total=Count('id')
-        ).order_by('semaine')
+        # Par mois (6 derniers mois)
+        vaccinations_par_mois = (
+            base_qs.filter(date_vaccination__gte=six_months_ago)
+            .annotate(mois=TruncMonth('date_vaccination'))
+            .values('mois')
+            .annotate(total=Count('id'))
+            .order_by('mois')
+        )
+
+        # Par semaine (12 dernières semaines)
+        vaccinations_par_semaine = (
+            base_qs.filter(date_vaccination__gte=today - timedelta(days=84))
+            .annotate(semaine=TruncWeek('date_vaccination'))
+            .values('semaine')
+            .annotate(total=Count('id'))
+            .order_by('semaine')
+        )
 
         # Total global pour les % (par vaccin / centre)
-        total_global = Vaccination.objects.filter(deleted_at__isnull=True).count() or 1
+        total_global = base_qs.count() or 1
 
-        vaccinations_par_vaccin_raw = Vaccination.objects.filter(
-            deleted_at__isnull=True
-        ).values(
-            'vaccin__nom', 'vaccin__id'
-        ).annotate(
-            total=Count('id')
-        ).order_by('-total')
+        vaccinations_par_vaccin_raw = (
+            base_qs
+            .values('vaccin__nom', 'vaccin__id')
+            .annotate(total=Count('id'))
+            .order_by('-total')
+        )
 
         vaccinations_par_vaccin = [
             {
@@ -245,13 +335,12 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             for row in vaccinations_par_vaccin_raw
         ]
 
-        vaccinations_par_centre_raw = Vaccination.objects.filter(
-            deleted_at__isnull=True
-        ).values(
-            'centre__name', 'centre__id'
-        ).annotate(
-            total=Count('id')
-        ).order_by('-total')
+        vaccinations_par_centre_raw = (
+            base_qs
+            .values('centre__name', 'centre__id')
+            .annotate(total=Count('id'))
+            .order_by('-total')
+        )
 
         vaccinations_par_centre = [
             {
@@ -261,54 +350,53 @@ class VaccinationViewSet(viewsets.ModelViewSet):
             for row in vaccinations_par_centre_raw
         ]
 
-        vaccinations_par_dose = Vaccination.objects.filter(
-            deleted_at__isnull=True
-        ).values('dose').annotate(
-            total=Count('id')
-        ).order_by('dose')
+        vaccinations_par_dose = (
+            base_qs
+            .values('dose')
+            .annotate(total=Count('id'))
+            .order_by('dose')
+        )
 
-        rappels_prochains = Vaccination.objects.filter(
-            deleted_at__isnull=True,
+        # KPIs (toujours sur base_qs = périmètre utilisateur)
+        rappels_prochains = base_qs.filter(
             date_rappel__isnull=False,
-            date_rappel__gte=date.today(),
-            date_rappel__lte=date.today() + timedelta(days=30)
+            date_rappel__gte=today,
+            date_rappel__lte=today + timedelta(days=30),
         ).count()
 
-        rappels_manques = Vaccination.objects.filter(
-            deleted_at__isnull=True,
+        rappels_manques = base_qs.filter(
             date_rappel__isnull=False,
-            date_rappel__lt=date.today()
+            date_rappel__lt=today,
         ).count()
 
-        vaccinations_aujourdhui = Vaccination.objects.filter(
-            deleted_at__isnull=True,
-            date_vaccination=date.today()
+        vaccinations_aujourdhui = base_qs.filter(
+            date_vaccination=today
         ).count()
 
-        debut_semaine = date.today() - timedelta(days=date.today().weekday())
-        vaccinations_semaine = Vaccination.objects.filter(
-            deleted_at__isnull=True,
+        debut_semaine = today - timedelta(days=today.weekday())
+        vaccinations_semaine = base_qs.filter(
             date_vaccination__gte=debut_semaine
         ).count()
 
-        debut_mois = date.today().replace(day=1)
-        vaccinations_mois = Vaccination.objects.filter(
-            deleted_at__isnull=True,
+        debut_mois = today.replace(day=1)
+        vaccinations_mois = base_qs.filter(
             date_vaccination__gte=debut_mois
         ).count()
 
         mois_precedent_debut = (debut_mois - timedelta(days=1)).replace(day=1)
         mois_precedent_fin = debut_mois - timedelta(days=1)
 
-        vaccinations_mois_precedent = Vaccination.objects.filter(
-            deleted_at__isnull=True,
+        vaccinations_mois_precedent = base_qs.filter(
             date_vaccination__gte=mois_precedent_debut,
             date_vaccination__lte=mois_precedent_fin
         ).count()
 
         evolution_mois = 0
         if vaccinations_mois_precedent > 0:
-            evolution_mois = ((vaccinations_mois - vaccinations_mois_precedent) / vaccinations_mois_precedent) * 100
+            evolution_mois = (
+                                     (vaccinations_mois - vaccinations_mois_precedent)
+                                     / vaccinations_mois_precedent
+                             ) * 100
 
         total_rappels = rappels_prochains + rappels_manques
         taux_rappel = (rappels_prochains * 100.0 / total_rappels) if total_rappels > 0 else 0

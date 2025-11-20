@@ -35,7 +35,7 @@ from inhp.views import HomePageView, patient_dashboard, mes_vaccins, generate_pd
 urlpatterns = [
                   path('admin/', admin.site.urls),
                   path("login/", login_unifie_view, name="login"),
-                  path("logout", logout_view, name="logout"),
+                  path("logout/", logout_view, name="logout"),
                   path(
                       "patient/change-password/patient_password_policy", patient_password_policy,
                       name="patient_password_policy",
@@ -58,6 +58,7 @@ urlpatterns = [
                        name='verifier_certificat'),
                   # ----------------------Admin ----------------urls
                   path('dashboard', DashboardView.as_view(), name='dashboard'),
+
 
                   path('patients/list', PatientListView.as_view(), name='patient_list'),
                   path('patients/create/', PatientCreateView.as_view(), name='patient-create'),

@@ -35,8 +35,25 @@
                 <!-- Texte principal -->
                 <div class="space-y-2 max-w-xl">
                     <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90">
-                        Côte d’Ivoire · Programme Élargi de Vaccination
-                    </p>
+                Côte d’Ivoire · Plateforme national de gestion de la vaccination {% if request.user.is_staff %}
+       
+
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/10 text-yellow-300 border border-yellow-400/40">
+                                    <i class="fa-solid fa-map-marker text-[12px]"></i>
+                    {% if request.user.access_level == "pole" and request.user.pole %}
+                        {{ request.user.pole }}
+                    {% elif request.user.access_level == "region" and request.user.region %}
+                        {{ request.user.region }}
+                    {% elif request.user.access_level == "district" and request.user.district %}
+                        {{ request.user.district }}
+                    {% elif request.user.access_level == "centre" and request.user.centre %}
+                        {{ request.user.centre }}
+                    {% elif request.user.access_level == "national" %}
+                        National
+                    {% endif %}
+                </span>
+        {% endif %}
+            </p>
                     <h1 class="text-xl sm:text-2xl font-semibold flex flex-wrap items-center gap-2">
                         <span>Historique des vaccinations</span>
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">

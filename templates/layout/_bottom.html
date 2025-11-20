@@ -57,99 +57,99 @@
         </div>
     </footer>
 
-    <script>
-        // Toggle menu mobile
-        document.getElementById('menuToggle').addEventListener('click', function() {
-            document.querySelector('.sidebar').classList.toggle('active');
-        });
-
-        // Toggle dropdown utilisateur
-        document.getElementById('userMenu').addEventListener('click', function() {
-            document.getElementById('userDropdown').classList.toggle('hidden');
-        });
-
-        // Fermer le dropdown en cliquant ailleurs
-        document.addEventListener('click', function(event) {
-            const userMenu = document.getElementById('userMenu');
-            const userDropdown = document.getElementById('userDropdown');
-            
-            if (!userMenu.contains(event.target) && !userDropdown.contains(event.target)) {
-                userDropdown.classList.add('hidden');
-            }
-        });
-
-        // Graphique des vaccinations par mois
-        const vaccinationCtx = document.getElementById('vaccinationChart').getContext('2d');
-        const vaccinationChart = new Chart(vaccinationCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
-                datasets: [{
-                    label: 'Vaccinations',
-                    data: [1200, 1900, 1500, 2200, 1800, 2500, 3000, 2800, 3200, 3500, 3800, 4000],
-                    backgroundColor: '#009639',
-                    borderRadius: 6,
-                    borderSkipped: false,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grid: {
-                            drawBorder: false
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-
-        // Graphique des types de vaccins
-        const vaccineTypeCtx = document.getElementById('vaccineTypeChart').getContext('2d');
-        const vaccineTypeChart = new Chart(vaccineTypeCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Pfizer', 'Moderna', 'AstraZeneca', 'Johnson & Johnson', 'Sinopharm'],
-                datasets: [{
-                    data: [35, 25, 20, 12, 8],
-                    backgroundColor: [
-                        '#009639',
-                        '#F77F00',
-                        '#3B82F6',
-                        '#8B5CF6',
-                        '#EF4444'
-                    ],
-                    borderWidth: 0,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '70%',
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            boxWidth: 12,
-                            padding: 20
-                        }
-                    }
-                }
-            }
-        });
-    </script>
+{#    <script>#}
+{#        // Toggle menu mobile#}
+{#        document.getElementById('menuToggle').addEventListener('click', function() {#}
+{#            document.querySelector('.sidebar').classList.toggle('active');#}
+{#        });#}
+{##}
+{#        // Toggle dropdown utilisateur#}
+{#        document.getElementById('userMenu').addEventListener('click', function() {#}
+{#            document.getElementById('userDropdown').classList.toggle('hidden');#}
+{#        });#}
+{##}
+{#        // Fermer le dropdown en cliquant ailleurs#}
+{#        document.addEventListener('click', function(event) {#}
+{#            const userMenu = document.getElementById('userMenu');#}
+{#            const userDropdown = document.getElementById('userDropdown');#}
+{#            #}
+{#            if (!userMenu.contains(event.target) && !userDropdown.contains(event.target)) {#}
+{#                userDropdown.classList.add('hidden');#}
+{#            }#}
+{#        });#}
+{##}
+{#        // Graphique des vaccinations par mois#}
+{#        const vaccinationCtx = document.getElementById('vaccinationChart').getContext('2d');#}
+{#        const vaccinationChart = new Chart(vaccinationCtx, {#}
+{#            type: 'bar',#}
+{#            data: {#}
+{#                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],#}
+{#                datasets: [{#}
+{#                    label: 'Vaccinations',#}
+{#                    data: [1200, 1900, 1500, 2200, 1800, 2500, 3000, 2800, 3200, 3500, 3800, 4000],#}
+{#                    backgroundColor: '#009639',#}
+{#                    borderRadius: 6,#}
+{#                    borderSkipped: false,#}
+{#                }]#}
+{#            },#}
+{#            options: {#}
+{#                responsive: true,#}
+{#                maintainAspectRatio: false,#}
+{#                plugins: {#}
+{#                    legend: {#}
+{#                        display: false#}
+{#                    }#}
+{#                },#}
+{#                scales: {#}
+{#                    y: {#}
+{#                        beginAtZero: true,#}
+{#                        grid: {#}
+{#                            drawBorder: false#}
+{#                        }#}
+{#                    },#}
+{#                    x: {#}
+{#                        grid: {#}
+{#                            display: false#}
+{#                        }#}
+{#                    }#}
+{#                }#}
+{#            }#}
+{#        });#}
+{##}
+{#        // Graphique des types de vaccins#}
+{#        const vaccineTypeCtx = document.getElementById('vaccineTypeChart').getContext('2d');#}
+{#        const vaccineTypeChart = new Chart(vaccineTypeCtx, {#}
+{#            type: 'doughnut',#}
+{#            data: {#}
+{#                labels: ['Pfizer', 'Moderna', 'AstraZeneca', 'Johnson & Johnson', 'Sinopharm'],#}
+{#                datasets: [{#}
+{#                    data: [35, 25, 20, 12, 8],#}
+{#                    backgroundColor: [#}
+{#                        '#009639',#}
+{#                        '#F77F00',#}
+{#                        '#3B82F6',#}
+{#                        '#8B5CF6',#}
+{#                        '#EF4444'#}
+{#                    ],#}
+{#                    borderWidth: 0,#}
+{#                }]#}
+{#            },#}
+{#            options: {#}
+{#                responsive: true,#}
+{#                maintainAspectRatio: false,#}
+{#                cutout: '70%',#}
+{#                plugins: {#}
+{#                    legend: {#}
+{#                        position: 'bottom',#}
+{#                        labels: {#}
+{#                            boxWidth: 12,#}
+{#                            padding: 20#}
+{#                        }#}
+{#                    }#}
+{#                }#}
+{#            }#}
+{#        });#}
+{#    </script>#}
  
 <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-white/90 dark:bg-slate-950/95 border-t border-slate-200/70 dark:border-slate-800/80 backdrop-blur-xl">
         <div class="max-w-md mx-auto px-4 py-2 flex items-center justify-between text-[11px]">

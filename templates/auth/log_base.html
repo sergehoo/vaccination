@@ -5,11 +5,9 @@
     <meta charset="UTF-8">
     <title>Plateforme Vaccination CI</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <link rel="stylesheet" href="{% static 'css/keneya.css' %}">
     <!-- Tailwind -->
-      <link rel="stylesheet" href="{% static 'css/keneya.css' %}">
-{#        <script src="https://cdn.tailwindcss.com"></script>#}
-
+    {#    <script src="https://cdn.tailwindcss.com"></script>#}
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -141,8 +139,8 @@
     <!-- jQuery + Select2 -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link
-        href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
-        rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+            rel="stylesheet"
     />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
@@ -150,7 +148,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 
     <style>
-        [x-cloak] { display: none !important; }
+        [x-cloak] {
+            display: none !important;
+        }
 
         /* Scrollbar custom */
         ::-webkit-scrollbar {
@@ -200,105 +200,139 @@
         .gradient-primary {
             background: linear-gradient(135deg, #1d5501 0%, #18A999 100%);
         }
+
         .gradient-secondary {
             background: linear-gradient(135deg, #18A999 0%, #F59E0B 100%);
         }
+
         .gradient-primary-soft {
             background: linear-gradient(135deg, rgba(29, 85, 1, 0.15) 0%, rgba(24, 169, 153, 0.25) 100%);
         }
+
         .gradient-primary-dark {
             background: linear-gradient(135deg, #020617 0%, #1d5501 50%, #18A999 100%);
         }
+
         .gradient-primary-ultralight {
             background: linear-gradient(135deg, rgba(29, 85, 1, 0.05) 0%, rgba(24, 169, 153, 0.08) 100%);
         }
+
         .gradient-info {
             background: linear-gradient(135deg, #0ea5e9 0%, #22d3ee 100%);
         }
+
         .gradient-info-soft {
             background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(34, 211, 238, 0.25) 100%);
         }
+
         .gradient-warning {
             background: linear-gradient(135deg, #F59E0B 0%, #f97316 50%, #fed7aa 100%);
         }
+
         .gradient-warning-soft {
             background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(249, 115, 22, 0.25) 100%);
         }
+
         .gradient-danger {
             background: linear-gradient(135deg, #dc2626 0%, #f97373 50%, #fee2e2 100%);
         }
+
         .gradient-danger-soft {
             background: linear-gradient(135deg, rgba(220, 38, 38, 0.15) 0%, rgba(249, 115, 115, 0.25) 100%);
         }
+
         .gradient-success {
             background: linear-gradient(135deg, #16a34a 0%, #22c55e 50%, #bbf7d0 100%);
         }
+
         .gradient-success-soft {
             background: linear-gradient(135deg, rgba(22, 163, 74, 0.15) 0%, rgba(34, 197, 94, 0.25) 100%);
         }
+
         .gradient-purple {
             background: linear-gradient(135deg, #8b5cf6 0%, #c084fc 50%, #e9d5ff 100%);
         }
+
         .gradient-purple-soft {
             background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(192, 132, 252, 0.25) 100%);
         }
+
         .gradient-pink {
             background: linear-gradient(135deg, #ec4899 0%, #f472b6 50%, #fbcfe8 100%);
         }
+
         .gradient-pink-soft {
             background: linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(244, 114, 182, 0.25) 100%);
         }
+
         .gradient-indigo {
             background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #a5b4fc 100%);
         }
+
         .gradient-indigo-soft {
             background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(99, 102, 241, 0.25) 100%);
         }
+
         .gradient-emerald {
             background: linear-gradient(135deg, #10b981 0%, #34d399 50%, #a7f3d0 100%);
         }
+
         .gradient-emerald-soft {
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.25) 100%);
         }
+
         .gradient-orange {
             background: linear-gradient(135deg, #f97316 0%, #fb923c 50%, #fed7aa 100%);
         }
+
         .gradient-orange-soft {
             background: linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(251, 146, 60, 0.25) 100%);
         }
+
         .gradient-cyan {
             background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 50%, #a5f3fc 100%);
         }
+
         .gradient-cyan-soft {
             background: linear-gradient(135deg, rgba(6, 182, 212, 0.15) 0%, rgba(34, 211, 238, 0.25) 100%);
         }
+
         .gradient-rose {
             background: linear-gradient(135deg, #f43f5e 0%, #fb7185 50%, #fecdd3 100%);
         }
+
         .gradient-rose-soft {
             background: linear-gradient(135deg, rgba(244, 63, 94, 0.15) 0%, rgba(251, 113, 133, 0.25) 100%);
         }
+
         .gradient-lime {
             background: linear-gradient(135deg, #84cc16 0%, #a3e635 50%, #d9f99d 100%);
         }
+
         .gradient-lime-soft {
             background: linear-gradient(135deg, rgba(132, 204, 22, 0.15) 0%, rgba(163, 230, 53, 0.25) 100%);
         }
+
         .gradient-violet {
             background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #ddd6fe 100%);
         }
+
         .gradient-violet-soft {
             background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(139, 92, 246, 0.25) 100%);
         }
+
         .gradient-amber {
             background: linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fde68a 100%);
         }
+
         .gradient-amber-soft {
             background: linear-gradient(135deg, rgba(217, 119, 6, 0.15) 0%, rgba(245, 158, 11, 0.25) 100%);
         }
+
         .gradient-teal {
             background: linear-gradient(135deg, #0d9488 0%, #14b8a6 50%, #99f6e4 100%);
         }
+
         .gradient-teal-soft {
             background: linear-gradient(135deg, rgba(13, 148, 136, 0.15) 0%, rgba(20, 184, 166, 0.25) 100%);
         }
@@ -306,54 +340,62 @@
         .gradient-surface {
             background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 50%, #e2e8f0 100%);
         }
+
         .dark .gradient-surface {
             background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%);
         }
+
         .gradient-surface-primary {
             background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 50%, #ecfdf5 100%);
         }
+
         .dark .gradient-surface-primary {
             background: linear-gradient(135deg, #020617 0%, #052e16 50%, #022c22 100%);
         }
+
         .gradient-surface-medical {
             background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 50%, #e0f2fe 100%);
         }
+
         .dark .gradient-surface-medical {
             background: linear-gradient(135deg, #020617 0%, #082f49 50%, #0c4a6e 100%);
         }
 
         .gradient-pill {
             background: radial-gradient(circle at top left, #18A999 0%, transparent 60%),
-                        radial-gradient(circle at bottom right, #F59E0B 0%, transparent 60%);
+            radial-gradient(circle at bottom right, #F59E0B 0%, transparent 60%);
         }
+
         .gradient-pill-info {
             background: radial-gradient(circle at top left, #0ea5e9 0%, transparent 60%),
-                        radial-gradient(circle at bottom right, #22d3ee 0%, transparent 60%);
+            radial-gradient(circle at bottom right, #22d3ee 0%, transparent 60%);
         }
+
         .gradient-pill-success {
             background: radial-gradient(circle at top left, #16a34a 0%, transparent 60%),
-                        radial-gradient(circle at bottom right, #22c55e 0%, transparent 60%);
+            radial-gradient(circle at bottom right, #22c55e 0%, transparent 60%);
         }
+
         .gradient-pill-warning {
             background: radial-gradient(circle at top left, #f59e0b 0%, transparent 60%),
-                        radial-gradient(circle at bottom right, #f97316 0%, transparent 60%);
+            radial-gradient(circle at bottom right, #f97316 0%, transparent 60%);
         }
+
         .gradient-pill-danger {
             background: radial-gradient(circle at top left, #dc2626 0%, transparent 60%),
-                        radial-gradient(circle at bottom right, #ef4444 0%, transparent 60%);
+            radial-gradient(circle at bottom right, #ef4444 0%, transparent 60%);
         }
 
         .map-placeholder {
-            background:
-                radial-gradient(circle at 20% 30%, rgba(24, 169, 153, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
-                linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            background: radial-gradient(circle at 20% 30%, rgba(24, 169, 153, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
+            linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         }
+
         .dark .map-placeholder {
-            background:
-                radial-gradient(circle at 20% 30%, rgba(24, 169, 153, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.15) 0%, transparent 50%),
-                linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            background: radial-gradient(circle at 20% 30%, rgba(24, 169, 153, 0.15) 0%, transparent 50%),
+            radial-gradient(circle at 80% 70%, rgba(245, 158, 11, 0.15) 0%, transparent 50%),
+            linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         }
 
         .text-gradient-primary {
@@ -362,18 +404,21 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+
         .text-gradient-secondary {
             background: linear-gradient(135deg, #18A999 0%, #F59E0B 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+
         .text-gradient-info {
             background: linear-gradient(135deg, #0ea5e9 0%, #22d3ee 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
+
         .text-gradient-success {
             background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
             -webkit-background-clip: text;
@@ -383,41 +428,48 @@
 
         .border-gradient-primary {
             border: 2px solid transparent;
-            background:
-                linear-gradient(white, white) padding-box,
-                linear-gradient(135deg, #1d5501 0%, #18A999 100%) border-box;
+            background: linear-gradient(white, white) padding-box,
+            linear-gradient(135deg, #1d5501 0%, #18A999 100%) border-box;
         }
+
         .dark .border-gradient-primary {
-            background:
-                linear-gradient(#0f172a, #0f172a) padding-box,
-                linear-gradient(135deg, #1d5501 0%, #18A999 100%) border-box;
+            background: linear-gradient(#0f172a, #0f172a) padding-box,
+            linear-gradient(135deg, #1d5501 0%, #18A999 100%) border-box;
         }
+
         .border-gradient-info {
             border: 2px solid transparent;
-            background:
-                linear-gradient(white, white) padding-box,
-                linear-gradient(135deg, #0ea5e9 0%, #22d3ee 100%) border-box;
+            background: linear-gradient(white, white) padding-box,
+            linear-gradient(135deg, #0ea5e9 0%, #22d3ee 100%) border-box;
         }
+
         .dark .border-gradient-info {
-            background:
-                linear-gradient(#0f172a, #0f172a) padding-box,
-                linear-gradient(135deg, #0ea5e9 0%, #22d3ee 100%) border-box;
+            background: linear-gradient(#0f172a, #0f172a) padding-box,
+            linear-gradient(135deg, #0ea5e9 0%, #22d3ee 100%) border-box;
         }
 
         .shadow-gradient-primary {
             box-shadow: 0 4px 14px 0 rgba(29, 85, 1, 0.2), 0 0 0 1px rgba(24, 169, 153, 0.1);
         }
+
         .shadow-gradient-info {
             box-shadow: 0 4px 14px 0 rgba(14, 165, 233, 0.2), 0 0 0 1px rgba(34, 211, 238, 0.1);
         }
+
         .shadow-gradient-success {
             box-shadow: 0 4px 14px 0 rgba(22, 163, 74, 0.2), 0 0 0 1px rgba(34, 197, 94, 0.1);
         }
 
         @keyframes gradient-shift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
         }
 
         .gradient-animated {
@@ -437,6 +489,7 @@
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
+
         .dark .glass-primary {
             background: rgba(15, 23, 42, 0.7);
             backdrop-filter: blur(10px);
@@ -452,15 +505,19 @@
         .gradient-vaccination {
             background: linear-gradient(135deg, #1d5501 0%, #18A999 50%, #0ea5e9 100%);
         }
+
         .gradient-patient {
             background: linear-gradient(135deg, #8b5cf6 0%, #c084fc 50%, #ec4899 100%);
         }
+
         .gradient-stock {
             background: linear-gradient(135deg, #f59e0b 0%, #f97316 50%, #dc2626 100%);
         }
+
         .gradient-reporting {
             background: linear-gradient(135deg, #0d9488 0%, #14b8a6 50%, #22d3ee 100%);
         }
+
         .gradient-admin {
             background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a78bfa 100%);
         }
@@ -480,6 +537,7 @@
             display: flex;
             align-items: center;
         }
+
         .dark .select2-container .select2-selection--single {
             background-color: #020617;
             border-color: #334155;
@@ -490,6 +548,7 @@
             padding-left: 0;
             color: #111827;
         }
+
         .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
             color: #e5e7eb;
         }
@@ -502,8 +561,9 @@
         .select2-dropdown {
             border-radius: 0.75rem;
             border-color: #e5e7eb;
-            box-shadow: 0 10px 40px rgba(15,23,42,0.18);
+            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.18);
         }
+
         .dark .select2-dropdown {
             background-color: #020617;
             border-color: #334155;
@@ -513,10 +573,12 @@
             background-color: #1A57A1;
             color: #fff;
         }
+
         .select2-container--default .select2-results__option[aria-selected="true"] {
             background-color: #e5f0ff;
             color: #1A57A1;
         }
+
         .dark .select2-container--default .select2-results__option[aria-selected="true"] {
             background-color: #0f172a;
             color: #bfdbfe;
@@ -527,6 +589,7 @@
             border-color: #e5e7eb;
             font-size: 0.75rem;
         }
+
         .dark .select2-search--dropdown .select2-search__field {
             background-color: #020617;
             border-color: #334155;
@@ -542,82 +605,82 @@
 <div class="relative min-h-screen flex flex-col">
 
     <!-- TOPBAR -->
-      {% include "patient_space/layout_patient/_patient_top_barre.html" %}
+    {% include "layout/_topbar.html" %}
 
     <!-- Layout principal -->
     <div class="flex-1 flex max-h-[calc(100vh-4rem)] overflow-hidden">
         <!-- SIDEBAR -->
-       {% include "patient_space/layout_patient/_patient-side.html" %}
+ 
 
         <!-- CONTENU PRINCIPAL -->
         <main class="flex-1 overflow-y-auto">
             <div class="max-w-7xl mx-auto px-4 lg:px-6 py-5 space-y-6">
-            
-            
+
+
                 {# Exemple d’autocomplete réutilisable (tu peux le supprimer ou le déplacer) #}
-             
-{#                <div#}
-{#                    x-data="autocompleteComponent({#}
-{#                        items: [#}
-{#                            { id: 1, label: 'CSU Cocody Saint Jean' },#}
-{#                            { id: 2, label: 'CHU Treichville' },#}
-{#                            { id: 3, label: 'CHR Bouaké' },#}
-{#                        ],#}
-{#                        onSelect(item) {#}
-{#                            $store.ui.showToast('Centre sélectionné : ' + item.label, 'info');#}
-{#                        }#}
-{#                    })"#}
-{#                    class="relative max-w-xs mb-4"#}
-{#                >#}
-{#                    <label class="block text-[11px] font-medium text-slate-500 mb-1">#}
-{#                        Recherche rapide d’un centre#}
-{#                    </label>#}
-{#                    <div class="relative">#}
-{#                        <input#}
-{#                            type="text"#}
-{#                            x-model="query"#}
-{#                            @focus="open = true"#}
-{#                            @keydown.escape.prevent="open = false"#}
-{#                            @keydown.arrow-down.prevent="$refs.list && $refs.list.firstElementChild && $refs.list.firstElementChild.focus()"#}
-{#                            :placeholder="placeholder"#}
-{#                            class="w-full rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-ivoireGreen/60"#}
-{#                        >#}
-{#                        <button#}
-{#                            type="button"#}
-{#                            x-show="query"#}
-{#                            @click="clear()"#}
-{#                            class="absolute right-9 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"#}
-{#                        >#}
-{#                            <i class="fa-solid fa-xmark"></i>#}
-{#                        </button>#}
-{#                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">#}
-{#                            <i class="fa-solid fa-magnifying-glass"></i>#}
-{#                        </span>#}
-{#                    </div>#}
-{##}
-{#                    <div#}
-{#                        x-cloak#}
-{#                        x-show="open && filtered.length"#}
-{#                        @click.outside="open = false"#}
-{#                        class="absolute z-20 mt-1 w-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-soft max-h-52 overflow-auto text-[12px]"#}
-{#                    >#}
-{#                        <ul class="py-1" x-ref="list">#}
-{#                            <template x-for="item in filtered" :key="item.id">#}
-{#                                <li#}
-{#                                    tabindex="0"#}
-{#                                    @click="select(item)"#}
-{#                                    @keydown.enter.prevent="select(item)"#}
-{#                                    class="px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"#}
-{#                                >#}
-{#                                    <span class="h-6 w-6 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-[10px] text-emerald-600 dark:text-emerald-400">#}
-{#                                        <i class="fa-solid fa-hospital"></i>#}
-{#                                    </span>#}
-{#                                    <span x-text="item.label"></span>#}
-{#                                </li>#}
-{#                            </template>#}
-{#                        </ul>#}
-{#                    </div>#}
-{#                </div>#}
+
+                {#                <div#}
+                {#                    x-data="autocompleteComponent({#}
+                {#                        items: [#}
+                {#                            { id: 1, label: 'CSU Cocody Saint Jean' },#}
+                {#                            { id: 2, label: 'CHU Treichville' },#}
+                {#                            { id: 3, label: 'CHR Bouaké' },#}
+                {#                        ],#}
+                {#                        onSelect(item) {#}
+                {#                            $store.ui.showToast('Centre sélectionné : ' + item.label, 'info');#}
+                {#                        }#}
+                {#                    })"#}
+                {#                    class="relative max-w-xs mb-4"#}
+                {#                >#}
+                {#                    <label class="block text-[11px] font-medium text-slate-500 mb-1">#}
+                {#                        Recherche rapide d’un centre#}
+                {#                    </label>#}
+                {#                    <div class="relative">#}
+                {#                        <input#}
+                {#                            type="text"#}
+                {#                            x-model="query"#}
+                {#                            @focus="open = true"#}
+                {#                            @keydown.escape.prevent="open = false"#}
+                {#                            @keydown.arrow-down.prevent="$refs.list && $refs.list.firstElementChild && $refs.list.firstElementChild.focus()"#}
+                {#                            :placeholder="placeholder"#}
+                {#                            class="w-full rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-ivoireGreen/60"#}
+                {#                        >#}
+                {#                        <button#}
+                {#                            type="button"#}
+                {#                            x-show="query"#}
+                {#                            @click="clear()"#}
+                {#                            class="absolute right-9 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"#}
+                {#                        >#}
+                {#                            <i class="fa-solid fa-xmark"></i>#}
+                {#                        </button>#}
+                {#                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">#}
+                {#                            <i class="fa-solid fa-magnifying-glass"></i>#}
+                {#                        </span>#}
+                {#                    </div>#}
+                {##}
+                {#                    <div#}
+                {#                        x-cloak#}
+                {#                        x-show="open && filtered.length"#}
+                {#                        @click.outside="open = false"#}
+                {#                        class="absolute z-20 mt-1 w-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-soft max-h-52 overflow-auto text-[12px]"#}
+                {#                    >#}
+                {#                        <ul class="py-1" x-ref="list">#}
+                {#                            <template x-for="item in filtered" :key="item.id">#}
+                {#                                <li#}
+                {#                                    tabindex="0"#}
+                {#                                    @click="select(item)"#}
+                {#                                    @keydown.enter.prevent="select(item)"#}
+                {#                                    class="px-3 py-2 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2"#}
+                {#                                >#}
+                {#                                    <span class="h-6 w-6 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-[10px] text-emerald-600 dark:text-emerald-400">#}
+                {#                                        <i class="fa-solid fa-hospital"></i>#}
+                {#                                    </span>#}
+                {#                                    <span x-text="item.label"></span>#}
+                {#                                </li>#}
+                {#                            </template>#}
+                {#                        </ul>#}
+                {#                    </div>#}
+                {#                </div>#}
                 <!-- Contenu spécifique à chaque page -->
                 {% block content %}
                 {% endblock %}
@@ -630,18 +693,18 @@
 
     <!-- FAB AIDE (Tooltip + Popover) -->
     <div
-        class="hidden md:block fixed bottom-24 right-4 z-30"
-        x-data="{ open: false }"
+            class="hidden md:block fixed bottom-24 right-4 z-30"
+            x-data="{ open: false }"
     >
         <button
-            @click="open = !open"
-            class="group relative h-11 w-11 rounded-full gradient-emerald shadow-gradient-success flex items-center justify-center text-white"
+                @click="open = !open"
+                class="group relative h-11 w-11 rounded-full gradient-emerald shadow-gradient-success flex items-center justify-center text-white"
         >
             <i class="fa-solid fa-circle-question text-lg"></i>
 
             <!-- Tooltip -->
             <span
-                class="absolute right-12 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-900 text-white text-[11px] shadow-lg"
+                    class="absolute right-12 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-900 text-white text-[11px] shadow-lg"
             >
                 Centre d'aide
             </span>
@@ -649,17 +712,17 @@
 
         <!-- Popover -->
         <div
-            x-cloak
-            x-show="open"
-            @click.outside="open = false"
-            x-transition
-            class="mt-3 w-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-soft p-4 text-[12px]"
+                x-cloak
+                x-show="open"
+                @click.outside="open = false"
+                x-transition
+                class="mt-3 w-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-soft p-4 text-[12px]"
         >
             <div class="flex items-start gap-2 mb-2">
                 <div class="h-7 w-7 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                     <i class="fa-solid fa-headset text-xs"></i>
                 </div>
-            <div>
+                <div>
                     <p class="font-semibold text-sm">Besoin d'aide ?</p>
                     <p class="text-slate-600 dark:text-slate-300 text-[11px]">
                         Consultez la documentation ou contactez l'équipe de support Vaccination CI.
@@ -668,9 +731,9 @@
             </div>
             <div class="space-y-2 mt-2">
                 <button
-                    type="button"
-                    class="w-full inline-flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/70 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-[11px]"
-                    @click="$store.ui.showToast('Lien vers le manuel administrateur en cours de préparation.', 'info')"
+                        type="button"
+                        class="w-full inline-flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/70 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-[11px]"
+                        @click="$store.ui.showToast('Lien vers le manuel administrateur en cours de préparation.', 'info')"
                 >
                     <span class="inline-flex items-center gap-2">
                         <i class="fa-solid fa-book-open text-sky-500"></i>
@@ -680,9 +743,9 @@
                 </button>
 
                 <button
-                    type="button"
-                    class="w-full inline-flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/70 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-[11px]"
-                    @click="$store.ui.openModal('Contact support Vaccination CI', 'Pour toute urgence technique, veuillez contacter l\'équipe e-santé du MSP ou ouvrir un ticket via le système de support.')"
+                        type="button"
+                        class="w-full inline-flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/70 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-[11px]"
+                        @click="$store.ui.openModal('Contact support Vaccination CI', 'Pour toute urgence technique, veuillez contacter l\'équipe e-santé du MSP ou ouvrir un ticket via le système de support.')"
                 >
                     <span class="inline-flex items-center gap-2">
                         <i class="fa-solid fa-envelope-open-text text-emerald-500"></i>
@@ -692,9 +755,9 @@
                 </button>
 
                 <button
-                    type="button"
-                    class="w-full inline-flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/70 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-[11px]"
-                    @click="
+                        type="button"
+                        class="w-full inline-flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/70 hover:bg-slate-100 dark:hover:bg-slate-700/80 text-[11px]"
+                        @click="
                         $store.ui.loading = true;
                         setTimeout(() => { $store.ui.loading = false; $store.ui.showToast('Simulation de rechargement des données terminée.', 'success'); }, 2000);
                     "
@@ -711,16 +774,16 @@
 
     <!-- GLOBAL TOAST -->
     <div
-        x-cloak
-        x-show="$store.ui.toastVisible"
-        x-transition
-        class="fixed bottom-4 right-4 z-40 max-w-xs sm:max-w-sm"
-        @mouseenter="$store.ui.freezeToast()"
-        @mouseleave="$store.ui.unfreezeToast()"
+            x-cloak
+            x-show="$store.ui.toastVisible"
+            x-transition
+            class="fixed bottom-4 right-4 z-40 max-w-xs sm:max-w-sm"
+            @mouseenter="$store.ui.freezeToast()"
+            @mouseleave="$store.ui.unfreezeToast()"
     >
         <div
-            class="flex items-start gap-3 px-4 py-3 rounded-2xl shadow-soft text-[12px]"
-            :class="{
+                class="flex items-start gap-3 px-4 py-3 rounded-2xl shadow-soft text-[12px]"
+                :class="{
                 'bg-slate-900 text-white': $store.ui.toastType === 'info',
                 'bg-emerald-600 text-white': $store.ui.toastType === 'success',
                 'bg-amber-500 text-slate-900': $store.ui.toastType === 'warning',
@@ -729,8 +792,8 @@
         >
             <div class="mt-0.5">
                 <i
-                    class="fa-solid"
-                    :class="{
+                        class="fa-solid"
+                        :class="{
                         'fa-circle-info': $store.ui.toastType === 'info',
                         'fa-circle-check': $store.ui.toastType === 'success',
                         'fa-triangle-exclamation': $store.ui.toastType === 'warning',
@@ -748,9 +811,9 @@
                 <p class="text-[11px]" x-text="$store.ui.toastMessage"></p>
             </div>
             <button
-                type="button"
-                class="mt-0.5 text-xs opacity-80 hover:opacity-100"
-                @click="$store.ui.hideToast()"
+                    type="button"
+                    class="mt-0.5 text-xs opacity-80 hover:opacity-100"
+                    @click="$store.ui.hideToast()"
             >
                 <i class="fa-solid fa-xmark"></i>
             </button>
@@ -759,16 +822,16 @@
 
     <!-- GLOBAL MODAL -->
     <div
-        x-cloak
-        x-show="$store.ui.modalOpen"
-        x-transition.opacity
-        class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"
-        aria-modal="true"
-        role="dialog"
+            x-cloak
+            x-show="$store.ui.modalOpen"
+            x-transition.opacity
+            class="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm"
+            aria-modal="true"
+            role="dialog"
     >
         <div
-            x-transition
-            class="w-full max-w-md mx-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-soft p-5"
+                x-transition
+                class="w-full max-w-md mx-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-soft p-5"
         >
             <div class="flex items-start gap-3">
                 <div class="h-9 w-9 rounded-2xl bg-ivoireBlue/10 text-ivoireBlue flex items-center justify-center dark:bg-ivoireBlue/20 dark:text-ivoireBlue">
@@ -782,9 +845,9 @@
 
             <div class="mt-4 flex items-center justify-end gap-2 text-[12px]">
                 <button
-                    type="button"
-                    class="px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
-                    @click="$store.ui.closeModal()"
+                        type="button"
+                        class="px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700"
+                        @click="$store.ui.closeModal()"
                 >
                     Fermer
                 </button>
@@ -794,10 +857,10 @@
 
     <!-- GLOBAL SPINNER OVERLAY -->
     <div
-        x-cloak
-        x-show="$store.ui.loading"
-        x-transition.opacity
-        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm"
+            x-cloak
+            x-show="$store.ui.loading"
+            x-transition.opacity
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm"
     >
         <div class="flex flex-col items-center gap-3 text-[12px] text-white">
             <div class="h-10 w-10 rounded-full border-2 border-white/20 border-t-white animate-spin"></div>
@@ -880,14 +943,14 @@
 
 <!-- Toast global -->
 <div
-    x-data
-    x-show="$store.ui.toastVisible"
-    x-transition.opacity.duration.300ms
-    @mouseenter="$store.ui.freezeToast()"
-    @mouseleave="$store.ui.unfreezeToast()"
-    class="fixed top-5 right-5 z-[9999] min-w-[260px] max-w-sm px-4 py-3 rounded-xl shadow-xl border backdrop-blur-lg
+        x-data
+        x-show="$store.ui.toastVisible"
+        x-transition.opacity.duration.300ms
+        @mouseenter="$store.ui.freezeToast()"
+        @mouseleave="$store.ui.unfreezeToast()"
+        class="fixed top-5 right-5 z-[9999] min-w-[260px] max-w-sm px-4 py-3 rounded-xl shadow-xl border backdrop-blur-lg
            text-[13px] select-none cursor-pointer"
-    :class="{
+        :class="{
         'bg-white/90 dark:bg-slate-900/90 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200': true,
         
         // Couleurs dynamiques selon type
@@ -898,7 +961,7 @@
         'border-pink-300 text-pink-700 dark:text-pink-300': $store.ui.toastType === 'alert',
         'border-purple-300 text-purple-700 dark:text-purple-300': $store.ui.toastType === 'error',
     }"
-    @click="$store.ui.hideToast()"
+        @click="$store.ui.hideToast()"
 >
     <!-- Icône -->
     <div class="flex items-start gap-3">
@@ -942,4 +1005,3 @@
 </div>
 </body>
 </html>
-

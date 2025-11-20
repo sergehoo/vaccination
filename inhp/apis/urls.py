@@ -6,7 +6,7 @@ from inhp.apis.views import VaccinViewSet, UtilisateurViewSet, PatientViewSet, P
     PatientRetrieveUpdateDestroyView, PatientVaccinationsListView, PatientMapisListView, PatientVaccineExtsListView, \
     MapiListCreateView, MapiRetrieveUpdateDestroyView, VaccineExtListCreateView, VaccineExtRetrieveUpdateDestroyView, \
     MeAPIView, stats_and_centres, FicheRetroViewSet, fiche_retro_stats, VaccinationViewSet, VaccinationCustomAPIView, \
-    LotsParVaccinAPIView
+    LotsParVaccinAPIView, DashboardStatsAPIView
 
 # from inhp.views import UtilisateurViewSet, PatientViewSet
 
@@ -20,6 +20,8 @@ router.register(r'vaccinations-custom', VaccinationCustomAPIView, basename='vacc
 
 urlpatterns = [
     path('', include(router.urls)),
+    path("dashboard/stats/", DashboardStatsAPIView.as_view(), name="admin_dashboard_stats"),
+
     path("api/me/", MeAPIView.as_view(), name="me"),
     path("patients/stats-and-centres/", stats_and_centres, name="stats-and-centres"),
     path('retrosaisie/stats', fiche_retro_stats),

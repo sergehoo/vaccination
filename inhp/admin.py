@@ -1,36 +1,615 @@
-from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
-from django.urls import reverse
-from django.utils.html import format_html
+from datetime import timezone
 
+from django import forms
+from django.contrib import admin, messages
+from django.contrib.auth.admin import UserAdmin
+from django.contrib.gis.admin import GISModelAdmin
+from django.contrib.gis.geos import Point
+from django.shortcuts import render
+from django.urls import reverse, path
+from django.utils.html import format_html
+from import_export import resources
+from import_export.admin import ImportExportModelAdmin, ImportExportMixin
+from django.contrib.gis.admin import GISModelAdmin
+from import_export import resources, fields
+from import_export.admin import ImportExportModelAdmin, ImportExportMixin
+from import_export.widgets import ForeignKeyWidget
+from .models import HealthRegion, DistrictSanitaire, PolesRegionaux
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     PolesRegionaux, HealthRegion, DistrictSanitaire, TypeServiceSanitaire,
     CentreVaccination, Utilisateur, Patient, Vaccin, Vaccination, Maladie, LotVaccin, TemplateConsultation,
     Consultation, Mapi, Message, VaccineExt, Equipement, FactureCentral, FactureDistrict, FactureRegion, Facture,
     FatureParametre, FicheRetro, CallCenter
 )
+from django.utils.translation import gettext_lazy as _
 
 # 🔹 Ajout de modèles basiques
-admin.site.register(PolesRegionaux)
-admin.site.register(HealthRegion)
-admin.site.register(DistrictSanitaire)
+# admin.site.register(PolesRegionaux)
+# admin.site.register(HealthRegion)
+# admin.site.register(DistrictSanitaire)
 admin.site.register(TypeServiceSanitaire)
 
 
-# 🔹 Ajout avec personnalisation
+# Resource pour l'import/export
+class PolesRegionauxResource(resources.ModelResource):
+    class Meta:
+        model = PolesRegionaux
+        skip_unchanged = True
+        report_skipped = True
+        exclude = ('id',)
+        import_id_fields = ('name',)
+        # Pour l'import en masse
+        use_bulk = True
+
+
+# Admin class avec import/export
+@admin.register(PolesRegionaux)
+class PolesRegionauxAdmin(ImportExportModelAdmin):
+    resource_class = PolesRegionauxResource
+    # Configuration de l'interface liste
+    list_display = ['name']
+    list_display_links = ['name']
+    search_fields = ['name']
+    ordering = ['name']
+
+
+class HealthRegionResource(resources.ModelResource):
+    poles = fields.Field(
+        column_name='poles',
+        attribute='poles',
+        widget=ForeignKeyWidget(PolesRegionaux, 'name')
+    )
+
+    class Meta:
+        model = HealthRegion
+        skip_unchanged = True
+        report_skipped = True
+        exclude = ('id',)
+        import_id_fields = ('name',)
+        use_bulk = True
+        fields = ('name', 'poles')
+
+    def get_or_init_instance(self, instance_loader, row):
+        """Gérer les doublons lors de l'import"""
+        instance, created = super().get_or_init_instance(instance_loader, row)
+        return instance, created
+
+
+class DistrictSanitaireResource(resources.ModelResource):
+    region = fields.Field(
+        column_name='region',
+        attribute='region',
+        widget=ForeignKeyWidget(HealthRegion, 'name')
+    )
+
+    poles = fields.Field(
+        column_name='poles',
+        attribute='region__poles',
+        widget=ForeignKeyWidget(PolesRegionaux, 'name'),
+        readonly=True
+    )
+
+    class Meta:
+        model = DistrictSanitaire
+        skip_unchanged = True
+        report_skipped = True
+        exclude = ('id', 'geom', 'geojson')
+        import_id_fields = ('nom',)
+        use_bulk = True
+        fields = ('nom', 'region', 'poles')
+
+    def before_save_instance(self, instance, using_transactions, dry_run):
+        """Validation avant sauvegarde"""
+        if not instance.nom:
+            raise ValueError("Le nom du district ne peut pas être vide")
+        if not instance.region:
+            raise ValueError("La région sanitaire doit être spécifiée")
+
+
+# Admin classes
+@admin.register(HealthRegion)
+class HealthRegionAdmin(ImportExportModelAdmin):
+    resource_class = HealthRegionResource
+
+    # Configuration de l'interface liste
+    list_display = ['name', 'poles', 'get_districts_count']
+    list_display_links = ['name']
+    list_filter = ['poles']
+    search_fields = ['name', 'poles__name']
+    list_select_related = ['poles']
+    ordering = ['name']
+    list_per_page = 50
+
+    # Champs pour l'édition
+    fields = ['name', 'poles']
+    autocomplete_fields = ['poles']
+
+    def get_districts_count(self, obj):
+        """Affiche le nombre de districts dans cette région"""
+        count = obj.districts.count()
+        return f"{count} district(s)"
+
+    get_districts_count.short_description = "Districts"
+    get_districts_count.admin_order_field = 'districts__count'
+
+    def get_CentreVaccination_count(self, obj):
+        """Affiche le nombre d'églises dans cette région (via les districts)"""
+        from django.db.models import Count
+        count = DistrictSanitaire.objects.filter(region=obj).aggregate(
+            total=Count('CentreVaccination')
+        )['total'] or 0
+        return f"{count} Centre Vaccination(s)"
+
+    get_CentreVaccination_count.short_description = "Centre Vaccination"
+
+
+@admin.register(DistrictSanitaire)
+class DistrictSanitaireAdmin(ImportExportMixin, GISModelAdmin):
+    resource_class = DistrictSanitaireResource
+
+    # Configuration de l'interface liste
+    list_display = ['nom', 'region', 'get_pole', 'get_CentreVaccination_count', 'has_geometry']
+    list_display_links = ['nom']
+    list_filter = ['region', 'region__poles']
+    search_fields = ['nom', 'region__name', 'region__poles__name']
+    list_select_related = ['region', 'region__poles']
+    ordering = ['nom']
+    list_per_page = 50
+
+    # Champs pour l'édition
+    fieldsets = (
+        ('Informations de base', {
+            'fields': ('nom', 'region')
+        }),
+        ('Géométrie', {
+            'fields': ('geom', 'geojson'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    autocomplete_fields = ['region']
+
+    # Configuration GIS
+    gis_widget_kwargs = {
+        'attrs': {
+            'default_lat': 7.5399,  # Côte d'Ivoire
+            'default_lon': -5.5471,
+            'default_zoom': 7,
+        }
+    }
+
+    def get_pole(self, obj):
+        """Affiche le pôle régional associé"""
+        return obj.region.poles if obj.region and obj.region.poles else "-"
+
+    get_pole.short_description = "Pôle Régional"
+    get_pole.admin_order_field = 'region__poles__name'
+
+    def get_CentreVaccination_count(self, obj):
+        """Affiche le nombre d'églises dans ce district"""
+        count = obj.centres.count()  # Supposant la relation inverse
+        return f"{count} centres(s)"
+
+    get_CentreVaccination_count.short_description = "Centres de vaccination"
+    get_CentreVaccination_count.admin_order_field = 'CentreVaccination__count'
+
+    def has_geometry(self, obj):
+        """Indique si le district a une géométrie"""
+        return bool(obj.geom)
+
+    has_geometry.boolean = True
+    has_geometry.short_description = "Avec géo"
+
+    # Actions personnalisées
+    actions = ['generate_geojson_from_geom']
+
+    def generate_geojson_from_geom(self, request, queryset):
+        """Générer le GeoJSON à partir de la géométrie"""
+        from django.contrib.gis.geos import GEOSGeometry
+        updated = 0
+        for district in queryset:
+            if district.geom and not district.geojson:
+                try:
+                    district.geojson = GEOSGeometry(district.geom.geojson)
+                    district.save(update_fields=['geojson'])
+                    updated += 1
+                except Exception as e:
+                    self.message_user(
+                        request,
+                        f"Erreur pour {district.nom}: {e}",
+                        level='ERROR'
+                    )
+
+        self.message_user(
+            request,
+            f"GeoJSON généré pour {updated} district(s)",
+            level='SUCCESS'
+        )
+
+    generate_geojson_from_geom.short_description = "Générer GeoJSON depuis la géométrie"
+
+    def get_export_queryset(self, request):
+        """Optimiser le queryset d'export"""
+        return super().get_export_queryset(request).select_related(
+            'region', 'region__poles'
+        )
+
+
+# Alternative avec des fonctionnalités avancées
+class DistrictSanitaireInline(admin.TabularInline):
+    model = DistrictSanitaire
+    extra = 0
+    fields = ['nom', 'has_geometry']
+    readonly_fields = ['has_geometry']
+
+    def has_geometry(self, obj):
+        return bool(obj.geom)
+
+    has_geometry.boolean = True
+    has_geometry.short_description = "Géo"
+
+
+class HealthRegionAdminWithInline(HealthRegionAdmin):
+    inlines = [DistrictSanitaireInline]
+    list_display = ['name', 'poles', 'get_districts_count', 'get_CentreVaccination_count']
+
+
+class CentreVaccinationResource(resources.ModelResource):
+    type = fields.Field(
+        column_name='type',
+        attribute='type',
+        widget=ForeignKeyWidget(TypeServiceSanitaire, 'name')
+    )
+
+    district = fields.Field(
+        column_name='district',
+        attribute='district',
+        widget=ForeignKeyWidget(DistrictSanitaire, 'nom')
+    )
+
+    region = fields.Field(
+        column_name='region',
+        attribute='district__region',
+        widget=ForeignKeyWidget(HealthRegion, 'name'),
+        readonly=True
+    )
+
+    poles = fields.Field(
+        column_name='poles',
+        attribute='district__region__poles',
+        widget=ForeignKeyWidget(PolesRegionaux, 'name'),
+        readonly=True
+    )
+
+    class Meta:
+        model = CentreVaccination
+        skip_unchanged = True
+        report_skipped = True
+        exclude = ('id', 'geom', 'deleted_at')
+        import_id_fields = ('name',)
+        use_bulk = True
+        fields = ('name', 'type', 'longitude', 'latitude', 'district', 'adresse', 'region', 'poles')
+
+    def after_import_instance(self, instance, new, **kwargs):
+        """Post-traitement après l'import"""
+        # S'assurer que la géométrie est à jour
+        if instance.longitude and instance.latitude and not instance.geom:
+            try:
+                instance.geom = Point(float(instance.longitude), float(instance.latitude))
+            except (ValueError, TypeError):
+                pass  # Ignorer les erreurs de conversion
+
+
+# Admin class
 @admin.register(CentreVaccination)
-class CentreVaccinationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'type', 'district', 'created_at')
-    search_fields = ('name', 'district__nom')
-    # autocomplete_fields = ('type', 'district','name')
+class CentreVaccinationAdmin(ImportExportMixin, GISModelAdmin):
+    resource_class = CentreVaccinationResource
+
+    # Configuration de l'interface liste
+    list_display = [
+        'name',
+        'type',
+        'district',
+        'get_region',
+        'get_pole',
+        'has_coordinates',
+        'has_geometry',
+        'created_at'
+    ]
+
+    list_display_links = ['name']
+    list_filter = [
+        'type',
+        'district',
+        'district__region',
+        'district__region__poles',
+        'created_at'
+    ]
+
+    search_fields = [
+        'name',
+        'adresse',
+        'district__nom',
+        'district__region__name',
+        'type__name'
+    ]
+
+    list_select_related = [
+        'type',
+        'district',
+        'district__region',
+        'district__region__poles'
+    ]
+
+    ordering = ['name']
+    list_per_page = 50
+    date_hierarchy = 'created_at'
+
+    # Champs pour l'édition
+    fieldsets = (
+        ('Informations de base', {
+            'fields': ('name', 'type', 'district', 'adresse')
+        }),
+        ('Localisation', {
+            'fields': ('latitude', 'longitude', 'geom'),
+            'description': 'Renseignez soit les coordonnées manuellement, soit la géométrie sur la carte'
+        }),
+        ('Métadonnées', {
+            'fields': ('created_at', 'updated_at', 'deleted_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    readonly_fields = ['created_at', 'updated_at']
+    # autocomplete_fields = ['type', 'district']
+
+    # Configuration GIS
+    gis_widget_kwargs = {
+        'attrs': {
+            'default_lat': 7.5399,  # Côte d'Ivoire
+            'default_lon': -5.5471,
+            'default_zoom': 7,
+            'map_width': 800,
+            'map_height': 500,
+        }
+    }
+
+    # Méthodes pour l'affichage
+    def get_region(self, obj):
+        """Affiche la région sanitaire"""
+        return obj.district.region if obj.district and obj.district.region else "-"
+
+    get_region.short_description = "Région"
+    get_region.admin_order_field = 'district__region__name'
+
+    def get_pole(self, obj):
+        """Affiche le pôle régional"""
+        return obj.district.region.poles if obj.district and obj.district.region and obj.district.region.poles else "-"
+
+    get_pole.short_description = "Pôle"
+    get_pole.admin_order_field = 'district__region__poles__name'
+
+    def has_coordinates(self, obj):
+        """Indique si le centre a des coordonnées"""
+        return bool(obj.latitude and obj.longitude)
+
+    has_coordinates.boolean = True
+    has_coordinates.short_description = "Coords"
+
+    def has_geometry(self, obj):
+        """Indique si le centre a une géométrie"""
+        return bool(obj.geom)
+
+    has_geometry.boolean = True
+    has_geometry.short_description = "Géo"
+
+    # Actions personnalisées
+    actions = [
+        'generate_geom_from_coords',
+        'generate_coords_from_geom',
+        'update_geojson_data'
+    ]
+
+    def generate_geom_from_coords(self, request, queryset):
+        """Générer la géométrie à partir des coordonnées"""
+        updated = 0
+        for centre in queryset:
+            if centre.latitude and centre.longitude and not centre.geom:
+                try:
+                    centre.geom = Point(float(centre.longitude), float(centre.latitude))
+                    centre.save(update_fields=['geom'])
+                    updated += 1
+                except (ValueError, TypeError) as e:
+                    self.message_user(
+                        request,
+                        f"Erreur pour {centre.name}: {e}",
+                        level='ERROR'
+                    )
+
+        self.message_user(
+            request,
+            f"Géométrie générée pour {updated} centre(s)",
+            level='SUCCESS'
+        )
+
+    generate_geom_from_coords.short_description = "Générer la géométrie depuis les coordonnées"
+
+    def generate_coords_from_geom(self, request, queryset):
+        """Générer les coordonnées à partir de la géométrie"""
+        updated = 0
+        for centre in queryset:
+            if centre.geom and (not centre.longitude or not centre.latitude):
+                try:
+                    centre.longitude = centre.geom.x
+                    centre.latitude = centre.geom.y
+                    centre.save(update_fields=['longitude', 'latitude'])
+                    updated += 1
+                except Exception as e:
+                    self.message_user(
+                        request,
+                        f"Erreur pour {centre.name}: {e}",
+                        level='ERROR'
+                    )
+
+        self.message_user(
+            request,
+            f"Coordonnées générées pour {updated} centre(s)",
+            level='SUCCESS'
+        )
+
+    generate_coords_from_geom.short_description = "Générer les coordonnées depuis la géométrie"
+
+    def update_geojson_data(self, request, queryset):
+        """Mettre à jour les données GeoJSON (si vous avez un champ geojson)"""
+        updated = 0
+        for centre in queryset:
+            if centre.geom:
+                try:
+                    # Si vous avez un champ geojson dans votre modèle
+                    # centre.geojson = centre.geom.geojson
+                    centre.save()
+                    updated += 1
+                except Exception as e:
+                    self.message_user(
+                        request,
+                        f"Erreur pour {centre.name}: {e}",
+                        level='ERROR'
+                    )
+
+        self.message_user(
+            request,
+            f"Données GeoJSON mises à jour pour {updated} centre(s)",
+            level='SUCCESS'
+        )
+
+    update_geojson_data.short_description = "Mettre à jour les données GeoJSON"
+
+    # Surcharge des méthodes de sauvegarde
+    def save_model(self, request, obj, form, change):
+        """S'assurer que la géométrie est synchronisée avec les coordonnées"""
+        if obj.latitude and obj.longitude and not obj.geom:
+            try:
+                obj.geom = Point(float(obj.longitude), float(obj.latitude))
+            except (ValueError, TypeError):
+                pass  # Garder la géométrie existante si conversion échoue
+
+        super().save_model(request, obj, form, change)
+
+    # Configuration des permissions
+    def has_import_permission(self, request):
+        return request.user.has_perm('your_app.import_centrevaccination')
+
+    def has_export_permission(self, request):
+        return request.user.has_perm('your_app.export_centrevaccination')
+
+    def get_export_queryset(self, request):
+        """Optimiser le queryset d'export"""
+        return super().get_export_queryset(request).select_related(
+            'type',
+            'district',
+            'district__region',
+            'district__region__poles'
+        )
+
+
+# Inline pour afficher les centres dans le district
+class CentreVaccinationInline(admin.TabularInline):
+    model = CentreVaccination
+    extra = 0
+    fields = ['name', 'type', 'has_coordinates', 'has_geometry']
+    readonly_fields = ['has_coordinates', 'has_geometry']
+    show_change_link = True
+
+    def has_coordinates(self, obj):
+        return bool(obj.latitude and obj.longitude)
+
+    has_coordinates.boolean = True
+    has_coordinates.short_description = "Coords"
+
+    def has_geometry(self, obj):
+        return bool(obj.geom)
+
+    has_geometry.boolean = True
+    has_geometry.short_description = "Géo"
+
+
+class UtilisateurCreationForm(forms.ModelForm):
+    """
+    Formulaire utilisé dans l'admin pour créer un utilisateur.
+    Gère password1/password2 + hash.
+    """
+    password1 = forms.CharField(
+        label=_("Mot de passe"),
+        widget=forms.PasswordInput,
+    )
+    password2 = forms.CharField(
+        label=_("Confirmation du mot de passe"),
+        widget=forms.PasswordInput,
+    )
+
+    class Meta:
+        model = Utilisateur
+        fields = ("email", "first_name", "last_name")
+
+    def clean_password2(self):
+        pwd1 = self.cleaned_data.get("password1")
+        pwd2 = self.cleaned_data.get("password2")
+        if pwd1 and pwd2 and pwd1 != pwd2:
+            raise forms.ValidationError(_("Les mots de passe ne correspondent pas."))
+        return pwd2
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        if commit:
+            user.save()
+        return user
+
+
+class UtilisateurChangeForm(forms.ModelForm):
+    """
+    Formulaire de modification (on laisse Django gérer la zone password).
+    """
+
+    class Meta:
+        model = Utilisateur
+        fields = "__all__"
 
 
 @admin.register(Utilisateur)
-class UtilisateurAdmin(admin.ModelAdmin):
-    list_display = ('email', 'first_name', 'last_name', 'role', 'centre', 'access_level', 'is_active')
-    search_fields = ('email', 'first_name', 'last_name')
-    list_filter = ('role', 'access_level', 'is_active')
-    # autocomplete_fields = ('centre', 'access_level','first_name')
+class UtilisateurAdmin(BaseUserAdmin):
+    add_form = UtilisateurCreationForm
+    form = UtilisateurChangeForm
+    model = Utilisateur
+
+    list_display = ("email", "first_name", "last_name", "role", "access_level", "is_staff", "is_active")
+    list_filter = ("is_staff", "is_active", "role", "access_level")
+
+    ordering = ("email",)
+    search_fields = ("email", "first_name", "last_name")
+
+    fieldsets = (
+        (_("Identité"), {"fields": ("email", "first_name", "last_name", "phone")}),
+        (_("Affectation"), {"fields": ("centre", "district", "region", "pole", "access_level", "role")}),
+        (_("Permissions"), {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        (_("Infos sécurité"), {"fields": ("last_login",)}),
+    )
+
+    add_fieldsets = (
+        (_("Compte"), {
+            "classes": ("wide",),
+            "fields": ("email", "first_name", "last_name", "password1", "password2"),
+        }),
+        (_("Affectation"), {
+            "classes": ("wide",),
+            "fields": ("centre", "district", "region", "pole", "access_level", "role"),
+        }),
+        (_("Permissions"), {
+            "classes": ("wide",),
+            "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions"),
+        }),
+    )
 
 
 @admin.register(Patient)

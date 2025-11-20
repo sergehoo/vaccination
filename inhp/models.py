@@ -1,6 +1,6 @@
 from datetime import date
 
-from django.contrib.auth.backends import BaseBackend
+# from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin, Group, Permission
 from django.contrib.gis.db.models import PointField
@@ -33,7 +33,7 @@ class DistrictSanitaire(models.Model):
     geojson = models.JSONField(null=True, blank=True)
 
     def __str__(self):
-        return f'{self.nom} ----> {self.region}'
+        return f'{self.nom}'
 
 
 class TypeServiceSanitaire(models.Model):

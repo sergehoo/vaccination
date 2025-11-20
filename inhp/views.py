@@ -1,6 +1,7 @@
 import base64
 import datetime
 import io
+import json
 import os
 import tempfile
 from collections import defaultdict
@@ -11,6 +12,7 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models import Q, Prefetch, Count
 from django.db.models.functions import TruncDate
@@ -22,6 +24,8 @@ from django.utils import timezone
 from django.utils.timezone import now
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView, View
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 from xhtml2pdf import pisa
@@ -37,10 +41,10 @@ class LandingView(TemplateView):
     template_name = "publiq/landing.html"
 
 
-class HomePageView(StaffOnlyMixin, LoginRequiredMixin, TemplateView):
+class HomePageView(LoginRequiredMixin, TemplateView):
     login_url = '/accounts/login/'
     # form_class = LoginForm
-    template_name = "pages/home.html"
+    template_name = "administration/welcome.html"
 
 
 # def patient_login_view(request):
@@ -175,11 +179,11 @@ def generate_pdf_certificat(request, maladie_id):
 
 
 #------------------------------------------------------For Bakend Part------------------------
-
-
-class DashboardView(StaffOnlyMixin, TemplateView):
-    login_url = '/accounts/login/'
-    template_name = "administration/dashboard.html"
+class DashboardStatsMixin:
+    """
+    Contient toute la logique de construction du JSON du dashboard.
+    Utilisé à la fois par la vue HTML et par l'API DRF.
+    """
 
     def _apply_scope(self, queryset, user, centre_field="centre"):
         """
@@ -193,34 +197,35 @@ class DashboardView(StaffOnlyMixin, TemplateView):
         if not isinstance(user, Utilisateur):
             return queryset
 
-        # Niveau CENTRE
+        # CENTRE
         if user.access_level == AccessLevel.CENTRE and user.centre_id:
             if centre_field:
                 return queryset.filter(**{centre_field: user.centre})
-            # queryset déjà sur CentreVaccination
             return queryset.filter(pk=user.centre_id)
 
-        # Niveau DISTRICT
+        # DISTRICT
         if user.access_level == AccessLevel.DISTRICT and user.district_id:
             if centre_field:
-                # ex : centre__district = user.district
                 return queryset.filter(**{f"{centre_field}__district": user.district})
-            # queryset sur CentreVaccination
             return queryset.filter(district=user.district)
 
-        # Niveau REGION
+        # REGION
         if user.access_level == AccessLevel.REGION and user.region_id:
             if centre_field:
                 return queryset.filter(**{f"{centre_field}__district__region": user.region})
             return queryset.filter(district__region=user.region)
 
-        # Niveau POLE
+        # POLE
         if user.access_level == AccessLevel.POLE and user.pole_id:
             if centre_field:
                 return queryset.filter(**{f"{centre_field}__district__region__poles": user.pole})
             return queryset.filter(district__region__poles=user.pole)
 
-        # Niveau NATIONAL ou autre → pas de restriction
+        # NATIONAL : aucune restriction, on renvoie tout
+        if user.access_level == AccessLevel.NATIONAL:
+            return queryset
+
+        # Si access_level inconnu, on ne restreint pas (ou tu peux décider de restreindre)
         return queryset
 
     def _get_scope_label(self, user):
@@ -237,59 +242,90 @@ class DashboardView(StaffOnlyMixin, TemplateView):
             return f"Pôle : {user.pole.name}"
         return "National"
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        user = self.request.user
+    def _build_dashboard_data(self, user, period="30d", disease_id=None):
+        """
+        Construit le JSON du dashboard en fonction :
+        - de l'utilisateur (scope)
+        - de la période (30d / quarter / year)
+        - d'une maladie éventuelle (disease_id)
+        """
+
         today = datetime.date.today()
         now = timezone.now()
 
-        # ---------------------------------------------------------------------
-        # 1) VACCINATIONS (scopées)
-        # ---------------------------------------------------------------------
-        vaccinations_qs = (
+        # -------------------------
+        # Période (fenêtre temporelle)
+        # -------------------------
+        if period == "year":
+            days = 365
+        elif period == "quarter":
+            days = 90
+        else:
+            period = "30d"
+            days = 30
+
+        stats_start = today - datetime.timedelta(days=days - 1)
+
+        # -------------------------
+        # Scoping de base
+        # -------------------------
+        vaccinations_qs_base = (
             Vaccination.objects
-            .select_related("centre", "vaccin", "centre__district__region")
+            .select_related("centre", "centre__district__region", "vaccin", "vaccin__maladie")
+        )
+        vaccinations_qs_base = self._apply_scope(vaccinations_qs_base, user, centre_field="centre")
+
+        # QS pour la liste des maladies (toujours toutes les maladies, mais sur la période + scope)
+        vaccinations_stats_for_disease_list_qs = vaccinations_qs_base.filter(
+            date_vaccination__gte=stats_start
         )
 
-        vaccinations_qs = self._apply_scope(vaccinations_qs, user, centre_field="centre")
+        # Filtre maladie global pour le dashboard
+        disease_id_int = None
+        if disease_id not in (None, "", "null", "None"):
+            try:
+                disease_id_int = int(disease_id)
+            except (TypeError, ValueError):
+                disease_id_int = None
 
+        vaccinations_qs = vaccinations_qs_base
+        if disease_id_int is not None:
+            vaccinations_qs = vaccinations_qs.filter(vaccin__maladie_id=disease_id_int)
 
-        # Total doses (toutes périodes)
-        total_doses = vaccinations_qs.count()
+        # QS principal sur la période choisie
+        vaccinations_stats_qs = vaccinations_qs.filter(date_vaccination__gte=stats_start)
 
-        # Doses du jour (pour le hero)
+        # -------------------------
+        # Totaux
+        # -------------------------
+        total_doses = vaccinations_stats_qs.count()
         total_doses_today = vaccinations_qs.filter(date_vaccination=today).count()
 
-        # 30 derniers jours (graph + stats)
-        start_30 = today - datetime.timedelta(days=29)
-        vaccinations_30_qs = vaccinations_qs.filter(date_vaccination__gte=start_30)
-
-        # Groupement par jour pour Chart.js
+        # -------------------------
+        # Tendances (graph) - agrégé par jour sur la période
+        # -------------------------
         by_day = (
-            vaccinations_30_qs
+            vaccinations_stats_qs
             .values("date_vaccination")
             .annotate(total=Count("id"))
             .order_by("date_vaccination")
         )
 
-        chart_labels = []
-        chart_data = []
-        for row in by_day:
-            chart_labels.append(row["date_vaccination"].strftime("%d/%m"))
-            chart_data.append(row["total"])
+        chart_labels = [row["date_vaccination"].strftime("%d/%m") for row in by_day]
+        chart_data = [row["total"] for row in by_day]
 
-        # ---------------------------------------------------------------------
-        # 2) Couverture "nationale" (ou scope)
-        #    approche simple : patients vaccinés / patients enregistrés
-        # ---------------------------------------------------------------------
+        # -------------------------
+        # Couverture
+        # -------------------------
         patients_qs = Patient.objects.all()
         patients_qs = self._apply_scope(patients_qs, user, centre_field="centre")
 
-
         total_patients = patients_qs.count()
 
+        # Nombre de patients vaccinés (distincts) sur la période, pour la maladie (ou toutes)
         patients_vaccines = (
-            patients_qs.filter(historique_vaccinations__in=vaccinations_qs)
+            vaccinations_stats_qs
+            .values("patient_id")
             .distinct()
             .count()
         )
@@ -298,25 +334,120 @@ class DashboardView(StaffOnlyMixin, TemplateView):
         if total_patients > 0:
             couverture = round((patients_vaccines / total_patients) * 100, 1)
 
-        # ---------------------------------------------------------------------
-        # 3) Centres actifs + alertes stock
-        # ---------------------------------------------------------------------
-        centres_qs = CentreVaccination.objects.all().select_related("district__region")
+        # -------------------------
+        # Top maladies (liste cliquable)
+        # NB : toujours sur toutes les maladies, pour la période et le scope
+        # -------------------------
+        stats_maladies_qs = (
+            vaccinations_stats_for_disease_list_qs
+            .values("vaccin__maladie_id", "vaccin__maladie__nom")
+            .annotate(
+                total_doses=Count("id"),
+                patients_vaccines=Count("patient_id", distinct=True),
+            )
+            .order_by("-total_doses")[:10]
+        )
 
+        stats_maladies = [
+            {
+                "maladie_id": row["vaccin__maladie_id"],
+                "maladie_nom": row["vaccin__maladie__nom"],
+                "total_doses": row["total_doses"],
+                "patients_vaccines": row["patients_vaccines"],
+            }
+            for row in stats_maladies_qs
+        ]
+
+        # -------------------------
+        # Stats géographiques (filtrées par maladie le cas échéant)
+        # -------------------------
+        # Régions
+        stats_regions_qs = (
+            vaccinations_stats_qs
+            .values("centre__district__region_id", "centre__district__region__name")
+            .annotate(
+                total_doses=Count("id"),
+                patients_vaccines=Count("patient_id", distinct=True),
+            )
+            .order_by("-total_doses")
+        )
+
+        stats_regions = [
+            {
+                "region_id": row["centre__district__region_id"],
+                "region_nom": row["centre__district__region__name"],
+                "total_doses": row["total_doses"],
+                "patients_vaccines": row["patients_vaccines"],
+            }
+            for row in stats_regions_qs
+        ]
+
+        # Districts
+        stats_districts_qs = (
+            vaccinations_stats_qs
+            .values("centre__district_id", "centre__district__nom")
+            .annotate(
+                total_doses=Count("id"),
+                patients_vaccines=Count("patient_id", distinct=True),
+            )
+            .order_by("-total_doses")[:50]
+        )
+
+        stats_districts = [
+            {
+                "district_id": row["centre__district_id"],
+                "district_nom": row["centre__district__nom"],
+                "total_doses": row["total_doses"],
+                "patients_vaccines": row["patients_vaccines"],
+            }
+            for row in stats_districts_qs
+        ]
+
+        # Centres
+        stats_centres_qs = (
+            vaccinations_stats_qs
+            .values("centre_id", "centre__name")
+            .annotate(
+                total_doses=Count("id"),
+                patients_vaccines=Count("patient_id", distinct=True),
+            )
+            .order_by("-total_doses")[:50]
+        )
+
+        stats_centres = [
+            {
+                "centre_id": row["centre_id"],
+                "centre_nom": row["centre__name"],
+                "total_doses": row["total_doses"],
+                "patients_vaccines": row["patients_vaccines"],
+            }
+            for row in stats_centres_qs
+        ]
+
+        # -------------------------
+        # Stocks en alerte (filtrés par maladie si disease_id_int)
+        # -------------------------
+        centres_qs = CentreVaccination.objects.select_related("district__region")
         centres_qs = self._apply_scope(centres_qs, user, centre_field="")
 
         centres_actifs = centres_qs.count()
 
-        # Lots pour détection des stocks critiques (< 7 jours / quantite basse)
-        lots_qs = LotVaccin.objects.filter(
-            centre__in=centres_qs,
-            quantite_disponible__isnull=False,
-        ).select_related("centre__district__region", "vaccin")
+        lots_qs = (
+            LotVaccin.objects
+            .filter(
+                centre__in=centres_qs,
+                quantite_disponible__isnull=False,
+            )
+            .select_related("centre__district__region", "vaccin")
+        )
+
+        if disease_id_int is not None:
+            lots_qs = lots_qs.filter(vaccin__maladie_id=disease_id_int)
+
+        seuil_quantite = 100
+        jours_limite = 7
 
         centres_stock_alertes = []
-        seuil_quantite = 100  # à ajuster
-        jours_limite = 7  # à ajuster
-
         for lot in lots_qs:
             statut = None
             nb_jours = None
@@ -324,7 +455,6 @@ class DashboardView(StaffOnlyMixin, TemplateView):
             if lot.date_expiration:
                 nb_jours = (lot.date_expiration - today).days
 
-            # Règles simplifiées
             if lot.quantite_disponible <= 0 or (nb_jours is not None and nb_jours <= 0):
                 statut = "critique"
             elif lot.quantite_disponible <= seuil_quantite or (nb_jours is not None and nb_jours <= jours_limite):
@@ -332,50 +462,81 @@ class DashboardView(StaffOnlyMixin, TemplateView):
 
             if statut:
                 centres_stock_alertes.append({
-                    "centre": lot.centre,
-                    "region": lot.centre.district.region if lot.centre and lot.centre.district and lot.centre.district.region else None,
-                    "vaccin": lot.vaccin,
+                    "centre_nom": lot.centre.name if lot.centre else None,
+                    "region_nom": (
+                        lot.centre.district.region.name
+                        if lot.centre and lot.centre.district and lot.centre.district.region
+                        else None
+                    ),
+                    "vaccin_nom": lot.vaccin.nom if lot.vaccin else None,
                     "quantite": lot.quantite_disponible,
                     "jours_restants": nb_jours,
                     "statut": statut,
                 })
 
-        # on limite l'affichage à 10 lignes
         centres_stock_alertes = centres_stock_alertes[:10]
 
-        # ---------------------------------------------------------------------
-        # 4) Incidents / MAPI
-        # ---------------------------------------------------------------------
+        # -------------------------
+        # MAPI / incidents (automatiquement filtrés par maladie via vaccinations_stats_qs)
+        # -------------------------
         mapi_qs = Mapi.objects.filter(
-            vaccination__in=vaccinations_qs,
-        ).select_related("centre", "vaccination", "patient")
+            vaccination__in=vaccinations_stats_qs,
+        )
 
         incidents_total = mapi_qs.count()
         incidents_24h = mapi_qs.filter(date__gte=now - datetime.timedelta(hours=24)).count()
         incidents_30j = mapi_qs.filter(date__gte=now - datetime.timedelta(days=30)).count()
 
-        # ---------------------------------------------------------------------
-        # 5) Contexte pour le hero + infos
-        # ---------------------------------------------------------------------
         scope_label = self._get_scope_label(user)
 
-        ctx.update({
-            "scope_label": scope_label,
-            "last_update": now,
-            "total_doses": total_doses,
-            "total_doses_today": total_doses_today,
-            "couverture": couverture,
-            "total_patients": total_patients,
-            "patients_vaccines": patients_vaccines,
-            "centres_actifs": centres_actifs,
-            "centres_stock_alertes": centres_stock_alertes,
-            "incidents_total": incidents_total,
-            "incidents_24h": incidents_24h,
-            "incidents_30j": incidents_30j,
-            # Données pour le graph
-            "chart_vaccinations_labels": chart_labels,
-            "chart_vaccinations_data": chart_data,
-        })
+        dashboard_data = {
+            "meta": {
+                "scope_label": scope_label,
+                "last_update": now.isoformat(),
+                "today": today.isoformat(),
+                "access_level": getattr(user, "access_level", None),
+                "period": period,
+                "selected_disease_id": disease_id_int,
+            },
+            "totals": {
+                "total_doses": total_doses,
+                "total_doses_today": total_doses_today,
+                "couverture": couverture,
+                "total_patients": total_patients,
+                "patients_vaccines": patients_vaccines,
+                "centres_actifs": centres_actifs,
+                "incidents_total": incidents_total,
+                "incidents_24h": incidents_24h,
+                "incidents_30j": incidents_30j,
+            },
+            "trends": {
+                "labels": chart_labels,
+                "data": chart_data,
+            },
+            "by_disease": stats_maladies,
+            "geo": {
+                "regions": stats_regions,
+                "districts": stats_districts,
+                "centres": stats_centres,
+            },
+            "stock_alerts": centres_stock_alertes,
+        }
+
+        return dashboard_data
+
+
+class DashboardView(StaffOnlyMixin, DashboardStatsMixin, TemplateView):
+    login_url = '/login/'
+    template_name = "administration/dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        # Période par défaut : 30d, maladie = toutes
+        data = self._build_dashboard_data(user=user, period="30d", disease_id=None)
+
+        ctx["dashboard_data_json"] = json.dumps(data, cls=DjangoJSONEncoder)
         return ctx
 
 
@@ -385,18 +546,44 @@ class PatientListView(StaffOnlyMixin, LoginRequiredMixin, ListView):
     template_name = 'administration/patients_list.html'
     context_object_name = 'patients'
     paginate_by = 10
-    # ordering = ['nom', 'prenoms', '-created_at', ]
     ordering = ['nom', 'prenoms']
 
+    # --- ⬇️ Fonction centrale : filtre selon l’accès utilisateur --- #
+    def filter_by_access_level(self, queryset, user):
+        if user.access_level == AccessLevel.CENTRE and user.centre:
+            return queryset.filter(centre=user.centre)
+
+        if user.access_level == AccessLevel.DISTRICT and user.district:
+            return queryset.filter(centre__district=user.district)
+
+        if user.access_level == AccessLevel.REGION and user.region:
+            return queryset.filter(centre__district__region=user.region)
+
+        if user.access_level == AccessLevel.POLE and user.pole:
+            return queryset.filter(centre__district__region__poles=user.pole)
+
+        # NATIONAL → aucun filtre
+        return queryset
+
+    # --- ⬇️ GET QUERYSET --- #
     def get_queryset(self):
+        user = self.request.user
         queryset = super().get_queryset().all()
 
-        q = self.request.GET.get('q')
-        statut = self.request.GET.get('statut')
-        centre = self.request.GET.get('centre')
+        # Filtrage automatique selon access_level
+        queryset = self.filter_by_access_level(queryset, user)
+
+        # Filtres optionnels GET
+        q = self.request.GET.get("q")
+        statut = self.request.GET.get("statut")
+        centre = self.request.GET.get("centre")
 
         if q:
-            queryset = queryset.filter(Q(nom__icontains=q) | Q(prenoms__icontains=q) | Q(telephone1__icontains=q))
+            queryset = queryset.filter(
+                Q(nom__icontains=q)
+                | Q(prenoms__icontains=q)
+                | Q(telephone1__icontains=q)
+            )
 
         if statut:
             queryset = queryset.filter(statut=statut)
@@ -406,27 +593,33 @@ class PatientListView(StaffOnlyMixin, LoginRequiredMixin, ListView):
 
         return queryset
 
+    # --- ⬇️ AJAX PARTIAL RENDER --- #
     def render_to_response(self, context, **response_kwargs):
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            html = render_to_string('administration/admin/partials/patients_table_partial.html', context,
-                                    request=self.request)
+            html = render_to_string(
+                'administration/admin/partials/patients_table_partial.html',
+                context,
+                request=self.request
+            )
             return HttpResponse(html)
         return super().render_to_response(context, **response_kwargs)
 
+    # --- ⬇️ CONTEXTE --- #
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = now()
         seven_days_ago = today - datetime.timedelta(days=7)
 
-        all_patients = Patient.objects.all()
-        total_patients = all_patients.count()
-        active_patients = all_patients.filter(is_active=True).count()
-        inactive_patients = all_patients.filter(is_active=False).count()
-        new_patients = all_patients.filter(created_at__gte=seven_days_ago).count()
+        user = self.request.user
+        base_queryset = Patient.objects.all()
 
-        # Éviter la division par zéro
-        active_percentage = (active_patients / total_patients * 100) if total_patients else 0
-        inactive_percentage = (inactive_patients / total_patients * 100) if total_patients else 0
+        # Appliquer même filtre que la liste
+        filtered = self.filter_by_access_level(base_queryset, user)
+
+        total_patients = filtered.count()
+        active_patients = filtered.filter(is_active=True).count()
+        inactive_patients = filtered.filter(is_active=False).count()
+        new_patients = filtered.filter(created_at__gte=seven_days_ago).count()
 
         context.update({
             'total_patients': total_patients,
@@ -434,12 +627,11 @@ class PatientListView(StaffOnlyMixin, LoginRequiredMixin, ListView):
             'inactive_patients': inactive_patients,
             'new_patients': new_patients,
             'stats': {
-                'active_percentage': active_percentage,
-                'inactive_percentage': inactive_percentage,
+                'active_percentage': (active_patients / total_patients * 100) if total_patients else 0,
+                'inactive_percentage': (inactive_patients / total_patients * 100) if total_patients else 0,
             }
         })
         return context
-
 
 class PatientVaccinationCarnetPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
     """

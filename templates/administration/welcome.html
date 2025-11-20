@@ -1,0 +1,319 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}Bienvenue – Espace Administration Vaccination CI{% endblock %}
+
+{% block extra_head %}
+<style>
+    .hover-lift {
+        transition: all 0.25s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 18px 40px rgba(15,23,42,0.25);
+    }
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.03); opacity: 0.9; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="nk-content nk-content-fluid">
+    <div class="container-xl wide-lg">
+        <div class="nk-content-body space-y-8">
+
+            {# HERO #}
+            <div class="relative overflow-hidden rounded-3xl border border-white/15 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 text-white shadow-2xl">
+                {# Décor #}
+                <div class="pointer-events-none absolute inset-0 opacity-25">
+                    <div class="absolute -top-10 -left-10 w-40 h-40 bg-emerald-500/40 blur-3xl rounded-full"></div>
+                    <div class="absolute bottom-0 right-0 w-52 h-52 bg-sky-500/40 blur-3xl rounded-full"></div>
+                </div>
+
+                <div class="relative px-6 sm:px-8 py-7 sm:py-8 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                    <div class="space-y-4">
+                        <p class="text-[10px] uppercase tracking-[0.3em] text-slate-300/90 font-medium">
+                            Plateforme Nationale de Gestion de la Vaccination
+                        </p>
+                        <h1 class="text-2xl sm:text-3xl md:text-4xl font-semibold leading-tight">
+                            Bienvenue,
+                            <span class="text-amber-300">{{ request.user.first_name }}</span> 👋
+                        </h1>
+                        <p class="text-[12px] sm:text-[13px] text-slate-200/90 max-w-xl">
+                            Supervisez le système vaccinal en temps quasi réel : activités des centres,
+                            couverture, stocks et alertes critiques selon votre périmètre d’accès.
+                        </p>
+
+                        {# Badges d'info #}
+                        <div class="flex flex-wrap items-center gap-2 mt-2 text-[11px]">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/20">
+                                <i class="fa-solid fa-user-shield text-[10px] text-amber-300"></i>
+                                {{ request.user.get_role_display }}
+                            </span>
+
+                            {% if request.user.access_level %}
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-200 border border-emerald-400/40">
+                                    <i class="fa-solid fa-location-dot text-[10px]"></i>
+                                    Niveau : {{ request.user.get_access_level_display }}
+                                </span>
+                            {% endif %}
+
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/15 text-sky-100 border border-sky-400/50">
+                                <i class="fa-solid fa-clock text-[10px]"></i>
+                                {% now "d/m/Y · H:i" %}
+                            </span>
+                        </div>
+
+                        {# Actions rapides #}
+                        <div class="flex flex-wrap gap-2 pt-4 text-[12px]">
+                            <a href="{% url 'dashboard' %}"
+                               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition-all pulse-animation">
+                                <i class="fa-solid fa-gauge-high text-[11px]"></i>
+                                Accéder au tableau de bord
+                            </a>
+                            <a href="{% url 'patient_list' %}"
+                               class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/15 transition-all">
+                                <i class="fa-solid fa-users text-[11px]"></i>
+                                Gérer les patients
+                            </a>
+                        </div>
+                    </div>
+
+                    {# Illustration #}
+                    <div class="hidden lg:flex items-center justify-center">
+                        <div class="relative">
+                            <div class="absolute -top-4 -right-4 h-8 w-8 rounded-full bg-amber-400/70 blur-sm animate-bounce"></div>
+                            <div class="absolute -bottom-4 -left-4 h-6 w-6 rounded-full bg-emerald-400/70 blur-sm animate-pulse"></div>
+                            <img src="{% static 'images/admin-dashboard.svg' %}"
+                                 alt="Dashboard Administration"
+                                 class="relative z-10 max-w-md w-full drop-shadow-[0_18px_45px_rgba(15,23,42,0.7)]">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            {# MODULES #}
+            <div class="space-y-4">
+                <div class="text-center space-y-1">
+                    <h2 class="text-lg sm:text-xl font-semibold text-slate-900 dark:text-white">
+                        Modules de gestion
+                    </h2>
+                    <p class="text-[12px] text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">
+                        Accédez rapidement aux sections clés de la plateforme selon votre rôle et votre niveau d’accès.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {# Dashboard #}
+                    <a href="{% url 'dashboard' %}"
+                       class="group bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-5 hover-lift">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="h-10 w-10 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+                                <i class="fa-solid fa-chart-line text-sm"></i>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                    Tableau de bord intelligent
+                                </p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    Activité, tendances et indicateurs.
+                                </p>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+                            Visualisations en temps réel, KPIs, comparaisons par période et périmètre.
+                        </p>
+                        <div class="flex items-center text-[11px] text-sky-600 dark:text-sky-400 font-medium">
+                            <span>Ouvrir le tableau de bord</span>
+                            <i class="fa-solid fa-arrow-right ml-1.5 text-[9px] transform group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </a>
+
+                    {# Patients #}
+                    <a href="{% url 'patient_list' %}"
+                       class="group bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-5 hover-lift">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                                <i class="fa-solid fa-users-gear text-sm"></i>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                    Gestion des patients
+                                </p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    Registre & historiques.
+                                </p>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+                            Fiches complètes, recherche avancée, suivi des parcours et statuts.
+                        </p>
+                        <div class="flex items-center text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                            <span>Accéder aux patients</span>
+                            <i class="fa-solid fa-arrow-right ml-1.5 text-[9px] transform group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </a>
+
+                    {# Vaccinations #}
+                    <a href="{% url 'vaccination_list' %}"
+                       class="group bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-5 hover-lift">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                <i class="fa-solid fa-syringe text-sm"></i>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                    Campagnes de vaccination
+                                </p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    Doses & rappels.
+                                </p>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+                            Enregistrement des doses, rappels programmés, suivi des campagnes.
+                        </p>
+                        <div class="flex items-center text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                            <span>Voir les vaccinations</span>
+                            <i class="fa-solid fa-arrow-right ml-1.5 text-[9px] transform group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </a>
+
+                    {# Stocks #}
+                    <a href="#"
+                       class="group bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-5 hover-lift">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="h-10 w-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center">
+                                <i class="fa-solid fa-boxes-stacked text-sm"></i>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                    Gestion des stocks
+                                </p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    Lots & alertes.
+                                </p>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+                            Suivi des niveaux, alertes &lt; 7 jours, gestion des lots et péremption.
+                        </p>
+                        <div class="flex items-center text-[11px] text-purple-600 dark:text-purple-400 font-medium">
+                            <span>Superviser les stocks</span>
+                            <i class="fa-solid fa-arrow-right ml-1.5 text-[9px] transform group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </a>
+
+                    {# Catalogue maladies / vaccins #}
+                    <a href="#"
+                       class="group bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-5 hover-lift">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="h-10 w-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+                                <i class="fa-solid fa-virus text-sm"></i>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900 dark:text-white">
+                                    Maladies & vaccins
+                                </p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    Protocoles & fiches.
+                                </p>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+                            Catalogue des maladies, fiches vaccins, schémas et contre-indications.
+                        </p>
+                        <div class="flex items-center text-[11px] text-red-600 dark:text-red-400 font-medium">
+                            <span>Configurer le catalogue</span>
+                            <i class="fa-solid fa-arrow-right ml-1.5 text-[9px] transform group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </a>
+
+                    {# Profil / sécurité #}
+                    <a href="#"
+                       class="group bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-5 hover-lift">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="h-10 w-10 rounded-xl bg-teal-500/10 text-teal-500 flex items-center justify-center">
+                                <i class="fa-solid fa-user-shield text-sm"></i>
+                            </span>
+                            <div>
+                                <p class="text-sm font-semibold text-slate-900 dark:text:white">
+                                    Sécurité & profil
+                                </p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    Compte & connexions.
+                                </p>
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+                            Informations personnelles, changement de mot de passe, historique de connexion.
+                        </p>
+                        <div class="flex items-center text-[11px] text-teal-600 dark:text-teal-400 font-medium">
+                            <span>Paramétrer mon compte</span>
+                            <i class="fa-solid fa-arrow-right ml-1.5 text-[9px] transform group-hover:translate-x-1 transition-transform"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            {# AIDE / SUPPORT #}
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-6 sm:p-7">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+                    <div class="space-y-3">
+                        <h2 class="text-sm sm:text-base font-semibold text-slate-900 dark:text-white">
+                            Besoin d’accompagnement ? 📚
+                        </h2>
+                        <p class="text-[12px] text-slate-500 dark:text-slate-400">
+                            Accédez aux guides, procédures, vidéos et support technique pour exploiter pleinement la plateforme.
+                        </p>
+                        <div class="flex flex-wrap gap-2 text-[12px]">
+                            <a href="#"
+                               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200">
+                                <i class="fa-solid fa-book text-[11px]"></i>
+                                Documentation
+                            </a>
+                            <a href="#"
+                               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-sky-600 text-white hover:bg-sky-700 transition">
+                                <i class="fa-solid fa-video text-[11px]"></i>
+                                Tutoriels vidéo
+                            </a>
+                            <a href="#"
+                               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition">
+                                <i class="fa-solid fa-headset text-[11px]"></i>
+                                Support technique
+                            </a>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <img src="{% static 'images/help-support.svg' %}"
+                             alt="Support et aide"
+                             class="w-full max-w-xs mx-auto">
+                    </div>
+                </div>
+            </div>
+
+            {# FOOTER #}
+            <div class="text-center space-y-1 py-5 text-[11px] border-t border-slate-200 dark:border-slate-800">
+                <div class="flex flex-col md:flex-row items-center justify-center gap-2 text-slate-500 dark:text-slate-400">
+                    <span>🏥 <span class="font-medium">Plateforme Nationale de Vaccination – Ministère de la Santé</span></span>
+                    <span class="hidden md:inline">•</span>
+                    <span>🛡️ Système sécurisé et tracé</span>
+                    <span class="hidden md:inline">•</span>
+                    <span>📩 Support : support@vaccination.ci</span>
+                </div>
+                <div class="text-[10px] text-slate-400 dark:text-slate-500">
+                    &copy; 2025 – Tous droits réservés · Version {{ app_version|default:"1.0" }}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

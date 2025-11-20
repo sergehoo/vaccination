@@ -2,31 +2,50 @@
 <aside class="hidden md:flex w-60 xl:w-64 flex-col border-r border-white/20 dark:border-slate-800/90 bg-gradient-to-b from-white/95 to-slate-50/90 dark:from-slate-900/95 dark:to-slate-950/90 backdrop-blur-2xl shadow-soft-xl">
 
     {# ================== BLOC UTILISATEUR (AMÉLIORÉ) ================== #}
-   <div class="mx-3 mt-3 mb-2 rounded-2xl bg-gradient-to-r from-ivoireBlue to-keneyaSecondary text-white shadow-sm">
+    <div class="mx-3 mt-3 mb-2 rounded-2xl bg-gradient-to-r from-ivoireBlue to-keneyaSecondary text-white shadow-sm">
         <!-- Effet de brillance -->
         <div class="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-xl"></div>
-        
-        <div class="px-4 pt-4 pb-3 flex items-center justify-between text-xs relative z-10">
-            <div class="flex items-center gap-2">
-                <div class="relative">
-                    <i class="fa-solid fa-circle text-[6px] text-emerald-300 animate-pulse"></i>
-                    <div class="absolute inset-0 animate-ping">
-                        <i class="fa-solid fa-circle text-[6px] text-emerald-300/70"></i>
-                    </div>
-                </div>
-                {% if request.user.is_staff %}
-                    <span>Mode <span class="font-bold">Administration</span></span>
-                {% else %}
-                    <span>Mode <span class="font-bold">Patient</span></span>
-                {% endif %}
-            </div>
 
-            {% if request.user.is_authenticated %}
-                <span class="px-2 py-1 rounded-full bg-white/20 text-[10px] flex items-center gap-1 backdrop-blur-sm border border-white/30">
-                    <i class="fa-solid fa-user-check text-[9px]"></i> Connecté
-                </span>
-            {% endif %}
+        <div class="px-4 pt-4 pb-3 flex items-center justify-between text-xs relative z-10">
+    <div class="flex items-center gap-2">
+        <div class="relative">
+            <i class="fa-solid fa-circle text-[6px] text-emerald-300 animate-pulse"></i>
+            <div class="absolute inset-0 animate-ping">
+                <i class="fa-solid fa-circle text-[6px] text-emerald-300/70"></i>
+            </div>
         </div>
+
+        {% if request.user.is_staff %}
+            <span>
+                Mode <span class="font-bold">Administration</span>
+
+                <span class="text-[12px] text-white ml-2">
+                    {% if request.user.access_level == "pole" and request.user.pole %}
+                        {{ request.user.pole }}
+                    {% elif request.user.access_level == "region" and request.user.region %}
+                        {{ request.user.region }}
+                    {% elif request.user.access_level == "district" and request.user.district %}
+                        {{ request.user.district }}
+                    {% elif request.user.access_level == "centre" and request.user.centre %}
+                        {{ request.user.centre }}
+                    {% elif request.user.access_level == "national" %}
+                        National
+                    {% endif %}
+                </span>
+            </span>
+        {% else %}
+            <span>
+                Mode <span class="font-bold">Patient</span>
+            </span>
+        {% endif %}
+    </div>
+
+    {% if request.user.is_authenticated %}
+        <span class="px-2 py-1 rounded-full bg-white/20 text-[10px] flex items-center gap-1 backdrop-blur-sm border border-white/30">
+            <i class="fa-solid fa-user-check text-[9px]"></i>
+        </span>
+    {% endif %}
+</div>
 
         {% if request.user.is_authenticated %}
             <div class="px-4 pb-4 flex items-center gap-3 relative z-10">
@@ -104,12 +123,19 @@
                     </span>
                     <span>Rapports & statistiques</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300"
+                   :class="open ? 'rotate-180' : ''"></i>
             </button>
             <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Rapport global</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Par région</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Par tranche d'âge</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Rapport
+                    global</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Par
+                    région</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Par
+                    tranche d'âge</a>
             </div>
         </div>
 
@@ -130,12 +156,19 @@
                     </span>
                     <span>Patients</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300"
+                   :class="open ? 'rotate-180' : ''"></i>
             </button>
             <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
-                <a href="{% url 'patient_list' %}" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste des patients</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Ajouter un patient</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Détails patient</a>
+                <a href="{% url 'patient_list' %}"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste
+                    des patients</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Ajouter
+                    un patient</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Détails
+                    patient</a>
             </div>
         </div>
 
@@ -149,12 +182,19 @@
                     </span>
                     <span>Vaccinations</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300"
+                   :class="open ? 'rotate-180' : ''"></i>
             </button>
             <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
-                <a href="{% url 'vaccination_list' %}" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste Vaccination</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Historique vaccinal</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Nouvelle vaccination</a>
+                <a href="{% url 'vaccination_list' %}"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste
+                    Vaccination</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Historique
+                    vaccinal</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Nouvelle
+                    vaccination</a>
             </div>
         </div>
 
@@ -168,11 +208,16 @@
                     </span>
                     <span>Vaccins</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300"
+                   :class="open ? 'rotate-180' : ''"></i>
             </button>
             <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste des vaccins</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Ajouter un vaccin</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste
+                    des vaccins</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Ajouter
+                    un vaccin</a>
             </div>
         </div>
 
@@ -193,12 +238,18 @@
                     </span>
                     <span>Campagnes & PEV</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300"
+                   :class="open ? 'rotate-180' : ''"></i>
             </button>
             <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste des campagnes</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Planification</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Couverture par district</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste
+                    des campagnes</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Planification</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Couverture
+                    par district</a>
             </div>
         </div>
 
@@ -212,12 +263,19 @@
                     </span>
                     <span>Centres & Régions</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300"
+                   :class="open ? 'rotate-180' : ''"></i>
             </button>
             <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Carte interactive</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste des centres</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Performance par région</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Carte
+                    interactive</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste
+                    des centres</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Performance
+                    par région</a>
             </div>
         </div>
 
@@ -265,12 +323,18 @@
                     </span>
                     <span>Utilisateurs</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300"
+                   :class="open ? 'rotate-180' : ''"></i>
             </button>
             <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste des utilisateurs</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Rôles & permissions</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Profil</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Liste
+                    des utilisateurs</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Rôles
+                    & permissions</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Profil</a>
             </div>
         </div>
 
@@ -293,12 +357,17 @@
                     </span>
                     <span>Authentification</span>
                 </span>
-                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300"
+                   :class="open ? 'rotate-180' : ''"></i>
             </button>
             <div x-show="open" x-collapse class="pl-11 space-y-1 text-xs">
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Connexion</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Inscription</a>
-                <a href="#" class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Mot de passe oublié</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Connexion</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Inscription</a>
+                <a href="#"
+                   class="block py-2 px-2 rounded-xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 hover:text-ivoireBlue transition-all duration-300 hover:translate-x-1">Mot
+                    de passe oublié</a>
             </div>
         </div>
     </nav>
@@ -307,7 +376,7 @@
     <div class="mx-3 mb-3 p-4 rounded-2xl bg-gradient-to-br from-ivoireBlue via-keneyaSecondary to-ivoireBlue text-white shadow-lg relative overflow-hidden">
         <!-- Effet de brillance -->
         <div class="absolute bottom-0 left-0 w-20 h-20 bg-white/10 rounded-full -translate-x-1/2 translate-y-1/2 blur-xl"></div>
-        
+
         <div class="flex items-center justify-between mb-2 relative z-10">
             <h3 class="font-bold text-sm">Progression nationale</h3>
             <span class="text-xs bg-white/20 px-2 py-1 rounded-full backdrop-blur-sm border border-white/30">78%</span>

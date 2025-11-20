@@ -5,30 +5,30 @@
     <meta charset="UTF-8">
     <title>Plateforme Vaccination CI</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<link rel="stylesheet" href="{% static 'css/keneya.css' %}">
     <!-- Tailwind -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        ivoireBlue: '#1A57A1',
-                        ivoireGreen: '#18A999',
-                        ivoireOrange: '#F59E0B',
-                        ivoireNight: '#020617',
-                    },
-                    boxShadow: {
-                        soft: '0 18px 45px rgba(15,23,42,0.24)',
-                    },
-                    borderRadius: {
-                        '3xl': '1.75rem',
-                    }
-                }
-            }
-        }
-    </script>
+{#    <script src="https://cdn.tailwindcss.com"></script>#}
+{#    <script>#}
+{#        tailwind.config = {#}
+{#            darkMode: 'class',#}
+{#            theme: {#}
+{#                extend: {#}
+{#                    colors: {#}
+{#                        ivoireBlue: '#1A57A1',#}
+{#                        ivoireGreen: '#18A999',#}
+{#                        ivoireOrange: '#F59E0B',#}
+{#                        ivoireNight: '#020617',#}
+{#                    },#}
+{#                    boxShadow: {#}
+{#                        soft: '0 18px 45px rgba(15,23,42,0.24)',#}
+{#                    },#}
+{#                    borderRadius: {#}
+{#                        '3xl': '1.75rem',#}
+{#                    }#}
+{#                }#}
+{#            }#}
+{#        }#}
+{#    </script>#}
 
     <!-- Alpine state (avant Alpine.js) -->
     <script>
@@ -138,10 +138,7 @@
 
     <!-- jQuery + Select2 -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link
-        href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
-        rel="stylesheet"
-    />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <!-- Icônes -->
@@ -932,8 +929,7 @@
         </div>
 
         <!-- Close -->
-        <button class="text-xs opacity-60 hover:opacity-100 transition"
-                @click="$store.ui.hideToast()">
+        <button class="text-xs opacity-60 hover:opacity-100 transition" @click="$store.ui.hideToast()">
             <i class="fa-solid fa-xmark"></i>
         </button>
     </div>

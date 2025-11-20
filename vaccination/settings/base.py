@@ -168,11 +168,9 @@ REST_FRAMEWORK = {
 }
 
 AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',
-    "inhp.backends.ProfessionalAuthBackend",
-    "inhp.backends.PatientAuthBackend",
-
-    # "djoser.auth_backends.LoginFieldBackend",
+    "inhp.backends.ProfessionalAuthBackend",   # Pros → Utilisateur
+    "inhp.backends.PatientAuthBackend",        # Patients → Patient
+    "django.contrib.auth.backends.ModelBackend",  # Admin & auth.User
 )
 
 # Internationalization
@@ -221,9 +219,9 @@ LEAFLET_CONFIG = {
 # 📂 Dossiers statiques
 # STATIC & MEDIA
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'     # /app/staticfiles
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Pour collectstatic
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',                   # /app/static
+    os.path.join(BASE_DIR, 'static'),  # Vos fichiers statiques sources
 ]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
@@ -232,6 +230,9 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
+
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'            # /app/media
@@ -245,8 +246,8 @@ SITE_ID = 1
 
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "landing"
-ACCOUNT_LOGOUT_REDIRECT = "account_login"
-ACCOUNT_SIGNUP_REDIRECT_URL = "account_login"
+ACCOUNT_LOGOUT_REDIRECT = "login"
+ACCOUNT_SIGNUP_REDIRECT_URL = "dashboard"
 
 # Configuration de Celery
 CELERY_ACCEPT_CONTENT = ['json']

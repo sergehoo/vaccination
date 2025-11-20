@@ -1,449 +1,827 @@
+{# templates/administration/dashboard.html #}
 {% extends "layout/base.html" %}
-{% load static %}
-{% load humanize %}
+{% load static humanize %}
+
 {% block title %}Dashboard Administration – Vaccination CI{% endblock %}
 
 {% block content %}
-      <!-- Bandeau contexte / hero -->
-{% block hero %}
-<div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft">
-    <div class="absolute inset-y-0 right-0 hidden md:block opacity-70">
-        <img src="{% static 'images/banner5.webp' %}" alt="Vaccination CI"  class="h-full object-contain pointer-events-none">
-    </div>
-
-    <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-        <div class="space-y-2 max-w-xl">
-            <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90">
-                {{ scope_label }} · Programme Élargi de Vaccination
-            </p>
-            <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
-                Pilotage temps réel des campagnes vaccinales
-            </h1>
-            <p class="text-[12px] text-slate-300">
-                Suivez la couverture, les stocks et les incidents sur votre périmètre.
-                Données issues des centres de vaccination et des déclarations MAPI.
-            </p>
-            <div class="flex flex-wrap items-center gap-2 text-[11px]">
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
-                    <i class="fa-solid fa-shield-virus text-[9px]"></i>
-                    COVID-19
-                </span>
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">
-                    <i class="fa-solid fa-baby text-[9px]"></i>
-                    Vaccination infantile
-                </span>
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/40">
-                    <i class="fa-solid fa-syringe text-[9px]"></i>
-                    PEV de routine
-                </span>
-            </div>
-        </div>
-
-        <div class="rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-[11px] min-w-[220px] space-y-2">
-            <div class="flex items-center justify-between gap-2">
-                <p class="text-slate-200/90 font-medium">
-                    Activité {{ scope_label|lower }}
-                </p>
-                <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">
-                    Synchro · OK
-                </span>
-            </div>
-            <div class="flex gap-3 items-end">
-                <div>
-                    <p class="text-lg font-semibold">
-                        {{ total_doses_today|default:0|intcomma }}
-                    </p>
-                    <p class="text-[10px] text-slate-300">
-                        doses enregistrées aujourd’hui
-                    </p>
-                </div>
-                <div class="flex-1 h-10 relative">
-                    <div class="absolute inset-0 rounded-xl bg-gradient-to-tr from-emerald-500/40 via-sky-500/30 to-amber-400/40 opacity-60 blur-[10px]"></div>
-                    <div class="absolute inset-0 border border-dashed border-slate-500/40 rounded-xl"></div>
-                </div>
-            </div>
-            <div class="flex items-center justify-between text-[10px] text-slate-300">
-                <span>Dernière mise à jour : {{ last_update|date:"d/m/Y · H:i" }}</span>
-                <span class="flex items-center gap-1">
-                    <i class="fa-solid fa-circle text-[5px] text-emerald-400 animate-pulse"></i>
-                    temps quasi réel
-                </span>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock hero %}
-   <!-- Quick actions + filtres -->
-                    <div class="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
-                        <div class="flex flex-wrap gap-2 text-[11px]">
-                            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 shadow-sm">
-                                <i class="fa-solid fa-plus text-[9px] text-emerald-500"></i>
-                                Nouvelle campagne
-                            </button>
-                            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/60 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70">
-                                <i class="fa-solid fa-upload text-[9px]"></i>
-                                Import DHIS2
-                            </button>
-                            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/60 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70">
-                                <i class="fa-solid fa-download text-[9px]"></i>
-                                Export OMS / PEV
-                            </button>
-                        </div>
-                        <div class="flex flex-wrap gap-2 text-[11px] items-center">
-                            <span class="text-slate-500 dark:text-slate-400">Période :</span>
-                            <button class="px-3 py-1.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-[11px]">
-                                30 derniers jours
-                            </button>
-                            <button class="px-3 py-1.5 rounded-full bg-white/70 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70">
-                                Trimestre
-                            </button>
-                            <button class="px-3 py-1.5 rounded-full bg-white/70 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70">
-                                Année
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Stats & Graph -->
-                    <div class="grid grid-cols-1 xl:grid-cols-4 gap-4 mt-4">
-    <!-- Doses administrées -->
-    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2 shadow-soft/40">
-        <div class="flex items-center justify-between">
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
-                Doses administrées (cumulées)
-            </p>
-            <span class="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                <i class="fa-solid fa-syringe text-xs"></i>
-            </span>
-        </div>
-        <p class="text-2xl font-semibold">{{ total_doses|default:0|intcomma }}</p>
-        <p class="text-[11px] text-emerald-600 dark:text-emerald-400">
-            {{ total_doses_today|default:0|intcomma }} doses aujourd’hui
-        </p>
-        <div class="mt-1 h-10 rounded-xl bg-gradient-to-r from-emerald-500/20 via-sky-500/10 to-amber-500/20 border border-dashed border-emerald-500/40"></div>
-    </div>
-
-    <!-- Couverture -->
-    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
-        <div class="flex items-center justify-between">
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
-                Couverture sur population enregistrée
-            </p>
-            <span class="h-8 w-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
-                <i class="fa-solid fa-globe-africa text-xs"></i>
-            </span>
-        </div>
-        <p class="text-2xl font-semibold">
-            {% if couverture %}{{ couverture }} %{% else %}–{% endif %}
-        </p>
-        <p class="text-[11px] text-slate-500 dark:text-slate-400">
-            {{ patients_vaccines|intcomma }} patient(s) vacciné(s) / {{ total_patients|intcomma }} enregistré(s)
-        </p>
-        <div class="mt-1 flex items-center gap-2 text-[10px]">
-            <div class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                <div class="h-full bg-emerald-500" style="width: {{ couverture|default:0 }}%;"></div>
-            </div>
-            <span>
-                {% if couverture %}{{ couverture }} %{% else %}0 %{% endif %}
-            </span>
-        </div>
-    </div>
-
-    <!-- Centres actifs -->
-    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
-        <div class="flex items-center justify-between">
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
-                Centres actifs
-            </p>
-            <span class="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                <i class="fa-solid fa-hospital text-xs"></i>
-            </span>
-        </div>
-        <p class="text-2xl font-semibold">{{ centres_actifs|default:0|intcomma }}</p>
-        <p class="text-[11px] text-slate-500 dark:text-slate-400">
-            Centres de vaccination dans votre périmètre
-        </p>
-    </div>
-
-    <!-- Incidents & MAPI -->
-    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
-        <div class="flex items-center justify-between">
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
-                Incidents &amp; effets indésirables
-            </p>
-            <span class="h-8 w-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
-                <i class="fa-solid fa-triangle-exclamation text-xs"></i>
-            </span>
-        </div>
-        <p class="text-2xl font-semibold">{{ incidents_30j|default:0|intcomma }}</p>
-        <p class="text-[11px] text-slate-500 dark:text-slate-400">
-            Déclarations MAPI sur les 30 derniers jours · {{ incidents_24h|default:0|intcomma }} sur les dernières 24h
-        </p>
-    </div>
-</div>
-
-                    <!-- Graph & listes -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                        <!-- Graph -->
-                        <div class="lg:col-span-2 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
-                            <div class="flex items-center justify-between gap-3">
-                                <div>
-                                    <h2 class="text-sm font-semibold">
-                                        Tendances des vaccinations (30 derniers jours)
-                                    </h2>
-                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                                        Routine · Campagnes COVID-19 · Rougeole-Rubéole · Autres.
-                                    </p>
-                                </div>
-                                <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
-                                    Exporter les données
-                                </button>
-                            </div>
-                            <div class="mt-2 h-64 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-[11px] text-slate-400 dark:text-slate-500">
-    <canvas id="vaccinationTrendsChart" class="w-full h-full"></canvas>
-</div>
-                        </div>
-
-                        <!-- Campagnes -->
-                        <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-4">
-                            <div class="flex items-center justify-between">
-                                <h2 class="text-sm font-semibold">
-                                    Campagnes en cours
-                                </h2>
-                                <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900">
-                                    + Nouvelle
-                                </button>
-                            </div>
-                            <div class="space-y-3 text-[11px]">
-                                <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-900/70 flex flex-col gap-1.5">
-                                    <div class="flex items-center justify-between gap-2">
-                                        <p class="font-semibold text-[12px]">
-                                            COVID-19 · Dose de rappel adultes
-                                        </p>
-                                        <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 text-[10px]">
-                                            En cours
-                                        </span>
-                                    </div>
-                                    <p class="text-slate-500 dark:text-slate-400">
-                                        Population cible : &gt; 18 ans · Zones urbaines prioritaire (Abidjan, Bouaké, San-Pédro).
-                                    </p>
-                                    <p class="text-slate-400 text-[10px]">
-                                        01 Oct – 31 Déc · Couverture : 62 % · 14 régions &gt; 70 %
-                                    </p>
-                                </div>
-
-                                <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-900/70 flex flex-col gap-1.5">
-                                    <div class="flex items-center justify-between gap-2">
-                                        <p class="font-semibold text-[12px]">
-                                            PEV de routine · 0–11 mois
-                                        </p>
-                                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 text-[10px]">
-                                            Continue
-                                        </span>
-                                    </div>
-                                    <p class="text-slate-500 dark:text-slate-400">
-                                        BCG, Penta, Polio, Rota, Pneumo, Rougeole. Liste de contrôle par centre.
-                                    </p>
-                                    <p class="text-slate-400 text-[10px]">
-                                        Couverture nationale : 81 % · 3 régions &lt; 60 %
-                                    </p>
-                                </div>
-
-                                <div class="p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-900/70 flex flex-col gap-1.5">
-                                    <div class="flex items-center justify-between gap-2">
-                                        <p class="font-semibold text-[12px]">
-                                            Rougeole-Rubéole · 9 mois – 14 ans
-                                        </p>
-                                        <span class="px-2 py-0.5 rounded-full bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300 text-[10px]">
-                                            Prévue
-                                        </span>
-                                    </div>
-                                    <p class="text-slate-500 dark:text-slate-400">
-                                        Ciblage renforcé zones rurales & à faible couverture.
-                                    </p>
-                                    <p class="text-slate-400 text-[10px]">
-                                        15 Nov – 15 Déc · Mise en place logistique en cours.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Tables & logs -->
-                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                        <!-- Centres en alerte -->
-                        <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
-                            <div class="flex items-center justify-between">
-                                <h2 class="text-sm font-semibold">
-                                    Centres en alerte · Stock < 7 jours
-                                </h2>
-                                <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900/80">
-                                    Voir tous
-                                </button>
-                            </div>
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-[11px]">
-                                    <thead class="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                                    <tr>
-                                        <th class="py-2 pr-3 text-left">Centre</th>
-                                        <th class="py-2 pr-3 text-left">Région</th>
-                                        <th class="py-2 pr-3 text-left">Vaccin</th>
-                                        <th class="py-2 pr-3 text-left">Stock</th>
-                                        <th class="py-2 text-left">Statut</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-    {% for alert in centres_stock_alertes %}
-        <tr>
-            <td class="py-2 pr-3">
-                {{ alert.centre.name }}
-            </td>
-            <td class="py-2 pr-3">
-                {% if alert.region %}{{ alert.region.name }}{% else %}-{% endif %}
-            </td>
-            <td class="py-2 pr-3">
-                {{ alert.vaccin.nom }}
-            </td>
-            <td class="py-2 pr-3">
-                {{ alert.quantite|default:"0"|intcomma }} dose(s)
-                {% if alert.jours_restants is not None %}
-                    <span class="text-[10px] text-slate-500 dark:text-slate-400">
-                        · {{ alert.jours_restants }} j restants
-                    </span>
-                {% endif %}
-            </td>
-            <td class="py-2">
-                {% if alert.statut == "critique" %}
-                    <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300 text-[10px]">
-                        Critique
-                    </span>
-                {% else %}
-                    <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 text-[10px]">
-                        À réapprovisionner
-                    </span>
-                {% endif %}
-            </td>
-        </tr>
-    {% empty %}
-        <tr>
-            <td colspan="5" class="py-4 text-center text-[11px] text-slate-500 dark:text-slate-400">
-                Aucun centre en alerte stock selon les critères définis.
-            </td>
-        </tr>
-    {% endfor %}
-</tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Logs DHIS2 -->
-                        <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
-                            <div class="flex items-center justify-between">
-                                <h2 class="text-sm font-semibold">
-                                    Synchronisations DHIS2 & systèmes nationaux
-                                </h2>
-                                <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900/80">
-                                    Journal complet
-                                </button>
-                            </div>
-                            <div class="space-y-3 text-[11px]">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div>
-                                        <p class="font-semibold">Région Sanitaire · Abidjan 1</p>
-                                        <p class="text-slate-500 dark:text-slate-400">
-                                            152 centres · 23 451 enregistrements envoyés.
-                                        </p>
-                                        <p class="text-slate-400 text-[10px]">
-                                            Dernière synchro : 13/11/2025 · 08:42
-                                        </p>
-                                    </div>
-                                    <span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300 text-[10px]">
-                                        Succès
-                                    </span>
-                                </div>
-                                <div class="flex items-start justify-between gap-3">
-                                    <div>
-                                        <p class="font-semibold">Région Sanitaire · Bounkani</p>
-                                        <p class="text-slate-500 dark:text-slate-400">
-                                            47 centres · 3 245 enregistrements envoyés.
-                                        </p>
-                                        <p class="text-slate-400 text-[10px]">
-                                            Dernière synchro : 13/11/2025 · 07:15
-                                        </p>
-                                    </div>
-                                    <span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300 text-[10px]">
-                                        À vérifier
-                                    </span>
-                                </div>
-                                <div class="flex items-start justify-between gap-3">
-                                    <div>
-                                        <p class="font-semibold">Région Sanitaire · Cavally</p>
-                                        <p class="text-slate-500 dark:text-slate-400">
-                                            32 centres · erreurs sur 5 structures.
-                                        </p>
-                                        <p class="text-slate-400 text-[10px]">
-                                            Dernière synchro : 13/11/2025 · 06:58
-                                        </p>
-                                    </div>
-                                    <span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300 text-[10px]">
-                                        Erreurs
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-{{ chart_vaccinations_labels|json_script:"chart-vacc-labels" }}
-    {{ chart_vaccinations_data|json_script:"chart-vacc-data" }}
-
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {# On injecte le JSON initial dans un script, Alpine va le lire #}
+    <script id="dashboard-data" type="application/json">
+        {{ dashboard_data_json|safe }}
+    </script>
+
+    <div x-data="dashboardApp()" x-init="init()" class="nk-content nk-content-fluid">
+        <div class="container-xl wide-lg">
+            <div class="nk-content-body space-y-5">
+
+                {# HERO / CONTEXTE #}
+                <div
+                        class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft"
+                >
+                    <div class="absolute inset-y-0 right-0 hidden md:block opacity-70">
+                        <img src="{% static 'images/banner5.webp' %}" alt="Vaccination CI"
+                             class="h-full object-contain pointer-events-none">
+                    </div>
+
+                    <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+                        <div class="space-y-2 max-w-xl">
+                            <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90">
+                                Plateforme Nationale de Gestion de la Vaccination
+                            </p>
+                            <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
+                                Pilotage temps réel des campagnes vaccinales
+                            </h1>
+                            <p class="text-[12px] text-slate-300">
+                                Suivez la couverture, les stocks et les incidents sur votre périmètre.
+                                Données issues des centres de vaccination et des déclarations MAPI.
+                            </p>
+                            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                                {% if request.user.is_staff %}
+
+
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/10 text-yellow-300 border border-yellow-400/40">
+                                    <i class="fa-solid fa-map-marker text-[12px]"></i>
+                                        {% if request.user.access_level == "pole" and request.user.pole %}
+                                            {{ request.user.pole }}
+                                        {% elif request.user.access_level == "region" and request.user.region %}
+                                            {{ request.user.region }}
+                                        {% elif request.user.access_level == "district" and request.user.district %}
+                                            {{ request.user.district }}
+                                        {% elif request.user.access_level == "centre" and request.user.centre %}
+                                            {{ request.user.centre }}
+                                        {% elif request.user.access_level == "national" %}
+                                            National
+                                        {% endif %}
+                </span>
+                                {% endif %}
+
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
+                                    <i class="fa-solid fa-shield-virus text-[9px]"></i>
+                                    COVID-19
+                                </span>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">
+                                    <i class="fa-solid fa-baby text-[9px]"></i>
+                                    Vaccination infantile
+                                </span>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/40">
+                                    <i class="fa-solid fa-syringe text-[9px]"></i>
+                                    PEV de routine
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-[11px] min-w-[220px] space-y-2">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-slate-200/90 font-medium"
+                                   x-text="`Activité ${data.meta.scope_label ? data.meta.scope_label.toLowerCase() : ''}`"></p>
+                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">
+                                    <span x-show="!isLoading">Synchro · OK</span>
+                                    <span x-show="isLoading">Mise à jour…</span>
+                                </span>
+                            </div>
+                            <div class="flex gap-3 items-end">
+                                <div>
+                                    <p class="text-lg font-semibold"
+                                       x-text="formatNumber(data.totals.total_doses_today)"></p>
+                                    <p class="text-[10px] text-slate-300">
+                                        doses enregistrées aujourd’hui
+                                    </p>
+                                </div>
+                                <div class="flex-1 h-10 relative">
+                                    <div class="absolute inset-0 rounded-xl bg-gradient-to-tr from-emerald-500/40 via-sky-500/30 to-amber-400/40 opacity-60 blur-[10px]"></div>
+                                    <div class="absolute inset-0 border border-dashed border-slate-500/40 rounded-xl"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-[10px] text-slate-300">
+                                <span x-text="`Dernière mise à jour : ${formatDateTime(data.meta.last_update)}`"></span>
+                                <span class="flex items-center gap-1">
+                                    <i class="fa-solid fa-circle text-[5px]"
+                                       :class="isLoading ? 'text-amber-300 animate-pulse' : 'text-emerald-400 animate-pulse'"></i>
+                                    <span x-text="isLoading ? 'rafraîchissement en cours' : 'temps quasi réel'"></span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {# BARRE D'ACTIONS / PÉRIODE #}
+                <div class="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
+                    <div class="flex flex-wrap gap-2 text-[11px]">
+                        <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 shadow-sm">
+                            <i class="fa-solid fa-plus text-[9px] text-emerald-500"></i>
+                            Nouvelle campagne
+                        </button>
+                        <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/60 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70">
+                            <i class="fa-solid fa-upload text-[9px]"></i>
+                            Import DHIS2
+                        </button>
+                        <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/60 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70">
+                            <i class="fa-solid fa-download text-[9px]"></i>
+                            Export OMS / PEV
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-[11px] items-center">
+                        <span class="text-slate-500 dark:text-slate-400">Période :</span>
+                        <button
+                                class="px-3 py-1.5 rounded-full"
+                                :class="period === '30d'
+                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                                : 'bg-white/70 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70'"
+                                @click="changePeriod('30d')"
+                        >
+                            30 derniers jours
+                        </button>
+                        <button
+                                class="px-3 py-1.5 rounded-full"
+                                :class="period === 'quarter'
+                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                                : 'bg-white/70 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70'"
+                                @click="changePeriod('quarter')"
+                        >
+                            Trimestre
+                        </button>
+                        <button
+                                class="px-3 py-1.5 rounded-full"
+                                :class="period === 'year'
+                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                                : 'bg-white/70 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70'"
+                                @click="changePeriod('year')"
+                        >
+                            Année
+                        </button>
+                    </div>
+                </div>
+
+                {# FILTRES ACTIFS #}
+                <div class="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
+                    <span class="text-slate-500 dark:text-slate-400">
+                        Filtres actifs :
+                    </span>
+
+                    {# Badge période #}
+                    <span
+                            class="px-2.5 py-1 rounded-full border border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-900/70 flex items-center gap-1"
+                    >
+                        <i class="fa-regular fa-calendar text-[9px]"></i>
+                        <span x-show="period === '30d'">30 derniers jours</span>
+                        <span x-show="period === 'quarter'">Trimestre</span>
+                        <span x-show="period === 'year'">Année</span>
+                    </span>
+
+                    {# Badge maladie #}
+                    <template x-if="selectedDiseaseId">
+                        <span class="px-2.5 py-1 rounded-full border border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-900/70 flex items-center gap-1">
+                            <i class="fa-solid fa-virus text-[9px] text-emerald-500"></i>
+                            <span x-text=" (data.by_disease.find(m => String(m.maladie_id) === selectedDiseaseId) || {}).maladie_nom  || 'Maladie inconnue'  "></span>
+
+                            <button @click="resetDisease()"
+                                    class="ml-1 h-4 w-4 flex items-center justify-center rounded-full bg-slate-300/50 dark:bg-slate-700/50 hover:bg-slate-400/70 transition">
+                                <i class="fa-solid fa-xmark text-[8px]"></i>
+                            </button>
+                        </span>
+                    </template>
+
+                    {# Badge si aucune maladie #}
+                    <template x-if="!selectedDiseaseId">
+                        <span class="px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                            <i class="fa-solid fa-virus-slash text-[9px]"></i>
+                            Toutes maladies
+                        </span>
+                    </template>
+
+                    {# Bouton reset général #}
+                    <button @click="resetFilters()"
+                            class="ml-auto px-2.5 py-1.5 text-[10px] border rounded-full bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+                        Réinitialiser
+                    </button>
+                </div>
+
+                {# Message d'erreur éventuel #}
+                <template x-if="errorMessage">
+                    <div class="mt-2 text-[11px] px-3 py-2 rounded-2xl bg-red-50 border border-red-200 text-red-700 dark:bg-red-950/40 dark:border-red-800 dark:text-red-300">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i>
+                        <span x-text="errorMessage"></span>
+                    </div>
+                </template>
+
+                {# 4 CARDS PRINCIPALES #}
+                <div class="grid grid-cols-1 xl:grid-cols-4 gap-4 mt-2"
+                     :class="{'opacity-60 pointer-events-none': isLoading}">
+                    <!-- Doses -->
+                    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2 shadow-soft/40">
+                        <div class="flex items-center justify-between">
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]"
+                               x-text="periodLabel">
+                            </p>
+                            <span class="h-8 w-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                                <i class="fa-solid fa-syringe text-xs"></i>
+                            </span>
+                        </div>
+                        <p class="text-2xl font-semibold" x-text="formatNumber(data.totals.total_doses)"></p>
+                        <p class="text-[11px] text-emerald-600 dark:text-emerald-400">
+                            <span x-text="formatNumber(data.totals.total_doses_today)"></span> doses aujourd’hui
+                        </p>
+                        <div class="mt-1 h-10 rounded-xl bg-gradient-to-r from-emerald-500/20 via-sky-500/10 to-amber-500/20 border border-dashed border-emerald-500/40"></div>
+                    </div>
+
+                    <!-- Couverture -->
+                    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
+                                Couverture sur population enregistrée
+                            </p>
+                            <span class="h-8 w-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+                                <i class="fa-solid fa-globe-africa text-xs"></i>
+                            </span>
+                        </div>
+                        <p class="text-2xl font-semibold" x-text="`${data.totals.couverture || 0} %`"></p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            <span x-text="formatNumber(data.totals.patients_vaccines)"></span> patient(s) vacciné(s) /
+                            <span x-text="formatNumber(data.totals.total_patients)"></span> enregistré(s)
+                        </p>
+                        <div class="mt-1 flex items-center gap-2 text-[10px]">
+                            <div class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                                <div class="h-full bg-emerald-500"
+                                     :style="`width: ${data.totals.couverture || 0}%`"></div>
+                            </div>
+                            <span x-text="`${data.totals.couverture || 0} %`"></span>
+                        </div>
+                    </div>
+
+                    <!-- Centres -->
+                    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
+                                Centres actifs
+                            </p>
+                            <span class="h-8 w-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+            <i class="fa-solid fa-hospital text-xs"></i>
+        </span>
+                        </div>
+
+                        <p class="text-2xl font-semibold" x-text="formatNumber(data.totals.centres_actifs)"></p>
+
+                        <!-- 👉 Texte dynamique selon le scope utilisateur -->
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400"
+                           x-text="data.meta.scope_label || 'Centres de vaccination dans votre périmètre'">
+                        </p>
+                    </div>
+                    <!-- MAPI -->
+                    <div class="col-span-2 xl:col-span-1 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-[0.16em]">
+                                Incidents &amp; effets indésirables
+                            </p>
+                            <span class="h-8 w-8 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+                                <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+                            </span>
+                        </div>
+                        <p class="text-2xl font-semibold" x-text="formatNumber(data.totals.incidents_30j || 0)"></p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Déclarations MAPI sur les 30 derniers jours ·
+                            <span x-text="formatNumber(data.totals.incidents_24h || 0)"></span> sur les dernières 24h
+                        </p>
+                    </div>
+                </div>
+
+                {# GRAPH + STAT MALADIES / GÉO #}
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-4"
+                     :class="{'opacity-60 pointer-events-none': isLoading}">
+                    <!-- Graph -->
+                    <div class="lg:col-span-2 bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <h2 class="text-sm font-semibold">
+                                    Tendances des vaccinations
+                                </h2>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    Routine · Campagnes COVID-19 · Rougeole-Rubéole · Autres.
+                                </p>
+                            </div>
+                            <button
+                                    type="button"
+                                    @click="exportData()"
+                                    class="text-[11px] px-3 py-1.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 flex items-center gap-1"
+                            >
+                                <i class="fa-solid fa-file-arrow-down text-[10px]"></i>
+                                Exporter les données
+                            </button>
+                        </div>
+                        <div class="mt-2 h-64 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-[11px] text-slate-400 dark:text-slate-500 relative">
+                            <canvas id="vaccinationTrendsChart" class="w-full h-full"></canvas>
+                            <div
+                                    x-show="isLoading"
+                                    class="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-slate-950/60 text-[11px]"
+                            >
+                                <i class="fa-solid fa-spinner animate-spin mr-1"></i>
+                                Mise à jour du graphique…
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats par maladie -->
+                    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-sm font-semibold">
+                                Top maladies par doses
+                            </h2>
+                            <span class="text-[10px] text-slate-400 dark:text-slate-500"
+                                  x-text="`${data.by_disease.length} maladies`"></span>
+                        </div>
+                        <div class="space-y-2 text-[11px] max-h-64 overflow-y-auto">
+                            <!-- Bouton "Toutes maladies" -->
+
+                            <!-- Bouton "Toutes maladies" -->
+                            <button
+                                    type="button"
+                                    class="w-full text-left p-2 rounded-2xl border text-[11px] mb-1"
+                                    :class="!selectedDiseaseId
+        ? 'bg-slate-900 text-white border-slate-900'
+        : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'"
+                                    @click="selectDisease(null)"
+                            >
+                                <div class="flex items-center justify-between">
+                                    <span class="font-semibold text-[12px]">Toutes maladies</span>
+                                    <span class="text-[10px] text-slate-300"
+                                          x-text="formatNumber(data.totals.total_doses) + ' doses'"></span>
+                                </div>
+                                <p class="text-[10px] text-slate-400 dark:text-slate-500">
+                                    Graph & stats géo agrégés sur l’ensemble des vaccinations.
+                                </p>
+                            </button>
+                            <!-- Maladies cliquables -->
+
+                            <template x-for="maladie in data.by_disease" :key="maladie.maladie_id">
+                                <button
+                                        type="button"
+                                        class="w-full text-left p-2 rounded-2xl border flex items-center justify-between gap-3"
+                                        :class="String(maladie.maladie_id) === selectedDiseaseId
+                                        ? 'bg-slate-900 text-white border-slate-900'
+                                        : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-700'"
+                                        @click="selectDisease(maladie.maladie_id)">
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-[12px]" x-text="maladie.maladie_nom"></p>
+                                        <p class="text-slate-500 dark:text-slate-400">
+                                            <span x-text="formatNumber(maladie.patients_vaccines)"></span> patients ·
+                                            <span x-text="formatNumber(maladie.total_doses)"></span> doses
+                                        </p>
+                                    </div>
+                                    <div class="w-16 text-right">
+                                        <span
+                                                class="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px]"
+                                                :class="String(maladie.maladie_id) === selectedDiseaseId
+                                                ? 'bg-emerald-500/20 text-emerald-200'
+                                                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300'"
+                                                x-text="Math.round((maladie.total_doses / (data.totals.total_doses || 1)) * 100) + ' %'"
+                                        ></span>
+                                    </div>
+                                </button>
+                            </template>
+
+                            <template x-if="!data.by_disease.length">
+                                <p class="text-slate-400 dark:text-slate-500 text-[11px]">
+                                    Aucune donnée de vaccination disponible sur la période.
+                                </p>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                {# TABLEAUX GÉO + STOCKS #}
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-5 mt-4"
+                     :class="{'opacity-60 pointer-events-none': isLoading}">
+                    <!-- Stats géographiques -->
+                    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-sm font-semibold">
+                                Répartition géographique
+                            </h2>
+                            <div class="flex items-center gap-1 text-[11px]">
+                                <button
+                                        class="px-2.5 py-1 rounded-full"
+                                        :class="geoTab === 'region' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-900/70'"
+                                        @click="geoTab = 'region'"
+                                >
+                                    Régions
+                                </button>
+                                <button
+                                        class="px-2.5 py-1 rounded-full"
+                                        :class="geoTab === 'district' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-900/70'"
+                                        @click="geoTab = 'district'"
+                                >
+                                    Districts
+                                </button>
+                                <button
+                                        class="px-2.5 py-1 rounded-full"
+                                        :class="geoTab === 'centre' ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-900/70'"
+                                        @click="geoTab = 'centre'"
+                                >
+                                    Centres
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto text-[11px]">
+                            <table class="w-full">
+                                <thead class="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                                <tr>
+                                    <th class="py-2 pr-3 text-left">
+                                        <span x-show="geoTab === 'region'">Région</span>
+                                        <span x-show="geoTab === 'district'">District</span>
+                                        <span x-show="geoTab === 'centre'">Centre</span>
+                                    </th>
+                                    <th class="py-2 pr-3 text-left">Doses</th>
+                                    <th class="py-2 text-left">Patients</th>
+                                </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                                <template x-for="row in currentGeoRows" :key="row.id">
+                                    <tr>
+                                        <td class="py-2 pr-3" x-text="row.label"></td>
+                                        <td class="py-2 pr-3" x-text="formatNumber(row.total_doses)"></td>
+                                        <td class="py-2" x-text="formatNumber(row.patients_vaccines)"></td>
+                                    </tr>
+                                </template>
+                                <template x-if="!currentGeoRows.length">
+                                    <tr>
+                                        <td colspan="3" class="py-4 text-center text-slate-400 dark:text-slate-500">
+                                            Aucune donnée disponible.
+                                        </td>
+                                    </tr>
+                                </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Centres en alerte stock -->
+                    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-sm font-semibold">
+                                Centres en alerte · Stock &lt; 7 jours
+                            </h2>
+                            <button class="text-[11px] px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-900/80">
+                                Voir tous
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-[11px]">
+                                <thead class="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                                <tr>
+                                    <th class="py-2 pr-3 text-left">Centre</th>
+                                    <th class="py-2 pr-3 text-left">Région</th>
+                                    <th class="py-2 pr-3 text-left">Vaccin</th>
+                                    <th class="py-2 pr-3 text-left">Stock</th>
+                                    <th class="py-2 text-left">Statut</th>
+                                </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                                <template x-for="alert in data.stock_alerts"
+                                          :key="`${alert.centre_nom}-${alert.vaccin_nom}-${alert.statut}`">
+                                    <tr>
+                                        <td class="py-2 pr-3" x-text="alert.centre_nom || '-'"></td>
+                                        <td class="py-2 pr-3" x-text="alert.region_nom || '-'"></td>
+                                        <td class="py-2 pr-3" x-text="alert.vaccin_nom || '-'"></td>
+                                        <td class="py-2 pr-3">
+                                            <span x-text="`${formatNumber(alert.quantite || 0)} dose(s)`"></span>
+                                            <span class="text-[10px] text-slate-500 dark:text-slate-400"
+                                                  x-show="alert.jours_restants !== null">
+                                                    · <span x-text="`${alert.jours_restants} j restants`"></span>
+                                                </span>
+                                        </td>
+                                        <td class="py-2">
+                                                <span
+                                                        class="px-2 py-0.5 rounded-full text-[10px]"
+                                                        :class="alert.statut === 'critique'
+                                                        ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300'
+                                                        : 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'"
+                                                        x-text="alert.statut === 'critique' ? 'Critique' : 'À réapprovisionner'"
+                                                ></span>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-if="!data.stock_alerts.length">
+                                    <tr>
+                                        <td colspan="5"
+                                            class="py-4 text-center text-[11px] text-slate-500 dark:text-slate-400">
+                                            Aucun centre en alerte stock selon les critères définis.
+                                        </td>
+                                    </tr>
+                                </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const labelsEl = document.getElementById('chart-vacc-labels');
-            const dataEl = document.getElementById('chart-vacc-data');
-            if (!labelsEl || !dataEl) return;
-
-            const labels = JSON.parse(labelsEl.textContent);
-            const data = JSON.parse(dataEl.textContent);
-
-            const canvas = document.getElementById('vaccinationTrendsChart');
-            if (!canvas) return;
-
-            const ctx = canvas.getContext('2d');
-
-            new Chart(ctx, {
-                type: 'line',
+        function dashboardApp() {
+            return {
                 data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Doses administrées (30 derniers jours)',
-                        data: data,
-                        tension: 0.3,
-                        fill: true,
-                        borderWidth: 2,
-                    }]
+                    meta: {},
+                    totals: {},
+                    trends: {labels: [], data: []},
+                    by_disease: [],
+                    geo: {regions: [], districts: [], centres: []},
+                    stock_alerts: [],
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return context.parsed.y.toLocaleString('fr-FR') + ' dose(s)';
-                                }
+                period: '30d',
+                geoTab: 'region',
+                selectedDiseaseId: null,   // null = toutes maladies
+                chartInstance: null,
+                apiUrl: '/management/dashboard/stats/',
+                isLoading: false,
+                errorMessage: '',
+
+                get periodLabel() {
+                    if (this.period === 'year') {
+                        return 'Doses administrées (12 derniers mois)';
+                    }
+                    if (this.period === 'quarter') {
+                        return 'Doses administrées (3 derniers mois)';
+                    }
+                    return 'Doses administrées (30 derniers jours)';
+                },
+
+                get currentGeoRows() {
+                    if (!this.data.geo) return [];
+                    const geoBlock = this.data.geo;
+
+                    if (this.geoTab === 'region') {
+                        return (geoBlock.regions || []).map(r => ({
+                            id: r.region_id,
+                            label: r.region_nom,
+                            total_doses: r.total_doses,
+                            patients_vaccines: r.patients_vaccines,
+                        }));
+                    }
+                    if (this.geoTab === 'district') {
+                        return (geoBlock.districts || []).map(r => ({
+                            id: r.district_id,
+                            label: r.district_nom,
+                            total_doses: r.total_doses,
+                            patients_vaccines: r.patients_vaccines,
+                        }));
+                    }
+                    return (geoBlock.centres || []).map(r => ({
+                        id: r.centre_id,
+                        label: r.centre_nom,
+                        total_doses: r.total_doses,
+                        patients_vaccines: r.patients_vaccines,
+                    }));
+                },
+
+                init() {
+                    // Données initiales côté serveur
+                    const el = document.getElementById('dashboard-data');
+                    if (el && el.textContent.trim()) {
+                        try {
+                            this.data = JSON.parse(el.textContent);
+                            if (this.data.meta && this.data.meta.period) {
+                                this.period = this.data.meta.period;
                             }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                        },
-                        y: {
-                            beginAtZero: true,
+                            if (this.data.meta && this.data.meta.selected_disease_id) {
+                                this.selectedDiseaseId = String(this.data.meta.selected_disease_id);
+                            }
+                        } catch (e) {
+                            console.error('Erreur de parsing du JSON initial du dashboard', e);
                         }
                     }
+                    this.initChart();
+                },
+
+                async loadData() {
+                    const params = new URLSearchParams();
+                    if (this.period) {
+                        params.set('period', this.period);
+                    }
+                    if (this.selectedDiseaseId) {
+                        params.set('disease_id', this.selectedDiseaseId);
+                    }
+
+                    this.isLoading = true;
+                    this.errorMessage = '';
+
+                    try {
+                        const response = await fetch(`${this.apiUrl}?${params.toString()}`, {
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+                        if (!response.ok) {
+                            console.error('Erreur de chargement du dashboard', response.status);
+                            this.errorMessage = "Impossible de rafraîchir les données du dashboard.";
+                            return;
+                        }
+                        const payload = await response.json();
+                        this.data = payload;
+                        this.updateChart();
+                    } catch (e) {
+                        console.error('Erreur de chargement du dashboard', e);
+                        this.errorMessage = "Erreur réseau lors du chargement des données.";
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                changePeriod(period) {
+                    if (this.period === period) return;
+                    this.period = period;
+                    this.loadData();
+                },
+
+                resetDisease() {
+                    if (!this.selectedDiseaseId) return;
+                    this.selectedDiseaseId = null;
+                    this.loadData();
+                },
+
+                resetFilters() {
+                    let changed = false;
+                    if (this.period !== '30d') {
+                        this.period = '30d';
+                        changed = true;
+                    }
+                    if (this.selectedDiseaseId !== null) {
+                        this.selectedDiseaseId = null;
+                        changed = true;
+                    }
+                    if (changed) {
+                        this.loadData();
+                    }
+                },
+
+                getTrendData() {
+                    return this.data.trends || {labels: [], data: []};
+                },
+
+                initChart() {
+                    const canvas = document.getElementById('vaccinationTrendsChart');
+                    if (!canvas) {
+                        console.warn('Canvas vaccinationTrendsChart introuvable');
+                        return;
+                    }
+
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        console.warn('Impossible de récupérer le contexte 2D du canvas');
+                        return;
+                    }
+
+                    const trend = this.getTrendData(); // { labels: [], data: [] }
+
+                    // Par sécurité : détruire toute instance précédente
+                    if (this.chartInstance) {
+                        try {
+                            this.chartInstance.destroy();
+                        } catch (e) {
+                            console.error('Erreur lors de la destruction du graphique', e);
+                        }
+                        this.chartInstance = null;
+                    }
+
+                    this.chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: Array.isArray(trend.labels) ? trend.labels : [],
+                            datasets: [{
+                                label: 'Doses administrées',
+                                data: Array.isArray(trend.data) ? trend.data : [],
+                                tension: 0.3,
+                                fill: true,
+                                borderWidth: 2,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 300
+                            },
+                            plugins: {
+                                legend: {display: false},
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) =>
+                                            context.parsed.y.toLocaleString('fr-FR') + ' dose(s)'
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {grid: {display: false}},
+                                y: {beginAtZero: true}
+                            }
+                        }
+                    });
+                },
+
+                updateChart() {
+                    const canvas = document.getElementById('vaccinationTrendsChart');
+                    if (!canvas) {
+                        console.warn('Canvas vaccinationTrendsChart introuvable (updateChart)');
+                        return;
+                    }
+
+                    const trend = this.getTrendData();
+
+                    // 👉 On détruit toujours l’instance précédente et on recrée
+                    if (this.chartInstance) {
+                        try {
+                            this.chartInstance.destroy();
+                        } catch (e) {
+                            console.error('Erreur lors de la destruction du graphique (update)', e);
+                        }
+                        this.chartInstance = null;
+                    }
+
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        console.warn('Impossible de récupérer le contexte 2D du canvas (updateChart)');
+                        return;
+                    }
+
+                    this.chartInstance = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: Array.isArray(trend.labels) ? trend.labels : [],
+                            datasets: [{
+                                label: 'Doses administrées',
+                                data: Array.isArray(trend.data) ? trend.data : [],
+                                tension: 0.3,
+                                fill: true,
+                                borderWidth: 2,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 300
+                            },
+                            plugins: {
+                                legend: {display: false},
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) =>
+                                            context.parsed.y.toLocaleString('fr-FR') + ' dose(s)'
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {grid: {display: false}},
+                                y: {beginAtZero: true}
+                            }
+                        }
+                    });
+                },
+
+                selectDisease(id) {
+                    if (id === null) {
+                        if (!this.selectedDiseaseId) return;
+                        this.selectedDiseaseId = null;
+                    } else {
+                        const newId = String(id);
+                        if (this.selectedDiseaseId === newId) return;
+                        this.selectedDiseaseId = newId;
+                    }
+                    this.loadData();  // recharge TOUT le dashboard pour cette maladie
+                },
+
+                exportData() {
+                    // Export JSON courant (période + maladie) dans un fichier
+                    const blob = new Blob([JSON.stringify(this.data, null, 2)], {type: 'application/json'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    const labelPeriod = this.period || '30d';
+                    a.download = `dashboard_vaccination_${labelPeriod}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                },
+
+                formatNumber(value) {
+                    if (value === null || value === undefined) return '0';
+                    return Number(value).toLocaleString('fr-FR');
+                },
+
+                formatDateTime(isoString) {
+                    if (!isoString) return '-';
+                    const d = new Date(isoString);
+                    if (isNaN(d)) return '-';
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const year = d.getFullYear();
+                    const hours = String(d.getHours()).padStart(2, '0');
+                    const minutes = String(d.getMinutes()).padStart(2, '0');
+                    return `${day}/${month}/${year} · ${hours}:${minutes}`;
                 }
-            });
-        });
+            }
+        }
     </script>
 {% endblock %}
