@@ -5,6 +5,7 @@ import json
 import os
 import tempfile
 from collections import defaultdict
+from pathlib import Path
 
 import qrcode
 from django.conf import settings
@@ -708,7 +709,21 @@ class PatientVaccinationCarnetPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
         img.save(buffer, format="PNG")
         qr_base64 = base64.b64encode(buffer.getvalue()).decode("ascii")
         qr_data_uri = f"data:image/png;base64,{qr_base64}"
+        # ---------- CHEMINS STATIC EN FILE:// ----------
+        static_root = Path(settings.STATIC_ROOT or (settings.BASE_DIR / "staticfiles"))
 
+        logo_ci_path = static_root / "images" / "images.jpeg"
+        logo_inhp_path = static_root / "images" / "logo_inhp.png"
+        logo_mshp_path = static_root / "images" / "logoMSHPCMU (1).svg"
+
+        # (Optionnel) Debug dans les logs pour vérifier que les fichiers existent
+        print("LOGO CI EXISTS:", logo_ci_path, logo_ci_path.exists())
+        print("LOGO INHP EXISTS:", logo_inhp_path, logo_inhp_path.exists())
+        print("LOGO MSHP EXISTS:", logo_mshp_path, logo_mshp_path.exists())
+
+        logo_ci_uri = logo_ci_path.as_uri()
+        logo_inhp_uri = logo_inhp_path.as_uri()
+        logo_mshp_uri = logo_mshp_path.as_uri()
         # 4) Contexte pour le template
         context = {
             "patient": patient,
@@ -718,6 +733,10 @@ class PatientVaccinationCarnetPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
             "consultations": consultations,
             "today": timezone.now().date(),
             "qr_code_data": qr_data_uri,
+            "qr_code_data": qr_data_uri,
+            "logo_ci_uri": logo_ci_uri,
+            "logo_inhp_uri": logo_inhp_uri,
+            "logo_mshp_uri": logo_mshp_uri,
         }
 
         # 5) Rendu HTML
@@ -1075,6 +1094,23 @@ class VaccinationCertificatPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
         qr_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
         qr_data_uri = f"data:image/png;base64,{qr_base64}"
 
+
+        # ---------- CHEMINS STATIC EN FILE:// ----------
+        static_root = Path(settings.STATIC_ROOT or (settings.BASE_DIR / "staticfiles"))
+
+        logo_ci_path = static_root / "images" / "images.jpeg"
+        logo_inhp_path = static_root / "images" / "logo_inhp.png"
+        logo_mshp_path = static_root / "images" / "logoMSHPCMU (1).svg"
+
+        # (Optionnel) Debug dans les logs pour vérifier que les fichiers existent
+        print("LOGO CI EXISTS:", logo_ci_path, logo_ci_path.exists())
+        print("LOGO INHP EXISTS:", logo_inhp_path, logo_inhp_path.exists())
+        print("LOGO MSHP EXISTS:", logo_mshp_path, logo_mshp_path.exists())
+
+        logo_ci_uri = logo_ci_path.as_uri()
+        logo_inhp_uri = logo_inhp_path.as_uri()
+        logo_mshp_uri = logo_mshp_path.as_uri()
+
         template = get_template("administration/vaccinations/certificat_vaccination_pdf.html")
 
         context = {
@@ -1083,6 +1119,9 @@ class VaccinationCertificatPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
             "centre": centre,
             "today": timezone.now().date(),
             "qr_code_data": qr_data_uri,
+            "logo_ci_uri": logo_ci_uri,
+            "logo_inhp_uri": logo_inhp_uri,
+            "logo_mshp_uri": logo_mshp_uri,
         }
 
         html_string = template.render(context, request=request)
