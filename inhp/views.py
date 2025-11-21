@@ -730,7 +730,7 @@ class PatientVaccinationCarnetPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
         font_config = FontConfiguration()
 
         # ✅ IMPORTANT : base_url = STATIC_ROOT (là où collectstatic dépose les fichiers)
-        base_url = settings.STATIC_ROOT or settings.BASE_DIR
+        base_url = request.build_absolute_uri('/')
 
         html = HTML(
             string=html_string,
@@ -1096,7 +1096,7 @@ class VaccinationCertificatPDFView(StaffOnlyMixin, LoginRequiredMixin, View):
         font_config = FontConfiguration()
 
         # 🟢 BASE_URL = STATIC_ROOT pour que les {% static %} soient résolus depuis le disque
-        base_url = settings.STATIC_ROOT or settings.BASE_DIR
+        base_url = request.build_absolute_uri('/')
 
         html = HTML(
             string=html_string,
