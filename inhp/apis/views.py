@@ -164,9 +164,7 @@ class VaccinationViewSet(viewsets.ModelViewSet):
     # ---------------------------------------------------
     def get_queryset(self):
         qs = (
-            Vaccination.objects
-            .filter(deleted_at__isnull=True)
-            .select_related('patient', 'centre', 'vaccin', 'lot', 'created_by')
+            Vaccination.objects.all().select_related('patient', 'centre', 'vaccin', 'lot', 'created_by')
         )
 
         # 🔒 Scope access_level
@@ -248,7 +246,6 @@ class VaccinationViewSet(viewsets.ModelViewSet):
         qs = (
             Vaccination.objects
             .filter(
-                deleted_at__isnull=True,
                 date_rappel__isnull=False,
                 date_rappel__gte=timezone.now().date(),
                 date_rappel__lte=date_limit,
@@ -271,7 +268,6 @@ class VaccinationViewSet(viewsets.ModelViewSet):
         qs = (
             Vaccination.objects
             .filter(
-                deleted_at__isnull=True,
                 date_rappel__isnull=False,
                 date_rappel__lt=timezone.now().date(),
             )
@@ -299,7 +295,7 @@ class VaccinationViewSet(viewsets.ModelViewSet):
         - répartitions (vaccin / centre / dose)
         - KPIs (rappels, activité récente, couverture de patients, centres actifs, etc.)
         """
-        base_qs = Vaccination.objects.filter(deleted_at__isnull=True)
+        base_qs = Vaccination.objects.all()
         base_qs = self._apply_access_level_scope(base_qs)
 
         today = date.today()
@@ -725,7 +721,7 @@ class VaccinViewSet(viewsets.ModelViewSet):
 
 
 class PatientListCreateView(generics.ListCreateAPIView):
-    queryset = Patient.objects.filter(deleted_at__isnull=True)
+    queryset = Patient.objects.all()
     serializer_class = PatientSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -760,7 +756,7 @@ class PatientRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class MapiListCreateView(generics.ListCreateAPIView):
-    queryset = Mapi.objects.filter(deleted_at__isnull=True)
+    queryset = Mapi.objects.all()
     serializer_class = MapiSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -790,7 +786,7 @@ class MapiRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class VaccineExtListCreateView(generics.ListCreateAPIView):
-    queryset = VaccineExt.objects.filter(deleted_at__isnull=True)
+    queryset = VaccineExt.objects.all()
     serializer_class = VaccineExtSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -826,7 +822,7 @@ class PatientVaccinationsListView(generics.ListAPIView):
 
     def get_queryset(self):
         code_patient = self.kwargs['code_patient']
-        return Vaccination.objects.filter(patient__code_patient=code_patient, deleted_at__isnull=True)
+        return Vaccination.objects.filter(patient__code_patient=code_patient)
 
 
 class PatientMapisListView(generics.ListAPIView):
@@ -836,7 +832,7 @@ class PatientMapisListView(generics.ListAPIView):
 
     def get_queryset(self):
         code_patient = self.kwargs['code_patient']
-        return Mapi.objects.filter(patient__code_patient=code_patient, deleted_at__isnull=True)
+        return Mapi.objects.filter(patient__code_patient=code_patient)
 
 
 class PatientVaccineExtsListView(generics.ListAPIView):
@@ -846,7 +842,7 @@ class PatientVaccineExtsListView(generics.ListAPIView):
 
     def get_queryset(self):
         code_patient = self.kwargs['code_patient']
-        return VaccineExt.objects.filter(patient__code_patient=code_patient, deleted_at__isnull=True)
+        return VaccineExt.objects.filter(patient__code_patient=code_patient)
 
 
 class FicheRetroViewSet(viewsets.ViewSet):
