@@ -13,7 +13,7 @@
                 <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{{ patient.code_patient }}</p>
             </div>
         </div>
-        
+
         <div class="flex items-center justify-between text-[10px]">
             <span class="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">
                 <i class="fa-solid fa-circle text-[4px]"></i>
@@ -35,7 +35,7 @@
                 <p class="text-[9px] text-emerald-600 dark:text-emerald-400">Vaccins</p>
             </div>
         </div>
-        
+
         <!-- Prochain rappel -->
         {% if prochain_rappel %}
         <div class="mt-2 p-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
@@ -69,7 +69,7 @@
         </a>
 
         <!-- Mes rendez-vous avec badge -->
-        <a href="{#% url 'patient_rendez_vous' %#}"
+        <a href="{% url 'patient_rendez_vous_liste' %}"
            class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-900/5 dark:hover:bg-slate-50/5 group relative">
             <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-calendar-check text-xs"></i>
@@ -233,7 +233,7 @@
                 En ligne
             </span>
         </div>
-        
+
         <div class="text-[8px] text-slate-400 dark:text-slate-600 text-center mt-1">
             © {% now "Y" %} Vaccination CI · Espace patient
         </div>

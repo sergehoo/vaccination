@@ -1,0 +1,153 @@
+{% extends "patient_space/patient_base.html" %}
+{% load static %}
+
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- En-tête -->
+    <div class="mb-8 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+            <i class="fa-solid fa-triangle-exclamation text-red-600 dark:text-red-400 text-2xl"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-slate-800 dark:text-white mb-2">
+            Annuler le rendez-vous
+        </h1>
+        <p class="text-slate-600 dark:text-slate-300">
+            Êtes-vous sûr de vouloir annuler ce rendez-vous ?
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+        <!-- Récapitulatif du rendez-vous -->
+        <div class="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 mb-6">
+            <h3 class="font-semibold text-slate-800 dark:text-white mb-3">Rendez-vous à annuler</h3>
+            <div class="grid md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-slate-500 dark:text-slate-400">Centre</p>
+                    <p class="text-slate-800 dark:text-white font-medium">{{ rendez_vous.centre.nom }}</p>
+                </div>
+                <div>
+                    <p class="text-slate-500 dark:text-slate-400">Date et heure</p>
+                    <p class="text-slate-800 dark:text-white font-medium">
+                        {{ rendez_vous.date_rendezvous|date:"d/m/Y H:i" }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-slate-500 dark:text-slate-400">Type</p>
+                    <p class="text-slate-800 dark:text-white font-medium">
+                        {{ rendez_vous.get_type_rendezvous_display }}
+                    </p>
+                </div>
+                <div>
+                    <p class="text-slate-500 dark:text-slate-400">Statut</p>
+                    <p class="text-slate-800 dark:text-white font-medium">
+                        {{ rendez_vous.get_statut_display }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire d'annulation -->
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                        Veuillez indiquer le motif de l'annulation *
+                    </label>
+                    {{ form.motif_annulation }}
+                    {% if form.motif_annulation.errors %}
+                    <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {{ form.motif_annulation.errors }}
+                    </div>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Ce motif nous aide à améliorer nos services.
+                    </p>
+                </div>
+
+                <!-- Informations importantes -->
+                <div class="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4 border border-amber-200 dark:border-amber-800">
+                    <h4 class="font-semibold text-amber-800 dark:text-amber-300 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-info-circle"></i>
+                        Informations importantes
+                    </h4>
+                    <ul class="text-sm text-amber-700 dark:text-amber-400 space-y-1">
+                        <li>• L'annulation est définitive</li>
+                        <li>• Vous pourrez prendre un nouveau rendez-vous à tout moment</li>
+                        <li>• En cas d'urgence, contactez directement le centre</li>
+                        {% if not rendez_vous.peut_etre_annule %}
+                        <li class="text-red-600 dark:text-red-400 font-semibold">
+                            • Ce rendez-vous ne peut plus être annulé en ligne
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- Boutons -->
+                <div class="flex gap-3 pt-4">
+                    <a href="{% url 'patient_rendez_vous_detail' rendez_vous.pk %}" 
+                       class="flex-1 px-6 py-3 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium text-center">
+                        Retour au détail
+                    </a>
+                    
+                    {% if rendez_vous.peut_etre_annule %}
+                    <button type="submit" 
+                            class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-calendar-xmark"></i>
+                        Confirmer l'annulation
+                    </button>
+                    {% else %}
+                    <button type="button" 
+                            disabled
+                            class="flex-1 px-6 py-3 bg-slate-400 cursor-not-allowed text-white rounded-xl font-medium flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-ban"></i>
+                        Annulation impossible
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Suggestions -->
+    {% if rendez_vous.peut_etre_annule %}
+    <div class="mt-8 text-center">
+        <p class="text-slate-600 dark:text-slate-400 mb-4">
+            Vous souhaitez plutôt modifier ce rendez-vous ?
+        </p>
+        <a href="{% url 'patient_rendez_vous_modifier' rendez_vous.pk %}" 
+           class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium">
+            <i class="fa-solid fa-pen"></i>
+            Modifier le rendez-vous
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    background: white;
+    color: #1f2937;
+    min-height: 100px;
+    resize: vertical;
+}
+
+.dark textarea {
+    background: #1e293b;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+
+textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,854 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Modifier {{ object.nom }}{% else %}Nouvelle Campagne PEV{% endif %}
+{% endblock %}
+
+{% block content %}
+    {{ geo_data|json_script:"geo-data" }}
+    <div x-data="campaignForm()" class="min-h-screen py-6">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 ">
+            {# HERO / BANDEAU #}
+            <div class="mb-6 space-y-4">
+                <div class="relative overflow-hidden rounded-3xl border border-white/20 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft px-5 sm:px-7 py-5 sm:py-6">
+                    <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
+                        <div class="space-y-2 max-w-xl">
+                            <p class="text-[10px] uppercase tracking-[0.28em] text-slate-300/90">
+                                Campagne PEV • Formulaire
+                            </p>
+                            <h1 class="text-xl sm:text-2xl font-semibold">
+                                {% if object %}Modifier la campagne{% else %}Nouvelle Campagne PEV{% endif %}
+                            </h1>
+                            <p class="text-[13px] text-slate-200/90">
+                                {% if object %}
+                                    Modifiez les paramètres, zones et modalités de rémunération de la campagne
+                                    {{ object.nom }}.
+                                {% else %}
+                                    Définissez les informations clés, les zones couvertes et la rémunération des agents.
+                                {% endif %}
+                            </p>
+
+                            <div class="flex flex-wrap gap-2 text-[11px] mt-2">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white/5 border border-white/15">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>
+                                Étape 1 : Informations & paramètres
+                            </span>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+                                <i class="fa-solid fa-location-dot text-[10px] mr-1"></i>
+                                Zones & équipes
+                            </span>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+                                <i class="fa-solid fa-sack-dollar text-[10px] mr-1"></i>
+                                Rémunération à la performance
+                            </span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-end gap-2 text-[11px]">
+                            <div class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/5 border border-white/15">
+                            <span class="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-100 font-medium">
+                                Service
+                            </span>
+                                <span class="text-slate-100">
+                                {% if service_auto %}{{ service_auto.nom }}{% else %}Non défini{% endif %}
+                            </span>
+                            </div>
+                            <div class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/5 border border-white/15 font-mono">
+                            <span class="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-100 font-medium">
+                                Code prévisionnel
+                            </span>
+                                <span>
+                                {% if object %}{{ object.code }}{% else %}{{ code_auto }}{% endif %}
+                            </span>
+                            </div>
+                            <a href="{% url 'pev:campaign_list' %}"
+                               class="inline-flex items-center mt-1 px-3 py-1.5 rounded-2xl bg-white text-slate-900 text-xs shadow-sm hover:bg-slate-50">
+                                <i class="fa-solid fa-arrow-left text-[10px] mr-1.5"></i>
+                                Retour à la liste
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- En-tête + bandeau résumé -->
+                <div class="mb-6 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">
+                                {% if object %}
+                                    Modifier la campagne
+                                {% else %}
+                                    Nouvelle Campagne PEV
+                                {% endif %}
+                            </h1>
+                            <p class="mt-2 text-sm text-gray-600">
+                                {% if object %}
+                                    Modifiez les informations de la campagne {{ object.nom }}
+                                {% else %}
+                                    Créez une nouvelle campagne de vaccination
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="flex space-x-3">
+                            <a href="{% url 'pev:campaign_list' %}"
+                               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                                </svg>
+                                Retour
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Bandeau info -->
+                    <div class="bg-white border border-blue-100 shadow-sm rounded-xl px-4 py-3 flex flex-wrap items-center gap-3">
+                        <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100">
+                        Service
+                    </span>
+                            <span class="text-sm text-gray-800 font-medium">
+                        {% if service_auto %}
+                            {{ service_auto.nom }}
+                        {% else %}
+                            Non défini pour votre compte
+                        {% endif %}
+                    </span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        Code prévisionnel
+                    </span>
+                            <span class="text-sm font-mono text-gray-900">
+                        {% if object %}
+                            {{ object.code }}
+                        {% else %}
+                            {{ code_auto }}
+                        {% endif %}
+                    </span>
+                        </div>
+                        <div class="ml-auto text-xs text-gray-500">
+                            Le code et le service seront affectés automatiquement à l’enregistrement.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulaire -->
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Messages d'erreur généraux -->
+                    {% if form.non_field_errors %}
+                        <div class="mb-6 bg-red-50 border border-red-200 rounded-md p-4 py-6 ">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <h3 class="text-sm font-medium text-red-800">
+                                        Erreurs de validation
+                                    </h3>
+                                    <div class="mt-2 text-sm text-red-700">
+                                        <ul class="list-disc list-inside space-y-1">
+                                            {% for error in form.non_field_errors %}
+                                                <li>{{ error }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="space-y-6">
+                        <!-- Section Informations Générales -->
+                        <div class="bg-white shadow rounded-lg">
+                            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                                <h2 class="text-lg font-medium text-gray-900">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-50 text-amber-600 text-xs font-bold">1</span>
+
+                                    <svg class="inline w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Informations Générales
+                                </h2>
+                            </div>
+                            <div class="px-6 py-6 space-y-6">
+                                <!-- Service + Code (read-only) -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Service PEV
+                                        </label>
+                                        <input type="text" value="  
+                                                
+                                                {% if service_auto %}{{ service_auto.nom }}{% else %}Aucun service rattaché{% endif %}"
+                                               readonly
+                                               class="block w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-md shadow-sm text-sm text-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Code campagne (auto-généré)
+                                        </label>
+                                        <input type="text"
+                                               value="
+                                                       
+                                                       
+                                                       {% if object %}{{ object.code }}{% else %}{{ code_auto }}{% endif %}"
+                                               readonly
+                                               class="block w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-md shadow-sm font-mono text-sm text-gray-800">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-6">
+                                    <!-- Nom -->
+                                    <div>
+                                        <label for="{{ form.nom.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-1">
+                                            Nom <span class="text-red-500">*</span>
+                                        </label>
+                                        {{ form.nom }}
+                                        {% if form.nom.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.nom.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Nom court -->
+                                    <div>
+                                        <label for="{{ form.nom_court.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-1">
+                                            Nom court
+                                        </label>
+                                        {{ form.nom_court }}
+                                        {% if form.nom_court.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.nom_court.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Responsable -->
+                                    <div>
+                                        <label for="{{ form.responsable_campagne.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-1">
+                                            Responsable
+                                        </label>
+                                        {{ form.responsable_campagne }}
+                                        {% if form.responsable_campagne.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.responsable_campagne.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section Type et Période -->
+                        <div class="bg-white shadow rounded-lg">
+                            <div class="px-6 py-4 border-b border-gray-200">
+                                <h2 class="text-lg font-medium text-gray-900">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-50 text-amber-600 text-xs font-bold">2</span>
+
+                                    <svg class="inline w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    Type et Période
+                                </h2>
+                            </div>
+                            <div class="px-6 py-6 space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Type de campagne -->
+                                    <div>
+                                        <label for="{{ form.type_campagne.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-1">
+                                            Type de campagne <span class="text-red-500">*</span>
+                                        </label>
+                                        {{ form.type_campagne }}
+                                        {% if form.type_campagne.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.type_campagne.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Fréquence -->
+                                    <div>
+                                        <label for="{{ form.frequence.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-1">
+                                            Fréquence <span class="text-red-500">*</span>
+                                        </label>
+                                        {{ form.frequence }}
+                                        {% if form.frequence.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.frequence.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Date début -->
+                                    <div>
+                                        <label for="{{ form.date_debut.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-1">
+                                            Date de début <span class="text-red-500">*</span>
+                                        </label>
+                                        {{ form.date_debut }}
+                                        {% if form.date_debut.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.date_debut.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Date fin -->
+                                    <div>
+                                        <label for="{{ form.date_fin.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-1">
+                                            Date de fin <span class="text-red-500">*</span>
+                                        </label>
+                                        {{ form.date_fin }}
+                                        {% if form.date_fin.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.date_fin.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                {% if object %}
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label for="{{ form.statut.id_for_label }}"
+                                                   class="block text-sm font-medium text-gray-700 mb-1">
+                                                Statut
+                                            </label>
+                                            {{ form.statut }}
+                                            {% if form.statut.errors %}
+                                                <p class="mt-1 text-sm text-red-600">{{ form.statut.errors.0 }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+<!-- Section Population Cible -->
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">
+                                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-50 text-amber-600 text-xs font-bold">4</span>
+
+                            <svg class="inline w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                            Population Cible
+                        </h2>
+                        <span class="text-xs text-gray-500">Section 3/5</span>
+                    </div>
+                    <div class="px-6 py-6 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Âge minimum -->
+                            <div>
+                                <label for="{{ form.age_min_mois.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Âge minimum (mois)
+                                </label>
+                                {{ form.age_min_mois }}
+                                {% if form.age_min_mois.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.age_min_mois.errors.0 }}</p>
+                                {% endif %}
+                                <p class="mt-1 text-xs text-gray-500" x-show="formData.age_min_mois">
+                                    <span x-text="formatAge(formData.age_min_mois)"></span>
+                                </p>
+                            </div>
+
+                            <!-- Âge maximum -->
+                            <div>
+                                <label for="{{ form.age_max_mois.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Âge maximum (mois)
+                                </label>
+                                {{ form.age_max_mois }}
+                                {% if form.age_max_mois.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.age_max_mois.errors.0 }}</p>
+                                {% endif %}
+                                <p class="mt-1 text-xs text-gray-500" x-show="formData.age_max_mois">
+                                    <span x-text="formatAge(formData.age_max_mois)"></span>
+                                </p>
+                            </div>
+
+                            <!-- Population cible -->
+                            <div>
+                                <label for="{{ form.population_cible.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Population cible
+                                </label>
+                                {{ form.population_cible }}
+                                {% if form.population_cible.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.population_cible.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Couverture cible -->
+                            <div>
+                                <label for="{{ form.couverture_cible.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Objectif de couverture (%)
+                                </label>
+                                {{ form.couverture_cible }}
+                                {% if form.couverture_cible.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.couverture_cible.errors.0 }}</p>
+                                {% endif %}
+                                <div class="mt-2" x-show="formData.couverture_cible">
+                                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                        <span>Objectif</span>
+                                        <span x-text="formData.couverture_cible + '%'"></span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" 
+                                             :style="'width: ' + Math.min(formData.couverture_cible, 100) + '%'"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Budget alloué -->
+                            <div>
+                                <label for="{{ form.budget_alloue.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Budget alloué (F CFA)
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">CFA</span>
+                                    </div>
+                                    {{ form.budget_alloue }}
+                                </div>
+                                {% if form.budget_alloue.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.budget_alloue.errors.0 }}</p>
+                                {% endif %}
+                                <div class="mt-1 text-xs text-gray-500" x-show="formData.budget_alloue">
+                                    <span x-text="formatBudget(formData.budget_alloue)"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                        {# 3. Rémunération & performance #}
+                        <div class="bg-white shadow rounded-2xl border border-gray-100" x-data="{
+                        montant: {{ form.montant_par_vaccination.value|default:'100' }},
+                        exempleVaccins: 100
+                    }">
+                            <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                                <h2 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-50 text-amber-600 text-xs font-bold">4</span>
+                                    Rémunération & performance des agents
+                                </h2>
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] border border-amber-100">
+                            <i class="fa-solid fa-circle-info text-[10px]"></i>
+                            Chaque vaccination est payée à l’agent.
+                        </span>
+                            </div>
+                            <div class="px-6 py-6 space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label for="{{ form.remuneration_mode.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-1">
+                                            Mode de rémunération
+                                        </label>
+                                        {{ form.remuneration_mode }}
+                                        {% if form.remuneration_mode.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.remuneration_mode.errors.0 }}</p>
+                                        {% endif %}
+                                        <p class="mt-1 text-xs text-gray-500">
+                                            Choisissez « À l’acte » si chaque vaccination donne droit à un montant fixe.
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label for="{{ form.montant_par_vaccination.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-1">
+                                            Montant par vaccination
+                                        </label>
+                                        {{ form.montant_par_vaccination }}
+                                        {% if form.montant_par_vaccination.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.montant_par_vaccination.errors.0 }}</p>
+                                        {% endif %}
+                                        <p class="mt-1 text-xs text-gray-500">
+                                            Exemple : si la valeur est 100 et qu’un agent réalise 100 vaccinations,
+                                            son salaire sera <span class="font-semibold"
+                                                                   x-text="(montant || 0) * exempleVaccins"></span>.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- (les autres sections : Population, Budget, Vaccins restent identiques à ce que tu avais) -->
+                        <!-- JE NE LES RÉPÈTE PAS ICI POUR GAGNER DE LA PLACE,
+                             tu peux garder tes blocs existants tels quels. -->
+
+                        <!-- Section Zones Géographiques avec filtres cascade -->
+                        <div class="bg-white shadow rounded-lg">
+                            <div class="px-6 py-4 border-b border-gray-200">
+                                <h2 class="text-lg font-medium text-gray-900">
+                                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-50 text-amber-600 text-xs font-bold">4</span>
+
+                                    <svg class="inline w-5 h-5 mr-2 text-indigo-500" fill="none" stroke="currentColor"
+                                         viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                                    </svg>
+                                    Zones Géographiques
+                                </h2>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    Les listes sont filtrées automatiquement selon vos sélections (Pôle → Région →
+                                    District
+                                    → Centre).
+                                </p>
+                            </div>
+                            <div class="px-6 py-6 space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Pôles -->
+                                    <div>
+                                        <label for="{{ form.poles.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-2">
+                                            Pôles régionaux
+                                        </label>
+                                        <div class="mt-1 border border-gray-300 rounded-md p-4 bg-gray-50 max-h-48 overflow-y-auto">
+                                            {{ form.poles }}
+                                        </div>
+                                        {% if form.poles.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.poles.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Régions -->
+                                    <div>
+                                        <label for="{{ form.regions.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-2">
+                                            Régions de santé
+                                        </label>
+                                        <div class="mt-1 border border-gray-300 rounded-md p-4 bg-gray-50 max-h-48 overflow-y-auto">
+                                            {{ form.regions }}
+                                        </div>
+                                        {% if form.regions.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.regions.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <!-- Districts -->
+                                    <div>
+                                        <label for="{{ form.districts.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-2">
+                                            Districts sanitaires
+                                        </label>
+                                        <div class="mt-1 border border-gray-300 rounded-md p-4 bg-gray-50 max-h-48 overflow-y-auto">
+                                            {{ form.districts }}
+                                        </div>
+                                        {% if form.districts.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.districts.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Centres -->
+                                    <div>
+                                        <label for="{{ form.centres.id_for_label }}"
+                                               class="block text-sm font-medium text-gray-700 mb-2">
+                                            Centres de vaccination
+                                        </label>
+                                        <div class="mt-1 border border-gray-300 rounded-md p-4 bg-gray-50 max-h-48 overflow-y-auto">
+                                            {{ form.centres }}
+                                        </div>
+                                        {% if form.centres.errors %}
+                                            <p class="mt-1 text-sm text-red-600">{{ form.centres.errors.0 }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="bg-white shadow rounded-lg">
+                            <div class="px-6 py-6">
+                                <div class="flex justify-end space-x-3">
+                                    <a href="
+                                        
+                                            
+                                            
+                                            {% if object %}{% url 'pev:campaign_detail' object.pk %}{% else %}{% url 'pev:campaign_list' %}{% endif %}"
+                                       class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                        Annuler
+                                    </a>
+                                    <button
+                                            type="submit"
+                                            :disabled="loading"
+                                            class="inline-flex items-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <svg x-show="loading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                             fill="none"
+                                             viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                    stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span x-show="!loading">
+                                    {% if object %}Mettre à jour{% else %}Créer la campagne{% endif %}
+                                </span>
+                                        <span x-show="loading">Enregistrement...</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function campaignForm() {
+                return {
+                    loading: false,
+                    geo: {poles: [], regions: [], districts: [], centres: []},
+                    polesSelect: null,
+                    regionsSelect: null,
+                    districtsSelect: null,
+                    centresSelect: null,
+
+                    init() {
+                        // 1) Récupérer les données géo depuis le <script id="geo-data">
+                        const el = document.getElementById('geo-data');
+                        if (el) {
+                            try {
+                                this.geo = JSON.parse(el.textContent) || {};
+                                this.geo.poles = this.geo.poles || [];
+                                this.geo.regions = this.geo.regions || [];
+                                this.geo.districts = this.geo.districts || [];
+                                this.geo.centres = this.geo.centres || [];
+                            } catch (e) {
+                                console.error('Erreur parsing geo-data', e);
+                            }
+                        }
+
+                        // 2) Styliser les champs
+                        this.styleFormFields();
+
+                        // 3) Initialiser les filtres en cascade
+                        this.initGeoFilters();
+
+                        // 4) Gérer le submit
+                        const form = this.$el.querySelector('form');
+                        form.addEventListener('submit', (e) => {
+                            this.loading = true;
+                            if (!this.validateForm()) {
+                                e.preventDefault();
+                                this.loading = false;
+                            }
+                        });
+                    },
+
+                    styleFormFields() {
+                        const inputs = this.$el.querySelectorAll('input, select, textarea');
+                        inputs.forEach(input => {
+                            if (input.type === 'hidden' || input.type === 'checkbox' || input.type === 'radio') return;
+
+                            input.classList.add(
+                                'block', 'w-full', 'px-3', 'py-2', 'border', 'border-gray-300',
+                                'rounded-md', 'shadow-sm', 'placeholder-gray-400',
+                                'focus:outline-none', 'focus:ring-blue-500', 'focus:border-blue-500',
+                                'sm:text-sm'
+                            );
+                        });
+
+                        const multipleSelects = this.$el.querySelectorAll('select[multiple]');
+                        multipleSelects.forEach(select => {
+                            select.classList.remove('rounded-md');
+                            select.classList.add('rounded');
+                        });
+                    },
+
+                    initGeoFilters() {
+                        this.polesSelect = this.$el.querySelector('select[name="poles"]');
+                        this.regionsSelect = this.$el.querySelector('select[name="regions"]');
+                        this.districtsSelect = this.$el.querySelector('select[name="districts"]');
+                        this.centresSelect = this.$el.querySelector('select[name="centres"]');
+
+                        if (this.polesSelect) {
+                            this.polesSelect.addEventListener('change', () => this.filterRegions());
+                        }
+                        if (this.regionsSelect) {
+                            this.regionsSelect.addEventListener('change', () => this.filterDistricts());
+                        }
+                        if (this.districtsSelect) {
+                            this.districtsSelect.addEventListener('change', () => this.filterCentres());
+                        }
+
+                        this.filterRegions();
+                        this.filterDistricts();
+                        this.filterCentres();
+                    },
+
+                    getSelectedValues(selectEl) {
+                        if (!selectEl) return [];
+                        return Array.from(selectEl.selectedOptions)
+                            .map(o => Number(o.value))
+                            .filter(v => !Number.isNaN(v));
+                    },
+
+                    filterRegions() {
+                        if (!this.regionsSelect) return;
+
+                        const selectedPoles = this.getSelectedValues(this.polesSelect);
+
+                        Array.from(this.regionsSelect.options).forEach(opt => {
+                            if (!opt.value) return;
+                            const id = parseInt(opt.value);
+                            const region = this.geo.regions.find(r => r.id === id);
+                            let show = true;
+
+                            if (selectedPoles.length > 0) {
+                                // ⚠️ doit correspondre à values('id','nom','pole_id')
+                                show = !!(region && selectedPoles.includes(region.poles_id));
+                            }
+
+                            opt.hidden = !show;
+                            opt.disabled = !show;
+                            if (!show) opt.selected = false;
+                        });
+
+                        this.filterDistricts();
+                        this.filterCentres();
+                    },
+
+                    filterDistricts() {
+                        if (!this.districtsSelect) return;
+
+                        const selectedRegions = this.getSelectedValues(this.regionsSelect);
+
+                        Array.from(this.districtsSelect.options).forEach(opt => {
+                            if (!opt.value) return;
+                            const id = parseInt(opt.value);
+                            const district = this.geo.districts.find(d => d.id === id);
+                            let show = true;
+
+                            if (selectedRegions.length > 0) {
+                                show = !!(district && selectedRegions.includes(district.region_id));
+                            }
+
+                            opt.hidden = !show;
+                            opt.disabled = !show;
+                            if (!show) opt.selected = false;
+                        });
+
+                        this.filterCentres();
+                    },
+
+                    filterCentres() {
+                        if (!this.centresSelect) return;
+
+                        const selectedDistricts = this.getSelectedValues(this.districtsSelect);
+
+                        Array.from(this.centresSelect.options).forEach(opt => {
+                            if (!opt.value) return;
+                            const id = parseInt(opt.value);
+                            const centre = this.geo.centres.find(c => c.id === id);
+                            let show = true;
+
+                            if (selectedDistricts.length > 0) {
+                                show = !!(centre && selectedDistricts.includes(centre.district_id));
+                            }
+
+                            opt.hidden = !show;
+                            opt.disabled = !show;
+                            if (!show) opt.selected = false;
+                        });
+                    },
+
+                    validateForm() {
+                        let isValid = true;
+                        const requiredFields = this.$el.querySelectorAll('[required]');
+
+                        requiredFields.forEach(field => {
+                            if (!field.value.trim()) {
+                                isValid = false;
+                                this.showFieldError(field, 'Ce champ est obligatoire');
+                            } else {
+                                this.clearFieldError(field);
+                            }
+                        });
+
+                        const dateDebut = this.$el.querySelector('#{{ form.date_debut.id_for_label }}');
+                        const dateFin = this.$el.querySelector('#{{ form.date_fin.id_for_label }}');
+
+                        if (dateDebut && dateFin && dateDebut.value && dateFin.value) {
+                            const debut = new Date(dateDebut.value);
+                            const fin = new Date(dateFin.value);
+                            if (fin < debut) {
+                                isValid = false;
+                                this.showFieldError(dateFin, 'La date de fin doit être postérieure à la date de début');
+                            }
+                        }
+
+                        return isValid;
+                    },
+
+                    showFieldError(field, message) {
+                        field.classList.add('border-red-300', 'text-red-900');
+                        field.classList.remove('border-gray-300');
+
+                        let errorElement = field.nextElementSibling;
+                        if (!errorElement || !errorElement.classList.contains('text-red-600')) {
+                            errorElement = document.createElement('p');
+                            errorElement.className = 'mt-1 text-sm text-red-600';
+                            field.parentNode.insertBefore(errorElement, field.nextSibling);
+                        }
+                        errorElement.textContent = message;
+                    },
+
+                    clearFieldError(field) {
+                        field.classList.remove('border-red-300', 'text-red-900');
+                        field.classList.add('border-gray-300');
+
+                        const errorElement = field.nextElementSibling;
+                        if (errorElement && errorElement.classList.contains('text-red-600')) {
+                            errorElement.remove();
+                        }
+                    }
+                }
+            }
+        </script>
+
+        <style>
+            select[multiple] {
+                background-image: none;
+                padding: 0.5rem;
+            }
+
+            select[multiple] option {
+                padding: 0.5rem;
+                margin: 0.125rem 0;
+                border-radius: 0.25rem;
+            }
+
+            select[multiple] option:checked {
+                background-color: #3b82f6;
+                color: white;
+            }
+
+            textarea {
+                resize: vertical;
+                min-height: 100px;
+            }
+
+            .animate-spin {
+                animation: spin 1s linear infinite;
+            }
+
+            @keyframes spin {
+                from {
+                    transform: rotate(0deg);
+                }
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+        </style>
+    </div>
+{% endblock %}

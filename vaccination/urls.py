@@ -25,7 +25,10 @@ from inhp import views
 from inhp.apis.urls import router
 from inhp.backends import login_unifie_view, logout_view
 from inhp.patient_views import PatientDashboardView, patient_change_password, patient_password_policy, \
-    patient_mapi_create_view
+    patient_mapi_create_view, RendezVousVaccinationListView, RendezVousVaccinationCreateView, \
+    RendezVousVaccinationDetailView, RendezVousVaccinationUpdateView, RendezVousVaccinationAnnulerView, \
+    RendezVousVaccinationConfirmerView, RendezVousVaccinationCalendarView, RendezVousVaccinationStatsView, \
+    RendezVousVaccinationEventsView
 from inhp.views import HomePageView, patient_dashboard, mes_vaccins, generate_pdf_certificat, \
     verifier_certificat, LandingView, DashboardView, PatientListView, PatientCreateView, PatientDetailView, \
     PatientUpdateView, PatientDeleteView, MapiListView, MapiCreateView, MapiUpdateView, MapiDetailView, MapiDeleteView, \
@@ -46,6 +49,7 @@ urlpatterns = [
                   ),
                   path('', include("django_prometheus.urls")),
                   path('management/', include(inhp.apis.urls)),
+                  path('pev/', include('pev.urls')),
                   path('api-auth/', include('rest_framework.urls')),
                   path('accounts/', include('allauth.urls')),
                   path('', LandingView.as_view(), name='landing'),
@@ -58,7 +62,6 @@ urlpatterns = [
                        name='verifier_certificat'),
                   # ----------------------Admin ----------------urls
                   path('dashboard', DashboardView.as_view(), name='dashboard'),
-
 
                   path('patients/list', PatientListView.as_view(), name='patient_list'),
                   path('patients/create/', PatientCreateView.as_view(), name='patient-create'),
@@ -96,10 +99,8 @@ urlpatterns = [
                   path('vaccine-exts/', VaccineExtListView.as_view(), name='vaccine-ext-list'),
                   path('vaccine-exts/create/', VaccineExtCreateView.as_view(), name='vaccine-ext-create'),
                   path('vaccine-exts/<int:pk>/', VaccineExtDetailView.as_view(), name='vaccine-ext-detail'),
-                  path('vaccine-exts/<int:pk>/update/', VaccineExtUpdateView.as_view(),
-                       name='vaccine-ext-update'),
-                  path('vaccine-exts/<int:pk>/delete/', VaccineExtDeleteView.as_view(),
-                       name='vaccine-ext-delete'),
+                  path('vaccine-exts/<int:pk>/update/', VaccineExtUpdateView.as_view(), name='vaccine-ext-update'),
+                  path('vaccine-exts/<int:pk>/delete/', VaccineExtDeleteView.as_view(), name='vaccine-ext-delete'),
 
                   path('patient/dashboard', PatientDashboardView.as_view(), name='patient_dashboard'),
                   path(
@@ -107,11 +108,30 @@ urlpatterns = [
                       patient_mapi_create_view,
                       name="patient_mapi_create",
                   ),
+                  path("espace-patient/mapi/signaler/<int:vaccination_id>/", patient_mapi_create_view,
+                       name="patient_mapi_create_with_vaccination", ),
+
+                  path("espace-patient/rendez-vous/", RendezVousVaccinationListView.as_view(),
+                       name="patient_rendez_vous_liste"),
+                  path("espace-patient/rendez-vous/nouveau/", RendezVousVaccinationCreateView.as_view(),
+                       name="patient_rendez_vous_creer"),
+                  path("espace-patient/rendez-vous/<int:pk>/", RendezVousVaccinationDetailView.as_view(),
+                       name="patient_rendez_vous_detail"),
+                  path("espace-patient/rendez-vous/<int:pk>/modifier/", RendezVousVaccinationUpdateView.as_view(),
+                       name="patient_rendez_vous_modifier"),
+                  path("espace-patient/rendez-vous/<int:pk>/annuler/", RendezVousVaccinationAnnulerView.as_view(),
+                       name="patient_rendez_vous_annuler"),
+                  path("espace-patient/rendez-vous/<int:pk>/confirmer/", RendezVousVaccinationConfirmerView.as_view(),
+                       name="patient_rendez_vous_confirmer"),
+                  path("espace-patient/rendez-vous/calendrier/", RendezVousVaccinationCalendarView.as_view(),
+                       name="patient_rendez_vous_calendrier"),
                   path(
-                      "espace-patient/mapi/signaler/<int:vaccination_id>/",
-                      patient_mapi_create_view,
-                      name="patient_mapi_create_with_vaccination",
+                      "api/espace-patient/rendez-vous/events/",
+                      RendezVousVaccinationEventsView.as_view(),
+                      name="api_rendez_vous_events",
                   ),
+                  path("espace-patient/rendez-vous/stats/", RendezVousVaccinationStatsView.as_view(),
+                       name="patient_rendez_vous_stats"),
 
               ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 if settings.DEBUG:

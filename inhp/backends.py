@@ -17,6 +17,7 @@ from django.http import request
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.timezone import localtime
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
@@ -37,20 +38,24 @@ class PatientAuthBackend(ModelBackend):
     """
     Backend d'authentification pour les patients.
 
-    - Identifiant : code_patient (ou email si tu veux garder ça)
+    - Identifiant : code_patient (ou email)
     - Première connexion / migration :
         si last_password_change est NULL
         => on autorise code_patient + telephone1
         => on bascule sur un vrai mot de passe hashé
     """
 
-    def authenticate(self, request, username=None, password=None, **kwargs):
+    def authenticate(self, request, username=None, password=None, user_type=None, **kwargs):
+        # 🔐 Ne répondre qu'aux logins patient
+        if user_type not in ("patient", None):
+            return None
+
         if username is None or password is None:
             return None
 
         identifier = str(username).strip()
 
-        # 1) Récupération du patient (code_patient d'abord, puis éventuel email)
+        # 1) Récupération du patient (code_patient d'abord, puis email)
         patient = None
         try:
             patient = Patient.objects.get(
@@ -58,7 +63,6 @@ class PatientAuthBackend(ModelBackend):
                 deleted_at__isnull=True,
             )
         except Patient.DoesNotExist:
-            # Optionnel : login par email si l'identifiant contient un @
             if "@" in identifier:
                 try:
                     patient = Patient.objects.get(
@@ -67,80 +71,76 @@ class PatientAuthBackend(ModelBackend):
                     )
                 except Patient.DoesNotExist:
                     logger.info(
-                        "Tentative de connexion patient échouée identifiant=%s",
+                        "[PatientAuth] Aucun patient trouvé pour identifiant=%s",
                         identifier[:10],
                     )
                     return None
                 except Exception as e:
                     logger.error(
-                        "Erreur lors de la récupération du patient identifiant=%s : %s",
+                        "[PatientAuth] Erreur récupération patient identifiant=%s : %s",
                         identifier[:10],
                         e,
                     )
                     return None
             else:
                 logger.info(
-                    "Tentative patient échouée (ni code_patient ni email) identifiant=%s",
+                    "[PatientAuth] Tentative patient échouée (ni code_patient ni email) identifiant=%s",
                     identifier[:10],
                 )
                 return None
         except Exception as e:
             logger.error(
-                "Erreur lors de la récupération du patient identifiant=%s : %s",
+                "[PatientAuth] Erreur récupération patient identifiant=%s : %s",
                 identifier[:10],
                 e,
             )
             return None
 
         # 2) Vérifications d'état
-        if not patient.is_active:
-            logger.warning("Patient inactif identifiant=%s", identifier[:10])
+        if not getattr(patient, "is_active", True):
+            logger.warning("[PatientAuth] Patient inactif identifiant=%s", identifier[:10])
             return None
 
-        if patient.is_account_locked():
+        if hasattr(patient, "is_account_locked") and patient.is_account_locked():
             logger.warning(
-                "Compte patient verrouillé identifiant=%s (jusqu'à %s)",
+                "[PatientAuth] Compte patient verrouillé identifiant=%s (jusqu'à %s)",
                 identifier[:10],
                 patient.account_locked_until,
             )
             return None
 
-        # 3) CAS 1 : patient déjà passé sur un vrai mot de passe
-        # (last_password_change non nul => on utilise le flux "normal")
-        if patient.has_usable_password() and patient.last_password_change:
+        # 3) Cas standard : mot de passe déjà défini
+        if hasattr(patient, "has_usable_password") and patient.has_usable_password() and getattr(
+                patient, "last_password_change", None
+        ):
             if patient.check_password(password):
-                # succès : reset sécurité
-                if patient.failed_login_attempts or patient.account_locked_until:
+                if getattr(patient, "failed_login_attempts", 0) or getattr(patient, "account_locked_until", None):
                     patient.failed_login_attempts = 0
                     patient.account_locked_until = None
                     patient.save(update_fields=["failed_login_attempts", "account_locked_until"])
+                logger.info("[PatientAuth] Connexion patient OK identifiant=%s", identifier[:10])
                 return patient
 
-            # mot de passe incorrect
             self._handle_failed_login(patient, identifier)
             return None
 
-        # 4) CAS 2 : première connexion / migration
-        #    On autorise "telephone1 comme mot de passe initial"
-        tel = (patient.telephone1 or "").strip()
+        # 4) Première connexion / migration : téléphone comme mot de passe initial
+        tel = (getattr(patient, "telephone1", "") or "").strip()
         if tel and password == tel:
-            logger.info(
-                "Première connexion / migration pour patient identifiant=%s",
-                identifier[:10],
-            )
-            # On bascule sur un vrai mot de passe hashé
+            logger.info("[PatientAuth] Première connexion / migration pour patient identifiant=%s", identifier[:10])
             patient.set_password(password)
             patient.last_password_change = timezone.now()
-            patient.must_change_password = True  # tu peux l'utiliser pour forcer un changement
+            if hasattr(patient, "must_change_password"):
+                patient.must_change_password = True
             patient.failed_login_attempts = 0
             patient.account_locked_until = None
             patient.save(
                 update_fields=[
                     "password",
                     "last_password_change",
-                    "must_change_password",
                     "failed_login_attempts",
                     "account_locked_until",
+                    *(["must_change_password"] if hasattr(patient, "must_change_password") else []),
                 ]
             )
             return patient
@@ -160,13 +160,13 @@ class PatientAuthBackend(ModelBackend):
         if patient.failed_login_attempts >= 5:
             patient.account_locked_until = timezone.now() + timezone.timedelta(hours=1)
             logger.warning(
-                "Compte patient verrouillé après %s tentatives, identifiant=%s",
+                "[PatientAuth] Compte patient verrouillé après %s tentatives, identifiant=%s",
                 patient.failed_login_attempts,
                 identifier[:10],
             )
 
         patient.save(update_fields=["failed_login_attempts", "last_failed_login", "account_locked_until"])
-        logger.warning("Mot de passe incorrect pour patient identifiant=%s", identifier[:10])
+        logger.warning("[PatientAuth] Mot de passe incorrect pour identifiant=%s", identifier[:10])
 
     def get_user(self, user_id):
         try:
@@ -211,7 +211,11 @@ class ProfessionalAuthBackend(BaseBackend):
     Auth sur le modèle Utilisateur (email + mot de passe).
     """
 
-    def authenticate(self, request, username=None, password=None, **kwargs):
+    def authenticate(self, request, username=None, password=None, user_type=None, **kwargs):
+        # ⬅️ ne répondre qu'aux connexions pro
+        if user_type not in ("professional", None):
+            return None
+
         if username is None or password is None:
             return None
 
@@ -251,6 +255,11 @@ class ProfessionalAuthBackend(BaseBackend):
         )
         return None
 
+    def get_user(self, user_id):
+        try:
+            return Utilisateur.objects.get(pk=user_id, is_active=True)
+        except Utilisateur.DoesNotExist:
+            return None
     def get_user(self, user_id):
         try:
             return Utilisateur.objects.get(pk=user_id, is_active=True)
@@ -307,6 +316,10 @@ def get_redirect_url_for_user(user):
 #  VUES DE LOGIN / LOGOUT UNIFIÉES
 # ======================================================================
 
+
+logger = logging.getLogger(__name__)
+
+
 @sensitive_post_parameters("password")
 @csrf_protect
 @never_cache
@@ -339,61 +352,91 @@ def login_unifie_view(request):
                 {"identifier": identifier, "user_type": user_type},
             )
 
-        # Rate limiting basique via la session
-        # if hasattr(request, "session"):
-        #     attempts = request.session.get("login_attempts", 0)
-        #     if attempts >= 10:
-        #         messages.error(
-        #             request,
-        #             _("Trop de tentatives de connexion. Veuillez réessayer plus tard."),
-        #         )
-        #         logger.warning(
-        #             "Blocage temporaire après trop de tentatives - IP=%s",
-        #             request.META.get("REMOTE_ADDR"),
-        #         )
-        #         return render(
-        #             request,
-        #             "auth/login.html",
-        #             {"identifier": identifier, "user_type": user_type},
-        #         )
-        #
-        # user = None
+        # ==========================
+        # 1) GESTION SPÉCIFIQUE PATIENT
+        # ==========================
+        patient_obj = None
+        if user_type == "patient" and identifier:
+            patient_obj = Patient.objects.filter(code_patient=identifier).first()
 
+            # 🔒 Si déjà verrouillé avant même l'authentification
+            if patient_obj and patient_obj.is_account_locked():
+                locked_until = localtime(patient_obj.account_locked_until)
+                messages.error(
+                    request,
+                    _(
+                        "Votre compte patient est verrouillé après plusieurs tentatives de connexion. "
+                        "Il sera de nouveau accessible à partir du %(date)s."
+                    )
+                    % {
+                        "date": locked_until.strftime("%d/%m/%Y à %H:%M"),
+                    },
+                )
+                logger.warning(
+                    "[PatientAuth] Tentative de connexion sur compte verrouillé - identifiant=%s..., IP=%s",
+                    identifier[:10],
+                    request.META.get("REMOTE_ADDR"),
+                )
+
+                return render(
+                    request,
+                    "auth/login.html",
+                    {"identifier": identifier, "user_type": user_type},
+                )
+
+        # ==========================
+        # 2) AUTHENTIFICATION
+        # ==========================
         try:
-            if user_type == "professional":
-                # Utilisateur : email comme username
-                user = authenticate(
-                    request,
-                    backend="inhp.backends.ProfessionalAuthBackend",
-                    username=identifier,
-                    password=password,
-                )
-            else:
-                # Patient : code_patient comme username
-                user = authenticate(
-                    request,
-                    backend="inhp.backends.PatientAuthBackend",
-                    username=identifier,
-                    password=password,
-                )
+            user = authenticate(
+                request,
+                username=identifier,
+                password=password,
+                user_type=user_type,  # 👈 clé pour que chaque backend sache s’il doit répondre
+            )
 
             if user is None:
-                # Incrément du compteur seulement en cas d'échec
+                # Cas particulier : le backend vient de verrouiller le compte patient
+                if (
+                    user_type == "patient"
+                    and patient_obj is not None
+                    and patient_obj.is_account_locked()
+                ):
+                    locked_until = localtime(patient_obj.account_locked_until)
+                    messages.error(
+                        request,
+                        _(
+                            "Votre compte patient vient d'être verrouillé après plusieurs tentatives de connexion. "
+                            "Il sera de nouveau accessible à partir du %(date)s."
+                        )
+                        % {
+                            "date": locked_until.strftime("%d/%m/%Y à %H:%M"),
+                        },
+                    )
+                    logger.warning(
+                        "[PatientAuth] Compte patient verrouillé identifiant=%s..., IP=%s",
+                        identifier[:10],
+                        request.META.get("REMOTE_ADDR"),
+                    )
+                else:
+                    # Message générique pour toutes les autres erreurs d'identifiants
+                    messages.error(
+                        request,
+                        _("Identifiants incorrects ou compte inactif. Veuillez réessayer."),
+                    )
+                    logger.warning(
+                        "Tentative de connexion échouée - type=%s, identifiant=%s..., IP=%s",
+                        user_type,
+                        identifier[:10],
+                        request.META.get("REMOTE_ADDR"),
+                    )
+
+                # (optionnel) gestion du compteur de tentatives par session
                 if hasattr(request, "session"):
                     request.session["login_attempts"] = request.session.get(
                         "login_attempts", 0
                     ) + 1
 
-                messages.error(
-                    request,
-                    _("Identifiants incorrects ou compte inactif. Veuillez réessayer."),
-                )
-                logger.warning(
-                    "Tentative de connexion échouée - type=%s, identifiant=%s..., IP=%s",
-                    user_type,
-                    identifier[:10],
-                    request.META.get("REMOTE_ADDR"),
-                )
             else:
                 # Succès : login + reset compteur
                 login(request, user)
@@ -409,6 +452,7 @@ def login_unifie_view(request):
                     request.META.get("REMOTE_ADDR"),
                 )
 
+                messages.success(request, _("Connexion réussie. Bienvenue dans votre espace."))
                 return redirect(get_redirect_url_for_user(user))
 
         except Exception as e:
@@ -427,7 +471,6 @@ def login_unifie_view(request):
             "user_type": user_type,
         },
     )
-
 
 @require_http_methods(["GET", "POST"])
 @csrf_protect
@@ -651,7 +694,6 @@ class StaffOnlyMixin(AccessMixin):
         if isinstance(user, Patient):
             messages.error(request, _("Accès réservé au personnel sanitaire."))
             return redirect("patient_dashboard")
-
 
         # 4) Pro et staff → pas le droit d’aller sur ces vues
         if not getattr(user, "is_staff", False):

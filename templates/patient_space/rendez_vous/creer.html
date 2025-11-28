@@ -1,0 +1,263 @@
+{% extends "patient_space/patient_base.html" %}
+{% load static %}
+
+{% block title %}Prendre un rendez-vous – Vaccination CI{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- En-tête -->
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+            <a href="{% url 'patient_rendez_vous_liste' %}" 
+               class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-arrow-left text-slate-600 dark:text-slate-400"></i>
+            </a>
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800 dark:text-white">
+                    Prendre un rendez-vous
+                </h1>
+                <p class="text-slate-600 dark:text-slate-300 mt-1">
+                    Planifiez votre prochaine vaccination
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-8">
+        <!-- Formulaire -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                <form method="post" id="rendezvous-form">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="mb-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50/80 dark:bg-red-900/30 px-3 py-2 text-xs text-red-700 dark:text-red-300">
+                        {% for err in form.non_field_errors %}
+                            <p>{{ err }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="space-y-6">
+                        <!-- Centre de vaccination -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fa-solid fa-hospital text-blue-500 mr-2"></i>
+                                Centre de vaccination *
+                            </label>
+                            {{ form.centre }}
+                            {% if form.centre.errors %}
+                            <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.centre.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Type de rendez-vous -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fa-solid fa-syringe text-green-500 mr-2"></i>
+                                Type de vaccination *
+                            </label>
+                            {{ form.type_rendezvous }}
+                            {% if form.type_rendezvous.errors %}
+                            <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.type_rendezvous.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Date et heure -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fa-solid fa-calendar-day text-purple-500 mr-2"></i>
+                                Date et heure *
+                            </label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Date</label>
+                                    {{ form.date_rendezvous.0 }}
+                                </div>
+                                <div>
+                                    <label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Heure</label>
+                                    {{ form.date_rendezvous.1 }}
+                                </div>
+                            </div>
+                            {% if form.date_rendezvous.errors %}
+                            <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.date_rendezvous.errors|striptags }}
+                            </div>
+                            {% else %}
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                Le rendez-vous doit être dans les 3 prochains mois.
+                            </p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Motif -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                <i class="fa-solid fa-note-sticky text-amber-500 mr-2"></i>
+                                Motif de la consultation
+                            </label>
+                            {{ form.motif }}
+                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                Décrivez brièvement la raison de votre visite (vaccin spécifique, rappel, consultation…)
+                            </p>
+                            {% if form.motif.errors %}
+                            <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.motif.errors|striptags }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Boutons -->
+                        <div class="flex gap-3 pt-4">
+                            <a href="{% url 'patient_rendez_vous_liste' %}" 
+                               class="px-6 py-3 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium">
+                                Annuler
+                            </a>
+                            <button type="submit" 
+                                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-plus"></i>
+                                Planifier le rendez-vous
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Informations et aide -->
+        <div class="space-y-6">
+            <!-- Guide -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
+                <h3 class="font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-info-circle"></i>
+                    Informations importantes
+                </h3>
+                <ul class="space-y-2 text-sm text-blue-700 dark:text-blue-400">
+                    <li class="flex items-start gap-2">
+                        <i class="fa-solid fa-clock mt-0.5 text-xs"></i>
+                        <span>Prévoyez 15 à 30 minutes pour votre rendez-vous.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fa-solid fa-id-card mt-0.5 text-xs"></i>
+                        <span>Apportez votre pièce d'identité et, si possible, votre carnet physique.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <i class="fa-solid fa-file-medical mt-0.5 text-xs"></i>
+                        <span>En cas de fièvre ou de symptômes inhabituels, signalez-le à l'accueil.</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Centres disponibles -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                <h3 class="font-semibold text-slate-800 dark:text-white mb-4 text-sm">
+                    Centres à proximité
+                </h3>
+                <div class="space-y-3 text-sm">
+                    {% for centre in centres_proches %}
+                    <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+                        <p class="font-medium text-slate-800 dark:text-white">
+                            {{ centre.name }}
+                        </p>
+                        {% if centre.adresse %}
+                        <p class="text-slate-600 dark:text-slate-400 mt-1">
+                            {{ centre.adresse }}
+                        </p>
+                        {% endif %}
+                        {% if centre.telephone %}
+                        <p class="text-xs text-slate-500 dark:text-slate-500 mt-2">
+                            <i class="fa-solid fa-phone mr-1"></i>
+                            {{ centre.telephone }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
+                        Aucun centre à proximité n'a encore été configuré.
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Style personnalisé pour les selects et inputs dans ce formulaire uniquement */
+#rendezvous-form select,
+#rendezvous-form textarea,
+#rendezvous-form input[type="text"],
+#rendezvous-form input[type="date"],
+#rendezvous-form input[type="time"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.75rem;
+    background: white;
+    color: #1f2937;
+    transition: all 0.2s;
+    font-size: 0.875rem;
+}
+
+.dark #rendezvous-form select,
+.dark #rendezvous-form textarea,
+.dark #rendezvous-form input[type="text"],
+.dark #rendezvous-form input[type="date"],
+.dark #rendezvous-form input[type="time"] {
+    background: #1e293b;
+    border-color: #475569;
+    color: #f1f5f9;
+}
+
+#rendezvous-form select:focus,
+#rendezvous-form textarea:focus,
+#rendezvous-form input[type="text"]:focus,
+#rendezvous-form input[type="date"]:focus,
+#rendezvous-form input[type="time"]:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+#rendezvous-form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.querySelector('#rendezvous-form input[type="date"]');
+    if (!dateInput) return;
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const todayStr = today.toISOString().split('T')[0];
+
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 90);
+    const maxDateStr = maxDate.toISOString().split('T')[0];
+
+    dateInput.min = todayStr;
+    dateInput.max = maxDateStr;
+
+    dateInput.addEventListener('change', function() {
+        if (!this.value) return;
+        const selected = new Date(this.value);
+        selected.setHours(0,0,0,0);
+
+        if (selected < today) {
+            alert('Veuillez sélectionner une date future.');
+            this.value = todayStr;
+        } else if (selected > maxDate) {
+            alert('La date du rendez-vous ne peut pas dépasser 3 mois.');
+            this.value = maxDateStr;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+from decouple import config
+from celery.schedules import crontab
 from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -61,13 +63,15 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'import_export',
 
-    "inhp",
     'rest_framework',
     'django_filters',
     'allauth',
     'allauth.account',
     'corsheaders',
-    'rest_framework_simplejwt'
+    'rest_framework_simplejwt',
+
+    'inhp',
+    'pev',
 ]
 
 MIDDLEWARE = [
@@ -87,7 +91,6 @@ MIDDLEWARE = [
     'inhp.middleware.BlockPatientAdminMiddleware',
 
     'django_prometheus.middleware.PrometheusAfterMiddleware',
-
 
 ]
 
@@ -168,8 +171,8 @@ REST_FRAMEWORK = {
 }
 
 AUTHENTICATION_BACKENDS = (
-    "inhp.backends.ProfessionalAuthBackend",   # Pros → Utilisateur
-    "inhp.backends.PatientAuthBackend",        # Patients → Patient
+    "inhp.backends.ProfessionalAuthBackend",  # Pros → Utilisateur
+    "inhp.backends.PatientAuthBackend",  # Patients → Patient
     "django.contrib.auth.backends.ModelBackend",  # Admin & auth.User
 )
 
@@ -235,7 +238,7 @@ WHITENOISE_USE_FINDERS = True
 WHITENOISE_AUTOREFRESH = True
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'            # /app/media
+MEDIA_ROOT = BASE_DIR / 'media'  # /app/media
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -249,9 +252,49 @@ LOGOUT_REDIRECT_URL = "landing"
 ACCOUNT_LOGOUT_REDIRECT = "login"
 ACCOUNT_SIGNUP_REDIRECT_URL = "dashboard"
 
+# CELERY_BROKER_URL = "redis://redis:6379/0"  # ou 127.0.0.1
+# CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
 # Configuration de Celery
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+CELERY_BEAT_SCHEDULE = {
+    "push_verse_of_day_daily": {
+        "task": "abmci.task_push.push_vod_daily",
+        "schedule": crontab(minute=0, hour=6),  # 06:00 (UTC ou TZ de ton worker)
+    },
+    "remind-stale-problems-every-hour": {
+        "task": "problems.tasks.remind_stale_problems",
+        "schedule": crontab(minute=0),  # chaque heure
+        "args": (),  # ou fixe 48
+    },
+    "send-daily-vod-0730": {
+        "task": "abmci.tasks.send_daily_vod",
+        "schedule": crontab(minute=30, hour=6),  # 06:30 tous les jours
+
+    },
+}
+
+
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+
+
+REDIS_URL = "redis://127.0.0.1:6379/0"
+
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = REDIS_URL
+# ====== ORANGE SMS ======
+# ORANGE_TOKEN_URL = os.environ.get("ORANGE_TOKEN_URL", default="https://api.orange.com/oauth/v3/token")
+# ORANGE_SMS_URL = os.environ.get("ORANGE_SMS_URL", default="https://api.orange.com/smsmessaging/v1/outbound/{}/requests")
+# ORANGE_SMS_CLIENT_ID = os.environ.get("ORANGE_SMS_CLIENT_ID", default="")
+# ORANGE_SMS_CLIENT_SECRET = os.environ.get("ORANGE_SMS_CLIENT_SECRET", default="")
+# ORANGE_SMS_SENDER = os.environ.get("ORANGE_SMS_SENDER", default="")  # ex: tel:+225734201
+
+ORANGE_TOKEN_URL = config("ORANGE_TOKEN_URL", default="https://api.orange.com/oauth/v3/token")
+ORANGE_SMS_URL = config("ORANGE_SMS_URL", default="https://api.orange.com/smsmessaging/v1/outbound/{}/requests")
+ORANGE_SMS_CLIENT_ID = config('ORANGE_SMS_CLIENT_ID')
+ORANGE_SMS_CLIENT_SECRET = config('ORANGE_SMS_CLIENT_SECRET')
+ORANGE_SMS_SENDER = config('ORANGE_SMS_SENDER')
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
@@ -280,3 +323,43 @@ SIMPLE_JWT = {
 #         },
 #     },
 # }
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+
+    "formatters": {
+        "simple": {
+            "format": "[%(asctime)s] %(levelname)s %(name)s: %(message)s",
+        },
+    },
+
+    "loggers": {
+        # ici TON logger SMS
+        "pev.sms": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+
+        # logger générique pour voir tout ce que Django envoie
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+
+        # logger celery (si besoin)
+        "celery": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": True,
+        },
+    },
+}

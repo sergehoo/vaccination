@@ -1,0 +1,625 @@
+{# patient_space/rendez_vous/liste.html #}
+{% extends "patient_space/patient_base.html" %}
+{% load static %}
+
+{% block title %}Mes rendez-vous – Mon Espace Patient{% endblock %}
+
+{% block content %}
+    {# HERO #}
+<div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white shadow-soft mb-6">
+  <div class="absolute inset-y-0 right-0 hidden md:block opacity-40">
+        <img src="{% static 'images/banner6.webp' %}" alt="Mes rendez-vous"
+             class="h-full object-contain pointer-events-none">
+    </div>
+
+    <div class="relative px-2 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div class="space-y-3 max-w-xl">
+            <p class="text-[10px] uppercase tracking-[0.32em] text-blue-200/90">
+                Mes rendez-vous · {{ patient.code_patient }}
+            </p>
+            <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-calendar-check text-blue-300"></i>
+                Mes rendez-vous de vaccination
+            </h1>
+            <p class="text-[12px] text-blue-200">
+                Consultez, confirmez ou modifiez vos rendez-vous de vaccination, et suivez votre parcours PEV / adulte.
+            </p>
+            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/30">
+                    <i class="fa-solid fa-user text-[9px]"></i>
+                    {{ patient.prenoms|title }} {{ patient.nom|upper }}
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/30">
+                    <i class="fa-solid fa-id-card text-[9px]"></i>
+                    {{ patient.code_patient }}
+                </span>
+                {% if patient.telephone1 %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white border border-white/30">
+                    <i class="fa-solid fa-phone text-[9px]"></i>
+                    {{ patient.telephone1 }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="rounded-2xl bg-white/10 border border-white/20 px-4  text-[11px]  ">
+            <div class="flex items-center justify-between gap-2">
+                <p class="text-white/90 font-medium">
+                    Mes statistiques RDV
+                </p>
+                {% if stats.prochain %}
+                <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-100 border border-emerald-300/60 text-[10px] flex items-center gap-1">
+                    <i class="fa-solid fa-bell text-[9px]"></i>
+                    Prochain : {{ stats.prochain.date_heure|date:"d/m" }} - {{ stats.prochain.date_heure|date:"H:i" }}
+                </span>
+                {% else %}
+                <span class="px-2 py-0.5 rounded-full bg-slate-500/20 text-slate-100 border border-slate-300/60 text-[10px]">
+                    Aucun RDV à venir
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div>
+                    <p class="text-base font-semibold">{{ stats.total }}</p>
+                    <p class="text-[10px] text-blue-100">Total</p>
+                </div>
+                <div>
+                    <p class="text-base font-semibold">{{ stats.a_venir }}</p>
+                    <p class="text-[10px] text-blue-100">À venir</p>
+                </div>
+                <div>
+                    <p class="text-base font-semibold">{{ stats.passes }}</p>
+                    <p class="text-[10px] text-blue-100">Passés</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2 text-center pt-1">
+                <div>
+                    <p class="text-sm font-semibold">{{ stats.planifies }}</p>
+                    <p class="text-[10px] text-blue-100">Planifiés</p>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold">{{ stats.confirmes }}</p>
+                    <p class="text-[10px] text-blue-100">Confirmés</p>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold">{{ stats.honores }}</p>
+                    <p class="text-[10px] text-blue-100">Honorés</p>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold">{{ stats.taux_honores|floatformat:0 }}%</p>
+                    <p class="text-[10px] text-blue-100">Taux honorés</p>
+                </div>
+            </div>
+
+            {% if stats.prochain %}
+            <div class="pt-2 mt-1 border-t border-white/10 text-[10px] text-blue-100 space-y-1">
+                <p class="flex items-center gap-1">
+                    <i class="fa-solid fa-location-dot text-[9px]"></i>
+                    {{ stats.prochain.centre.nom }}
+                </p>
+                <p>
+                    {{ stats.prochain.date_heure|date:"d/m/Y" }} à {{ stats.prochain.date_heure|date:"H:i" }}
+                </p>
+                {% if stats.prochain.est_pev %}
+                <p class="flex items-center gap-1">
+                    <i class="fa-solid fa-baby text-[9px]"></i>
+                    {{ stats.prochain.resume_pev }}
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+
+
+{# MESSAGES FLASH #}
+{% if messages %}
+  <div class="mb-4 space-y-2">
+    {% for message in messages %}
+      <div
+        class="
+          text-sm px-3 py-2 rounded-lg border
+          {% if message.tags == 'error' %}
+            bg-red-50 border-red-200 text-red-700
+          {% elif message.tags == 'success' %}
+            bg-emerald-50 border-emerald-200 text-emerald-700
+          {% else %}
+            bg-slate-50 border-slate-200 text-slate-700
+          {% endif %}
+        "
+      >
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{# CARTES STAT #}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2 mb-6">
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Total RDV</p>
+                <p class="text-2xl font-semibold">{{ stats.total }}</p>
+                <p class="text-[11px] text-slate-400 mt-1">Toute votre histoire de vaccination</p>
+            </div>
+            <div class="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                <i class="fa-solid fa-calendar-days text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">À venir</p>
+                <p class="text-2xl font-semibold">{{ stats.a_venir }}</p>
+                <p class="text-[11px] text-slate-400 mt-1">RDV encore programmés</p>
+            </div>
+            <div class="h-10 w-10 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center">
+                <i class="fa-solid fa-clock text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Honorés</p>
+                <p class="text-2xl font-semibold">{{ stats.honores }}</p>
+                <p class="text-[11px] text-slate-400 mt-1">RDV réalisés avec succès</p>
+            </div>
+            <div class="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+                <i class="fa-solid fa-circle-check text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-2xl p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Absents / Annulés</p>
+                <p class="text-2xl font-semibold">{{ stats.absents|add:stats.annules }}</p>
+                <p class="text-[11px] text-slate-400 mt-1">RDV non honorés</p>
+            </div>
+            <div class="h-10 w-10 rounded-xl bg-red-500/10 text-red-500 flex items-center justify-center">
+                <i class="fa-solid fa-circle-exclamation text-lg"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# PROCHAIN RDV #}
+{% if stats.prochain %}
+<div class="mb-6 p-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl text-white">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div class="space-y-1">
+            <p class="text-[11px] font-medium text-blue-100 uppercase tracking-wide">Prochain rendez-vous</p>
+            <p class="text-base sm:text-lg font-bold mt-1 flex items-center gap-2">
+                <i class="fa-solid fa-location-dot"></i>
+                {{ stats.prochain.centre.nom }}
+            </p>
+            <p class="text-blue-100 text-xs sm:text-sm">
+                {{ stats.prochain.date_heure|date:"l d F Y" }} à {{ stats.prochain.date_heure|date:"H:i" }}
+            </p>
+            <p class="text-[11px] text-blue-100/90">
+                Priorité : {{ stats.prochain.label_priorite }} · Canal : {{ stats.prochain.label_canal }}
+            </p>
+            {% if stats.prochain.est_pev %}
+            <p class="text-[11px] text-blue-100/90 flex items-center gap-1">
+                <i class="fa-solid fa-baby text-[10px]"></i>
+                Programme PEV – {{ stats.prochain.resume_pev }}
+            </p>
+            {% endif %}
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{% url 'patient_rendez_vous_detail' stats.prochain.pk %}"
+               class="px-3 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-xs sm:text-sm flex items-center gap-2">
+                <i class="fa-solid fa-eye"></i>
+                Détails
+            </a>
+
+            {% if stats.prochain.needs_confirmation %}
+            <form method="post" action="{% url 'patient_rendez_vous_confirmer' stats.prochain.pk %}">
+                {% csrf_token %}
+                <button type="submit"
+                   class="px-3 py-2 bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-colors text-xs sm:text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-check"></i>
+                    Confirmer
+                </button>
+            </form>
+            {% endif %}
+
+            {% if stats.prochain.peut_etre_annule %}
+            <a href="{% url 'patient_rendez_vous_annuler' stats.prochain.pk %}"
+               class="px-3 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition-colors text-xs sm:text-sm flex items-center gap-2">
+                <i class="fa-solid fa-xmark"></i>
+                Annuler
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# ACTIONS + FILTRES #}
+<div class="max-w-7xl mx-auto px-4 sm:px-0 py-4">
+    <div class="flex flex-col gap-4 mb-6">
+        <div class="flex flex-col lg:flex-row justify-between gap-4">
+            <div class="flex flex-wrap gap-2 items-center">
+                <input
+                    id="filtre-search"
+                    type="search"
+                    placeholder="Rechercher un centre, un motif..."
+                    value="{{ filtre_actuel.q }}"
+                    class="w-full sm:w-64 rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm px-3 py-2"
+                >
+
+                <select id="filtre-statut" class="rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm px-3 py-2">
+                    <option value="">Tous les statuts</option>
+                    {% for value, label in statuts_rendezvous %}
+                    <option value="{{ value }}" {% if filtre_actuel.statut == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="filtre-type" class="rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm px-3 py-2">
+                    <option value="">Tous les types</option>
+                    {% for value, label in types_rendezvous %}
+                    <option value="{{ value }}" {% if filtre_actuel.type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="filtre-pev" class="rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm px-3 py-2">
+                    <option value="">PEV & non PEV</option>
+                    <option value="1" {% if filtre_actuel.pev == '1' %}selected{% endif %}>PEV uniquement</option>
+                    <option value="0" {% if filtre_actuel.pev == '0' %}selected{% endif %}>Hors PEV</option>
+                </select>
+
+                <select id="filtre-priorite" class="rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm px-3 py-2">
+                    <option value="">Toutes priorités</option>
+                    {% for value, label in priorites_rdv %}
+                    <option value="{{ value }}" {% if filtre_actuel.priorite == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="filtre-canal" class="rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm px-3 py-2">
+                    <option value="">Tous les canaux</option>
+                    {% for value, label in canaux_rdv %}
+                    <option value="{{ value }}" {% if filtre_actuel.canal == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+
+                <select id="filtre-tri" class="rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm px-3 py-2">
+                    <option value="-date_heure" {% if filtre_actuel.tri == '-date_heure' %}selected{% endif %}>Plus récent</option>
+                    <option value="date_heure" {% if filtre_actuel.tri == 'date_heure' %}selected{% endif %}>Plus ancien</option>
+                    <option value="statut" {% if filtre_actuel.tri == 'statut' %}selected{% endif %}>Par statut</option>
+                    <option value="priorite" {% if filtre_actuel.tri == 'priorite' %}selected{% endif %}>Par priorité</option>
+                </select>
+            </div>
+
+            <div class="flex gap-3 justify-end">
+                <a href="{% url 'patient_rendez_vous_calendrier' %}"
+                   class="px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-xl transition-colors flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-calendar"></i>
+                    Vue calendrier
+                </a>
+                <a href="{% url 'patient_rendez_vous_creer' %}"
+                   class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    Nouveau rendez-vous
+                </a>
+            </div>
+        </div>
+
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 flex flex-wrap gap-3">
+            <span class="flex items-center gap-1">
+                <span class="inline-block w-2 h-2 rounded-full bg-amber-400"></span> Aujourd'hui
+            </span>
+            <span class="flex items-center gap-1">
+                <span class="inline-block w-2 h-2 rounded-full bg-orange-400"></span> Bientôt (&lt; 24h)
+            </span>
+            <span class="flex items-center gap-1">
+                <i class="fa-solid fa-bell text-[9px] text-emerald-500"></i> RDV nécessitant une confirmation
+            </span>
+        </div>
+    </div>
+
+    {# LISTE RDV #}
+    <div class="bg-white/80 dark:bg-slate-950/80 rounded-2xl shadow-lg border border-slate-200/70 dark:border-slate-800/80 overflow-hidden">
+        {% if rendez_vous %}
+        <div class="divide-y divide-slate-200 dark:divide-slate-700">
+            {% for rdv in rendez_vous %}
+            <div class="p-6 hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors {% if rdv.est_aujourdhui %}bg-amber-50 dark:bg-amber-900/10{% endif %}">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            {# Statut #}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium
+                                {% if rdv.statut == 'planifie' %}
+                                    bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                                {% elif rdv.statut == 'confirme' %}
+                                    bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                                {% elif rdv.statut == 'honore' %}
+                                    bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300
+                                {% elif rdv.statut == 'annule' %}
+                                    bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                                {% elif rdv.statut == 'reporte' %}
+                                    bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300
+                                {% elif rdv.statut == 'absent' %}
+                                    bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                                {% else %}
+                                    bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300
+                                {% endif %}">
+                                {{ rdv.get_statut_display }}
+                            </span>
+
+                            {# Type RDV #}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                                {{ rdv.get_type_rendezvous_display }}
+                            </span>
+
+                            {# Priorité #}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium
+                                {% if rdv.priorite == 'urgent' %}
+                                    bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                                {% elif rdv.priorite == 'elevee' %}
+                                    bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300
+                                {% else %}
+                                    bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300
+                                {% endif %}">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i>{{ rdv.label_priorite }}
+                            </span>
+
+                            {# Canal #}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300">
+                                <i class="fa-solid fa-globe mr-1"></i>{{ rdv.label_canal }}
+                            </span>
+
+                            {# Aujourd'hui / Bientôt / Passé #}
+                            {% if rdv.est_aujourdhui %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                                <i class="fa-solid fa-bell mr-1"></i>Aujourd'hui
+                            </span>
+                            {% elif rdv.est_dans_24h %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
+                                <i class="fa-solid fa-clock mr-1"></i>Bientôt (&lt; 24h)
+                            </span>
+                            {% endif %}
+
+                            {% if rdv.est_passe and rdv.statut != 'honore' and rdv.statut != 'annule' and rdv.statut != 'absent' %}
+    <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+        <i class="fa-solid fa-exclamation-triangle mr-1"></i>Passé
+    </span>
+{% endif %}
+
+                            {% if rdv.conflit_avec %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
+                                <i class="fa-solid fa-layer-group mr-1"></i>Conflit avec un autre RDV
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <h3 class="font-semibold text-slate-800 dark:text-white mb-1">
+                            {{ rdv.centre.nom }}
+                        </h3>
+
+                        <p class="text-slate-600 dark:text-slate-300 mb-1 flex items-center gap-2 text-sm">
+                            <i class="fa-solid fa-calendar text-slate-400"></i>
+                            {{ rdv.date_heure|date:"l d F Y" }} à {{ rdv.date_heure|date:"H:i" }}
+                            <span class="text-xs text-slate-500">({{ rdv.duree_estimee }} min)</span>
+                        </p>
+
+                        {% if rdv.time_until_appointment and rdv.is_future %}
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+                            Dans environ {{ rdv.time_until_appointment.days }} j {{ rdv.time_until_appointment.seconds|divisibleby:3600 }} h (estimation)
+                        </p>
+                        {% endif %}
+
+                        {% if rdv.personnel_affecte %}
+                        <p class="text-sm text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-2">
+                            <i class="fa-solid fa-user-doctor text-slate-400"></i>
+                            {{ rdv.personnel_affecte.get_full_name }}
+                        </p>
+                        {% endif %}
+
+                        {% if rdv.motif %}
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-1">
+                            <i class="fa-solid fa-note-sticky text-slate-400 mr-1"></i>
+                            {{ rdv.motif|truncatechars:120 }}
+                        </p>
+                        {% endif %}
+
+                        {% if rdv.est_pev %}
+                        <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-1 flex items-center gap-1">
+                            <i class="fa-solid fa-baby text-[10px]"></i>
+                            PEV – {{ rdv.resume_pev }}
+                        </p>
+                        {% endif %}
+
+                        {% if not rdv.consentement_notifications %}
+                        <p class="text-[11px] text-amber-600 dark:text-amber-300 mt-1 flex items-center gap-1">
+                            <i class="fa-solid fa-bell-slash text-[10px]"></i>
+                            Notifications désactivées pour ce rendez-vous.
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <a href="{% url 'patient_rendez_vous_detail' rdv.pk %}"
+                           class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg transition-colors text-sm flex items-center gap-2 justify-center">
+                            <i class="fa-solid fa-eye"></i>
+                            Détails
+                        </a>
+
+                        {% if rdv.statut == 'planifie' and rdv.peut_etre_modifie %}
+                        <form method="post" action="{% url 'patient_rendez_vous_confirmer' rdv.pk %}" class="m-0">
+                            {% csrf_token %}
+                            <button type="submit"
+                               class="w-full px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm flex items-center gap-2 justify-center">
+                                <i class="fa-solid fa-check"></i>
+                                Confirmer
+                            </button>
+                        </form>
+                        {% endif %}
+
+                        {% if rdv.peut_etre_annule %}
+                        <a href="{% url 'patient_rendez_vous_annuler' rdv.pk %}"
+                           class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm flex items-center gap-2 justify-center">
+                            <i class="fa-solid fa-xmark"></i>
+                            Annuler
+                        </a>
+                        {% endif %}
+
+                        {% if rdv.peut_etre_modifie %}
+                        <a href="{% url 'patient_rendez_vous_modifier' rdv.pk %}"
+                           class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm flex items-center gap-2 justify-center">
+                            <i class="fa-solid fa-pen"></i>
+                            Modifier
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {# PAGINATION #}
+        {% if is_paginated %}
+        <div class="px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center">
+                <div class="text-sm text-slate-600 dark:text-slate-400">
+                    Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }} – {{ page_obj.paginator.count }} rendez-vous
+                </div>
+                <div class="flex gap-1">
+                    {% if page_obj.has_previous %}
+                    <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                       class="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs">
+                        « Première
+                    </a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                       class="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs">
+                        ‹ Précédent
+                    </a>
+                    {% endif %}
+
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                       class="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs">
+                        Suivant ›
+                    </a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                       class="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs">
+                        Dernière »
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-12">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <i class="fa-solid fa-calendar-xmark text-2xl text-slate-400 dark:text-slate-500"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-600 dark:text-slate-300 mb-2">
+                Aucun rendez-vous trouvé
+            </h3>
+            <p class="text-slate-500 dark:text-slate-400 mb-4 max-w-md mx-auto text-sm">
+                {% if filtre_actuel.statut or filtre_actuel.type or filtre_actuel.pev or filtre_actuel.priorite or filtre_actuel.canal or filtre_actuel.q %}
+                Aucun rendez-vous ne correspond à vos critères de filtrage.
+                {% else %}
+                Vous n'avez pas encore de rendez-vous de vaccination planifié.
+                {% endif %}
+            </p>
+            <div class="flex gap-3 justify-center">
+                {% if filtre_actuel.statut or filtre_actuel.type or filtre_actuel.pev or filtre_actuel.priorite or filtre_actuel.canal or filtre_actuel.q %}
+                <button onclick="clearFilters()"
+                       class="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg transition-colors text-sm">
+                    <i class="fa-solid fa-filter-circle-xmark"></i>
+                    Effacer les filtres
+                </button>
+                {% endif %}
+                <a href="{% url 'patient_rendez_vous_creer' %}"
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm">
+                    <i class="fa-solid fa-plus"></i>
+                    Prendre un rendez-vous
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+const filtreStatutEl = document.getElementById('filtre-statut');
+const filtreTypeEl = document.getElementById('filtre-type');
+const filtreTriEl = document.getElementById('filtre-tri');
+const filtrePevEl = document.getElementById('filtre-pev');
+const filtrePrioriteEl = document.getElementById('filtre-priorite');
+const filtreCanalEl = document.getElementById('filtre-canal');
+const filtreSearchEl = document.getElementById('filtre-search');
+
+function applyFilters() {
+    const url = new URL(window.location.href);
+
+    const params = {
+        statut: filtreStatutEl ? filtreStatutEl.value : '',
+        type: filtreTypeEl ? filtreTypeEl.value : '',
+        tri: filtreTriEl ? filtreTriEl.value : '',
+        pev: filtrePevEl ? filtrePevEl.value : '',
+        priorite: filtrePrioriteEl ? filtrePrioriteEl.value : '',
+        canal: filtreCanalEl ? filtreCanalEl.value : '',
+        q: filtreSearchEl ? filtreSearchEl.value : '',
+    };
+
+    Object.keys(params).forEach(key => {
+        if (params[key]) {
+            url.searchParams.set(key, params[key]);
+        } else {
+            url.searchParams.delete(key);
+        }
+    });
+
+    url.searchParams.set('page', '1');
+    window.location.href = url.toString();
+}
+
+function clearFilters() {
+    const url = new URL(window.location.href);
+    ['statut', 'type', 'tri', 'pev', 'priorite', 'canal', 'q', 'page'].forEach(k => url.searchParams.delete(k));
+    window.location.href = url.toString();
+}
+
+if (filtreStatutEl) filtreStatutEl.addEventListener('change', applyFilters);
+if (filtreTypeEl) filtreTypeEl.addEventListener('change', applyFilters);
+if (filtreTriEl) filtreTriEl.addEventListener('change', applyFilters);
+if (filtrePevEl) filtrePevEl.addEventListener('change', applyFilters);
+if (filtrePrioriteEl) filtrePrioriteEl.addEventListener('change', applyFilters);
+if (filtreCanalEl) filtreCanalEl.addEventListener('change', applyFilters);
+if (filtreSearchEl) {
+    filtreSearchEl.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            applyFilters();
+        }
+    });
+}
+
+// Auto-refresh si prochain RDV proche
+{% if stats.prochain %}
+setTimeout(function() {
+    const now = new Date().getTime();
+    const prochainRDV = new Date('{{ stats.prochain.date_heure|date:"c" }}').getTime();
+    const diff = prochainRDV - now;
+    if (diff > 0 && diff < 5 * 60 * 1000) {
+        window.location.reload();
+    }
+}, 60000);
+{% endif %}
+</script>
+{% endblock %}

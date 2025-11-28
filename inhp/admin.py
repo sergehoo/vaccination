@@ -6,6 +6,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField, AdminPasswordChangeForm
 from django.contrib.gis.admin import GISModelAdmin
 from django.contrib.gis.geos import Point
+from django.db.models import Count, Q
 from django.shortcuts import render
 from django.urls import reverse, path
 from django.utils.html import format_html
@@ -15,7 +16,7 @@ from django.contrib.gis.admin import GISModelAdmin
 from import_export import resources, fields
 from import_export.admin import ImportExportModelAdmin, ImportExportMixin
 from import_export.widgets import ForeignKeyWidget
-from .models import HealthRegion, DistrictSanitaire, PolesRegionaux
+from .models import HealthRegion, DistrictSanitaire, PolesRegionaux, RendezVousStatut, RendezVousVaccination
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     PolesRegionaux, HealthRegion, DistrictSanitaire, TypeServiceSanitaire,
@@ -269,18 +270,15 @@ class CentreVaccinationResource(resources.ModelResource):
         widget=ForeignKeyWidget(DistrictSanitaire, 'nom')
     )
 
+    # Export uniquement
     region = fields.Field(
         column_name='region',
-        attribute='district__region',
-        widget=ForeignKeyWidget(HealthRegion, 'name'),
-        readonly=True
+        readonly=True,
     )
 
     poles = fields.Field(
         column_name='poles',
-        attribute='district__region__poles',
-        widget=ForeignKeyWidget(PolesRegionaux, 'name'),
-        readonly=True
+        readonly=True,
     )
 
     class Meta:
@@ -290,17 +288,25 @@ class CentreVaccinationResource(resources.ModelResource):
         exclude = ('id', 'geom', 'deleted_at')
         import_id_fields = ('name',)
         use_bulk = True
-        fields = ('name', 'type', 'longitude', 'latitude', 'district', 'adresse', 'region', 'poles')
+        fields = ('name', 'type', 'longitude', 'latitude',
+                  'district', 'adresse', 'region', 'poles')
+
+    def dehydrate_region(self, obj):
+        if obj.district and obj.district.region:
+            return obj.district.region.name
+        return ''
+
+    def dehydrate_poles(self, obj):
+        if obj.district and obj.district.region and obj.district.region.poles:
+            return obj.district.region.poles.name
+        return ''
 
     def after_import_instance(self, instance, new, **kwargs):
-        """Post-traitement après l'import"""
-        # S'assurer que la géométrie est à jour
         if instance.longitude and instance.latitude and not instance.geom:
             try:
                 instance.geom = Point(float(instance.longitude), float(instance.latitude))
             except (ValueError, TypeError):
-                pass  # Ignorer les erreurs de conversion
-
+                pass
 
 # Admin class
 @admin.register(CentreVaccination)
@@ -333,7 +339,7 @@ class CentreVaccinationAdmin(ImportExportMixin, GISModelAdmin):
         'adresse',
         'district__nom',
         'district__region__name',
-        'type__name'
+        'type__nom'
     ]
 
     list_select_related = [
@@ -611,7 +617,7 @@ class UtilisateurAdmin(BaseUserAdmin):
             "fields": ("email", "first_name", "last_name", "phone", "password")
         }),
         (_("Affectation"), {
-            "fields": ("centre", "district", "region", "pole", "access_level", "role")
+            "fields": ("centre", "district", "region", "pole","service", "access_level", "role")
         }),
         (_("Permissions"), {
             "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")
@@ -628,7 +634,7 @@ class UtilisateurAdmin(BaseUserAdmin):
         }),
         (_("Affectation"), {
             "classes": ("wide",),
-            "fields": ("centre", "district", "region", "pole", "access_level", "role"),
+            "fields": ("centre", "district", "region", "pole","service", "access_level", "role"),
         }),
         (_("Permissions"), {
             "classes": ("wide",),
@@ -636,32 +642,31 @@ class UtilisateurAdmin(BaseUserAdmin):
         }),
     )
 
+
 @admin.register(Patient)
 class PatientAdmin(UserAdmin):
     """Configuration d'administration pour le modèle Patient"""
 
-    # Configuration de base
+    # --- Config de base ---
+
     list_display = [
+        'cmu_num',
         'code_patient',
         'nom_complet',
-        'age',
+        'age_display',
         'sexe',
         'telephone1',
         'commune',
         'statut_display',
         'is_active',
         'account_status',
-        'created_at'
+        'created_at',
     ]
 
     list_filter = [
         'sexe',
         'statut',
         'is_active',
-        'commune',
-        'niveau_instruction',
-        'situation_matrimoniale',
-        'centre',
         'created_at',
         'must_change_password',
         ('account_locked_until', admin.EmptyFieldListFilter),
@@ -669,6 +674,7 @@ class PatientAdmin(UserAdmin):
 
     search_fields = [
         'code_patient',
+        'cmu_num',
         'nom',
         'prenoms',
         'telephone1',
@@ -676,7 +682,7 @@ class PatientAdmin(UserAdmin):
         'email',
         'num_piece',
         'commune',
-        'quartier'
+        'quartier',
     ]
 
     readonly_fields = [
@@ -687,50 +693,55 @@ class PatientAdmin(UserAdmin):
         'updated_at',
         'failed_login_attempts_display',
         'password_change_required',
-        'vaccinations_count'
+        'vaccinations_count',
     ]
 
     fieldsets = (
-        ('Informations d\'identification', {
+        ("Informations d'identification", {
             'fields': (
                 'code_patient',
                 'email',
-
             )
         }),
-        ('Informations personnelles', {
+        ("Informations personnelles", {
             'fields': (
                 'nom',
                 'prenoms',
+                'cmu_num',
                 'date_naissance',
                 'age_display',
                 'sexe',
                 'situation_matrimoniale',
                 'nombre_enfant',
-                'nationalite'
+                'nationalite',
+                'responsable',
+                'nom_parent',
+                'prenoms_parent',
+                'telephone_parent',
+                'lien_parente',
             )
         }),
-        ('Pièce d\'identité', {
+        ("Pièce d'identité", {
             'fields': (
                 'type_piece',
-                'num_piece'
+                'num_piece',
             )
         }),
-        ('Coordonnées', {
+        ("Coordonnées", {
             'fields': (
                 'telephone1',
                 'telephone2',
                 'commune',
-                'quartier'
+                'quartier',
             )
         }),
-        ('Situation socio-professionnelle', {
+        ("Situation socio-professionnelle", {
             'fields': (
                 'niveau_instruction',
-                'profession'
+                'profession',
             )
         }),
-        ('Sécurité et accès', {
+        ("Sécurité et accès", {
             'fields': (
                 'is_active',
                 'account_status',
@@ -740,30 +751,30 @@ class PatientAdmin(UserAdmin):
                 'account_locked_until',
                 'must_change_password',
                 'password_change_required',
-                'statut'
+                'statut',
             )
         }),
-        ('Centre de vaccination', {
+        ("Centre de vaccination", {
             'fields': (
                 'centre',
                 'centre_actuel',
                 'consentement_parental',
-                'vaccinations_count'
+                'vaccinations_count',
             )
         }),
-        ('Permissions', {
+        ("Permissions", {
             'fields': (
                 'groups',
-                'user_permissions'
+                'user_permissions',
             )
         }),
-        ('Métadonnées', {
+        ("Métadonnées", {
             'fields': (
                 'created_by',
                 'created_at',
                 'updated_at',
             ),
-            'classes': ('collapse',)
+            'classes': ('collapse',),
         }),
     )
 
@@ -779,7 +790,7 @@ class PatientAdmin(UserAdmin):
                 'sexe',
                 'telephone1',
                 'password1',
-                'password2'
+                'password2',
             ),
         }),
     )
@@ -787,15 +798,21 @@ class PatientAdmin(UserAdmin):
     ordering = ['-created_at', 'nom', 'prenoms']
     date_hierarchy = 'created_at'
     filter_horizontal = ['groups', 'user_permissions']
+
+    # Pour accélérer les formulaires / relations lourdes
+    list_select_related = ('centre', 'centre_actuel', 'responsable', 'created_by')
+    raw_id_fields = ('centre', 'centre_actuel', 'responsable', 'created_by')
+
     actions = [
         'activate_patients',
         'deactivate_patients',
         'reset_login_attempts',
         'unlock_accounts',
-        'force_password_change'
+        'force_password_change',
     ]
 
-    # Méthodes d'affichage personnalisées
+    # --- Méthodes d’affichage ---
+
     def nom_complet(self, obj):
         return f"{obj.nom} {obj.prenoms}"
 
@@ -857,15 +874,6 @@ class PatientAdmin(UserAdmin):
 
     last_login_display.short_description = "Dernière connexion"
 
-    # def password_display(self, obj):
-    #     return format_html(
-    #         '<a href="{}" style="background: #417690; color: white; padding: 5px 10px; '
-    #         'text-decoration: none; border-radius: 3px;">Changer le mot de passe</a>',
-    #         reverse('admin:auth_user_password_change', args=[obj.pk])
-    #     )
-
-    # password_display.short_description = "Mot de passe"
-
     def password_change_required(self, obj):
         if obj.must_change_password:
             return format_html('<span style="color: red; font-weight: bold;">⚠️ Changement requis</span>')
@@ -874,8 +882,20 @@ class PatientAdmin(UserAdmin):
     password_change_required.short_description = "Mot de passe"
 
     def vaccinations_count(self, obj):
-        count = obj.vaccination_set.count()
-        url = reverse('admin:inhp_vaccination_changelist') + f'?patient__id__exact={obj.id}'
+        """
+        Utilise l’annotation _vaccinations_count calculée dans get_queryset.
+        Fallback sur un count() direct si on n’a pas l’annotation
+        (ex : autre queryset que celui de la liste).
+        """
+        count = getattr(obj, "_vaccinations_count", None)
+        if count is None:
+            # fallback (par exemple dans la fiche détail)
+            count = obj.historique_vaccinations.filter(deleted_at__isnull=True).count()
+
+        url = (
+                reverse('admin:inhp_vaccination_changelist')
+                + f'?patient__id__exact={obj.id}'
+        )
         return format_html(
             '<a href="{}" style="background: #4CAF50; color: white; padding: 3px 8px; '
             'text-decoration: none; border-radius: 3px;">{} vaccination(s)</a>',
@@ -884,9 +904,14 @@ class PatientAdmin(UserAdmin):
 
     vaccinations_count.short_description = "Vaccinations"
 
-    # Actions personnalisées
+    # --- Actions personnalisées ---
+
     def activate_patients(self, request, queryset):
-        updated = queryset.update(is_active=True, failed_login_attempts=0, account_locked_until=None)
+        updated = queryset.update(
+            is_active=True,
+            failed_login_attempts=0,
+            account_locked_until=None
+        )
         self.message_user(
             request,
             f"{updated} patient(s) activé(s) avec succès."
@@ -904,7 +929,10 @@ class PatientAdmin(UserAdmin):
     deactivate_patients.short_description = "Désactiver les patients sélectionnés"
 
     def reset_login_attempts(self, request, queryset):
-        updated = queryset.update(failed_login_attempts=0, account_locked_until=None)
+        updated = queryset.update(
+            failed_login_attempts=0,
+            account_locked_until=None
+        )
         self.message_user(
             request,
             f"Compteurs de tentatives réinitialisés pour {updated} patient(s)."
@@ -913,7 +941,10 @@ class PatientAdmin(UserAdmin):
     reset_login_attempts.short_description = "Réinitialiser les tentatives de connexion"
 
     def unlock_accounts(self, request, queryset):
-        updated = queryset.update(account_locked_until=None, failed_login_attempts=0)
+        updated = queryset.update(
+            account_locked_until=None,
+            failed_login_attempts=0
+        )
         self.message_user(
             request,
             f"{updated} compte(s) déverrouillé(s) avec succès."
@@ -930,21 +961,43 @@ class PatientAdmin(UserAdmin):
 
     force_password_change.short_description = "Forcer le changement de mot de passe"
 
-    # Méthodes de sauvegarde
+    # --- Sauvegarde ---
+
     def save_model(self, request, obj, form, change):
-        if not change:  # Création d'un nouveau patient
+        if not change:  # Création
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
 
-    # Permissions
+    # --- Optimisation / Permissions ---
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        # Filtrage personnalisé selon les permissions
+
+        # Chargement optimisé des FK utilisées souvent
+        qs = qs.select_related(
+            'centre',
+            'centre_actuel',
+            'responsable',
+            'created_by',
+        )
+
+        # Annotation du nombre de vaccinations (soft-delete respecté)
+        qs = qs.annotate(
+            _vaccinations_count=Count(
+                'historique_vaccinations',
+                filter=Q(historique_vaccinations__deleted_at__isnull=True),
+                distinct=True,
+            )
+        )
+
         if request.user.is_superuser:
             return qs
+
+        # Ici tu peux plus tard restreindre par centre / service si besoin
         return qs
 
-    # Configuration des permissions dans l'admin
+    # --- Permissions module ---
+
     def has_module_permission(self, request):
         return request.user.has_perm('inhp.view_patient')
 
@@ -966,8 +1019,9 @@ class VaccinationAdmin(admin.ModelAdmin):
     list_display = ('patient', 'vaccin', 'dose', 'date_vaccination')
     search_fields = ('patient__nom', 'vaccin__nom')
     list_filter = ('vaccin', 'date_vaccination')
-    # raw_id_fields = ('patient', 'vaccin')
-    autocomplete_fields = ['patient']
+    raw_id_fields = ('patient', 'vaccin')
+    list_select_related = ('patient', 'vaccin', 'centre')
+    # autocomplete_fields = ['patient']
 
 
 @admin.register(Maladie)
@@ -1074,3 +1128,336 @@ class FicheRetroAdmin(admin.ModelAdmin):
 class CallCenterAdmin(admin.ModelAdmin):
     list_display = ('telephone', 'disponible')
     list_filter = ('disponible',)
+
+
+@admin.register(RendezVousVaccination)
+class RendezVousVaccinationAdmin(admin.ModelAdmin):
+    list_display = [
+        "id",
+        "patient_display",
+        "centre_display",
+        "date_heure",
+        "type_rdv_display",
+        "statut_display",
+        "canal_display",
+        "est_passe_display",
+        "can_be_cancelled_display",
+    ]
+
+    list_filter = [
+        "statut",
+        "type_rdv",
+        "canal_prise",
+        "centre",
+        "date_heure",
+        "created_at",
+    ]
+
+    search_fields = [
+        "patient__nom",
+        "patient__prenoms",
+        "patient__code_patient",
+        "centre__nom",
+        "motif",
+    ]
+
+    readonly_fields = [
+        "created_at",
+        "updated_at",
+        "is_future",
+        "is_today",
+        "is_past",
+        "needs_confirmation",
+        "can_be_modified",
+        "can_be_cancelled",
+        "time_until_appointment",
+        "date_statut",
+    ]
+
+    fieldsets = (
+        ("Informations principales", {
+            "fields": (
+                "service",
+                "patient",
+                "centre",
+                "personnel_affecte",
+                "date_heure",
+                "duree_minutes",
+                "priorite",
+            )
+        }),
+        ("Statut & canal", {
+            "fields": (
+                "statut",
+                "canal_prise",
+                "date_statut",
+            )
+        }),
+        ("Contenu & lien vaccination", {
+            "fields": (
+                "motif",
+                "commentaire",
+                "vaccination_cible",
+            )
+        }),
+        ("Spécifique PEV", {
+            "fields": (
+                "est_pev",
+                "pev_tranche_age",
+                "pev_antigene",
+                "pev_numero_dose",
+            )
+        }),
+        ("Notifications", {
+            "fields": (
+                "consentement_notifications",
+                "notifications_envoyees",
+                "prochaine_notification",
+            )
+        }),
+        ("Conflits / chevauchement", {
+            "fields": (
+                "chevauchement_verifie",
+                "conflit_avec",
+            )
+        }),
+        ("Traçabilité", {
+            "fields": (
+                "created_at",
+                "created_by",
+                "updated_at",
+                "updated_by",
+            ),
+            "classes": ("collapse",),
+        }),
+    )
+
+    # plus de vaccins_prevus -> on retire filter_horizontal
+    # filter_horizontal = ["vaccins_prevus"]
+
+    autocomplete_fields = [
+        "service",
+        "patient",
+        "centre",
+        "personnel_affecte",
+        "vaccination_cible",
+        "created_by",
+        "updated_by",
+        "conflit_avec",
+    ]
+
+    date_hierarchy = "date_heure"
+    ordering = ["-date_heure"]
+    list_per_page = 50
+
+    actions = [
+        "marquer_comme_confirme",
+        "marquer_comme_honore",
+        "marquer_comme_annule",
+        "envoyer_rappel",
+    ]
+
+    # --- Affichages custom ---
+
+    @admin.display(description="Patient", ordering="patient__nom")
+    def patient_display(self, obj):
+        return f"{obj.patient.prenoms} {obj.patient.nom}"
+
+    @admin.display(description="Centre", ordering="centre__nom")
+    def centre_display(self, obj):
+        return str(obj.centre)
+
+    @admin.display(description="Type RDV", ordering="type_rdv")
+    def type_rdv_display(self, obj):
+        type_colors = {
+            "infant_pev": "blue",
+            "infant_rattrapage": "dodgerblue",
+            "adult_routine": "green",
+            "voyage": "orange",
+            "rappel": "purple",
+            "groupe": "teal",
+            "campagne": "crimson",
+            "urgence": "darkred",
+            "autre": "gray",
+        }
+        color = type_colors.get(obj.type_rdv, "gray")
+        return format_html(
+            '<span style="padding:2px 6px; border-radius:9999px; '
+            'background-color: {0}; color: white; font-size:11px;">{1}</span>',
+            color,
+            obj.get_type_rdv_display(),
+        )
+
+    @admin.display(description="Statut", ordering="statut")
+    def statut_display(self, obj):
+        statut_colors = {
+            "planifie": "royalblue",
+            "confirme": "seagreen",
+            "honore": "gray",
+            "absent": "orangered",
+            "annule": "darkred",
+            "reporte": "goldenrod",
+        }
+        color = statut_colors.get(obj.statut, "gray")
+        return format_html(
+            '<span style="padding:2px 6px; border-radius:9999px; '
+            'background-color: {0}; color: white; font-weight:bold; font-size:11px;">{1}</span>',
+            color,
+            obj.get_statut_display(),
+        )
+
+    @admin.display(description="Canal", ordering="canal_prise")
+    def canal_display(self, obj):
+        canal_icons = {
+            "front": "🏥",
+            "tel": "📞",
+            "web": "🌐",
+            "sms": "💬",
+            "app": "📱",
+            "partenaire": "🤝",
+            "autre": "❓",
+        }
+        icon = canal_icons.get(obj.canal_prise, "❓")
+        return format_html(
+            "{} <span style='font-size:11px;'>{}</span>",
+            icon,
+            obj.get_canal_prise_display(),
+        )
+
+    @admin.display(description="Passé ?", boolean=True)
+    def est_passe_display(self, obj):
+        return obj.is_past
+
+    @admin.display(description="Annulable ?", boolean=True)
+    def can_be_cancelled_display(self, obj):
+        return obj.can_be_cancelled
+
+    # --- Actions ---
+
+    @admin.action(description="Marquer comme confirmé")
+    def marquer_comme_confirme(self, request, queryset):
+        updated = queryset.filter(statut=RendezVousStatut.PLANIFIE).update(
+            statut=RendezVousStatut.CONFIRME
+        )
+        self.message_user(request, f"{updated} rendez-vous marqués comme confirmés.")
+
+    @admin.action(description="Marquer comme honoré")
+    def marquer_comme_honore(self, request, queryset):
+        updated = queryset.filter(
+            statut__in=[RendezVousStatut.PLANIFIE, RendezVousStatut.CONFIRME]
+        ).update(statut=RendezVousStatut.HONORE)
+        self.message_user(request, f"{updated} rendez-vous marqués comme honorés.")
+
+    @admin.action(description="Marquer comme annulé")
+    def marquer_comme_annule(self, request, queryset):
+        updated = queryset.exclude(statut=RendezVousStatut.ANNULE).update(
+            statut=RendezVousStatut.ANNULE,
+        )
+        self.message_user(request, f"{updated} rendez-vous marqués comme annulés.")
+
+    @admin.action(description="Envoyer rappel")
+    def envoyer_rappel(self, request, queryset):
+        # à adapter à ta logique de notifications
+        count = queryset.filter(
+            consentement_notifications=True
+        ).count()
+        self.message_user(request, f"Rappels à traiter pour {count} rendez-vous.")
+
+    # --- Optimisation queryset ---
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related(
+            "service",
+            "patient",
+            "centre",
+            "personnel_affecte",
+            "vaccination_cible",
+            "created_by",
+            "updated_by",
+            "conflit_avec",
+        )
+#
+# @admin.register(NotificationRendezVous)
+# class NotificationRendezVousAdmin(admin.ModelAdmin):
+#     list_display = [
+#         'id',
+#         'rendez_vous_display',
+#         'type_notification_display',
+#         'canal_display',
+#         'statut_display',
+#         'date_envoi'
+#     ]
+#
+#     list_filter = [
+#         'type_notification',
+#         'canal',
+#         'statut',
+#         'date_envoi'
+#     ]
+#
+#     search_fields = [
+#         'rendez_vous__patient__nom',
+#         'rendez_vous__patient__prenoms',
+#         'rendez_vous__centre__nom'
+#     ]
+#
+#     readonly_fields = ['date_envoi']
+#
+#     def rendez_vous_display(self, obj):
+#         return f"{obj.rendez_vous.patient} - {obj.rendez_vous.date_rendezvous}"
+#
+#     rendez_vous_display.short_description = "Rendez-vous"
+#     rendez_vous_display.admin_order_field = 'rendez_vous__date_rendezvous'
+#
+#     def type_notification_display(self, obj):
+#         type_colors = {
+#             'rappel_24h': 'blue',
+#             'rappel_1h': 'orange',
+#             'confirmation': 'green',
+#             'annulation': 'red',
+#             'report': 'purple'
+#         }
+#         color = type_colors.get(obj.type_notification, 'gray')
+#         return format_html(
+#             '<span style="color: {};">{}</span>',
+#             color,
+#             obj.get_type_notification_display()
+#         )
+#
+#     type_notification_display.short_description = "Type"
+#
+#     def canal_display(self, obj):
+#         canal_icons = {
+#             'email': '📧',
+#             'sms': '💬',
+#             'push': '📱'
+#         }
+#         icon = canal_icons.get(obj.canal, '❓')
+#         return format_html(
+#             '{} {}',
+#             icon,
+#             obj.get_canal_display()
+#         )
+#
+#     canal_display.short_description = "Canal"
+#
+#     def statut_display(self, obj):
+#         statut_colors = {
+#             'envoye': 'green',
+#             'echec': 'red',
+#             'lu': 'blue'
+#         }
+#         color = statut_colors.get(obj.statut, 'gray')
+#         return format_html(
+#             '<span style="color: {}; font-weight: bold;">{}</span>',
+#             color,
+#             obj.get_statut_display()
+#         )
+#
+#     statut_display.short_description = "Statut"
+#
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).select_related(
+#             'rendez_vous__patient', 'rendez_vous__centre'
+#         )

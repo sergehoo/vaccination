@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" x-data="loginApp()" x-bind:class="darkMode ? 'dark' : ''">
+<html lang="fr" x-data="loginApp() " x-bind:class="darkMode ? 'dark' : ''">
 <head>
     <meta charset="UTF-8">
     <title>Connexion - Plateforme Vaccination CI</title>
@@ -37,6 +37,7 @@
                 currentView: 'login', // 'login', 'register', 'forgot'
                 loading: false,
                 userType: 'professional', // 'professional', 'patient'
+                showPassword: false,
                 formData: {
                     email: '',
                     password: '',
@@ -346,9 +347,29 @@
                     </div>
                 </div>
             </div>
-
+{% if messages %}
+  <div class="mb-4 space-y-2">
+    {% for message in messages %}
+      <div
+        class="
+          text-sm px-3 py-2 rounded-lg border
+          {% if message.tags == 'error' %}
+            bg-red-50 border-red-200 text-red-700
+          {% elif message.tags == 'success' %}
+            bg-emerald-50 border-emerald-200 text-emerald-700
+          {% else %}
+            bg-slate-50 border-slate-200 text-slate-700
+          {% endif %}
+        "
+      >
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
             <!-- Formulaire de connexion -->
-            <form method="post"
+<!-- Formulaire de connexion -->
+<form method="post"
       action="{% url 'login' %}"
       x-show="currentView === 'login'"
       @submit="loading = true"
@@ -358,20 +379,26 @@
     <!-- type d'utilisateur (pro / patient), envoyé au backend -->
     <input type="hidden" name="user_type" :value="userType">
 
-    <!-- Champ identifiant (email pour pro, code ou email pour patient) -->
+    <!-- Champ identifiant -->
     <div>
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
             <span x-text="userType === 'professional' ? 'Email professionnel' : 'Code patient ou email'"></span>
         </label>
         <div class="relative">
             <input
-                x-model="formData.email"
+                x-model="formData.identifier"
                 name="identifier"
-                type="text"
+                :type="userType === 'professional' ? 'email' : 'text'"
                 required
-                class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
-                :placeholder="userType === 'professional' ? 'votre.email@example.ci' : 'CAV-000123 ou email'">
-            <i class="fa-solid fa-user absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                autocomplete="username"
+                class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600
+                       bg-white dark:bg-slate-800 text-slate-900 dark:text-white
+                       placeholder-slate-400 dark:placeholder-slate-500
+                       input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
+                :placeholder="userType === 'professional'
+                    ? 'votre.email@example.ci'
+                    : 'CAV-000123 ou email'">
+            <i class="fa-solid fa-user absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
         </div>
     </div>
 
@@ -380,55 +407,82 @@
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
             Mot de passe
         </label>
+
         <div class="relative">
             <input 
                 x-model="formData.password"
                 name="password"
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 required
-                class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
-                placeholder="Votre mot de passe">
-            <i class="fa-solid fa-lock absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+                autocomplete="current-password"
+                class="w-full px-4 py-3 rounded-2xl border border-slate-300 dark:border-slate-600
+                       bg-white dark:bg-slate-800 text-slate-900 dark:text-white
+                       placeholder-slate-400 dark:placeholder-slate-500 pr-12
+                       input-glow focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50 transition"
+                :placeholder="userType === 'professional'
+                    ? 'Votre mot de passe'
+                    : 'Mot de passe (téléphone si première connexion)'">
+
+            <!-- 👁️ Bouton afficher/masquer -->
+            <button 
+                type="button"
+                @click="showPassword = !showPassword"
+                class="absolute right-4 top-1/2 -translate-y-1/2
+                       text-slate-400 hover:text-slate-600 dark:hover:text-slate-300
+                       transition-colors focus:outline-none">
+                <i class="fa-solid"
+                   :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+            </button>
         </div>
     </div>
 
-                <div class="flex items-center justify-between text-sm">
-                    <label class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                        <input 
-                            x-model="formData.remember"
-                            type="checkbox" 
-                            class="rounded border-slate-300 text-ivoireBlue focus:ring-ivoireBlue">
-                        Se souvenir de moi
-                    </label>
-                    <button type="button" @click="setView('forgot')" class="text-ivoireBlue dark:text-ivoireGreen hover:underline font-medium">
-                        Mot de passe oublié ?
-                    </button>
-                </div>
+    <!-- Options -->
+    <div class="flex items-center justify-between text-sm">
+        <label class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+            <input 
+                x-model="formData.remember"
+                type="checkbox" 
+                class="rounded border-slate-300 text-ivoireBlue focus:ring-ivoireBlue">
+            Se souvenir de moi
+        </label>
 
-                <button 
-                    type="submit"
-                    :disabled="loading"
-                    :class="loading 
-                        ? 'bg-slate-400 cursor-not-allowed' 
-                        : 'gradient-primary hover:shadow-lg transform hover:scale-[1.02]'"
-                    class="w-full py-3 px-4 rounded-2xl text-white font-semibold shadow-md transition duration-200 flex items-center justify-center gap-2">
-                    <template x-if="loading">
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                    </template>
-                    <template x-if="!loading">
-                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                    </template>
-                    <span x-text="loading ? 'Connexion...' : 'Se connecter'"></span>
-                </button>
+        <button type="button"
+                @click="setView('forgot')"
+                class="text-ivoireBlue dark:text-ivoireGreen hover:underline font-medium">
+            Mot de passe oublié ?
+        </button>
+    </div>
 
-                <div class="text-center text-sm text-slate-500 dark:text-slate-400">
-                    Nouveau sur la plateforme ? 
-                    <button type="button" @click="setView('register')" class="text-ivoireBlue dark:text-ivoireGreen hover:underline font-medium ml-1">
-                        Créer un compte
-                    </button>
-                </div>
-            </form>
+    <!-- Bouton de connexion -->
+    <button 
+        type="submit"
+        :disabled="loading"
+        :class="loading
+            ? 'bg-slate-400 cursor-not-allowed' 
+            : 'gradient-primary hover:shadow-lg transform hover:scale-[1.02]'"
+        class="w-full py-3 px-4 rounded-2xl text-white font-semibold shadow-md transition duration-200 flex items-center justify-center gap-2">
+        
+        <template x-if="loading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+        </template>
 
+        <template x-if="!loading">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i>
+        </template>
+
+        <span x-text="loading ? 'Connexion...' : 'Se connecter'"></span>
+    </button>
+
+    <!-- Lien création compte -->
+    <div class="text-center text-sm text-slate-500 dark:text-slate-400">
+        Nouveau sur la plateforme ? 
+        <button type="button"
+                @click="setView('register')"
+                class="text-ivoireBlue dark:text-ivoireGreen hover:underline font-medium ml-1">
+            Créer un compte
+        </button>
+    </div>
+</form>
             <!-- Formulaire d'inscription -->
             <form x-show="currentView === 'register'" @submit.prevent="handleRegister" class="space-y-4">
                 <div>

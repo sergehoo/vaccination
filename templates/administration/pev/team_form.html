@@ -1,0 +1,185 @@
+{% extends "layout/base.html" %}
+{% load static %}
+
+{% block title %}Nouvelle équipe – {{ campagne.code }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- En-tête -->
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-500 uppercase tracking-widest">
+                    Campagne {{ campagne.code }}
+                </p>
+                <h1 class="mt-1 text-2xl font-bold text-gray-900">
+                    Nouvelle équipe de vaccination
+                </h1>
+                <p class="mt-1 text-sm text-gray-600">
+                    Créez une équipe rattachée à la campagne <span class="font-semibold">{{ campagne.nom }}</span>.
+                </p>
+            </div>
+            <a href="{% url 'pev:campaign_detail' campagne.pk %}"
+               class="inline-flex items-center px-3 py-1.5 border border-gray-300 rounded-full text-xs font-medium text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Retour à la campagne
+            </a>
+        </div>
+
+        <!-- Formulaire -->
+        <form method="post" class="space-y-6 bg-white shadow rounded-lg p-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="mb-4 bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
+                {% for error in form.non_field_errors %}
+                    <p>- {{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Identité équipe -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Code équipe <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.code }}
+                    {% if form.code.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.code.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Type d'équipe
+                    </label>
+                    {{ form.type_equipe }}
+                    {% if form.type_equipe.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.type_equipe.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Nom / description <span class="text-red-500">*</span>
+                </label>
+                {{ form.nom }}
+                {% if form.nom.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.nom.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Zone principale -->
+            <div class="border rounded-lg p-4 bg-gray-50">
+                <p class="text-sm font-medium text-gray-700 mb-2">Zone principale (une seule)</p>
+                <p class="text-xs text-gray-500 mb-3">
+                    Sélectionnez soit un pôle, soit une région, soit un district, soit un centre.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Pôle régional</label>
+                        {{ form.pole }}
+                        {% if form.pole.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.pole.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Région sanitaire</label>
+                        {{ form.region }}
+                        {% if form.region.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.region.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">District sanitaire</label>
+                        {{ form.district }}
+                        {% if form.district.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.district.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">Centre de vaccination</label>
+                        {{ form.centre }}
+                        {% if form.centre.errors %}
+                        <p class="mt-1 text-xs text-red-600">{{ form.centre.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Composition -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Responsable d'équipe
+                    </label>
+                    {{ form.responsable }}
+                    {% if form.responsable.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.responsable.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Téléphone de contact
+                    </label>
+                    {{ form.telephone_contact }}
+                    {% if form.telephone_contact.errors %}
+                    <p class="mt-1 text-xs text-red-600">{{ form.telephone_contact.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Membres de l'équipe
+                </label>
+                {{ form.membres }}
+                {% if form.membres.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.membres.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-1 text-xs text-gray-500">
+                    Sélectionnez les agents vaccinateurs / relais impliqués dans cette équipe.
+                </p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Moyen de déplacement
+                </label>
+                {{ form.moyen_deplacement }}
+                {% if form.moyen_deplacement.errors %}
+                <p class="mt-1 text-xs text-red-600">{{ form.moyen_deplacement.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Actif -->
+            <div class="flex items-center">
+                {{ form.actif }}
+                <span class="ml-2 text-sm text-gray-700">Équipe active</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <a href="{% url 'pev:campaign_detail' campagne.pk %}"
+                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Annuler
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center px-5 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                    Enregistrer l'équipe
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("alpine:init", () => {
+    // Tu peux ajouter de petits comportements Alpine ici si besoin
+});
+</script>
+{% endblock %}

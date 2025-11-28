@@ -1,0 +1,171 @@
+{% extends "patient_space/patient_base.html" %}
+{% load static %}
+
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- En-tête -->
+    <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+            <a href="{% url 'patient_rendez_vous_detail' object.pk %}" 
+               class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors">
+                <i class="fa-solid fa-arrow-left text-slate-600 dark:text-slate-400"></i>
+            </a>
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800 dark:text-white">
+                    Modifier le rendez-vous
+                </h1>
+                <p class="text-slate-600 dark:text-slate-300 mt-1">
+                    {{ object.date_rendezvous|date:"l d F Y" }} à {{ object.date_rendezvous|date:"H:i" }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-8">
+        <!-- Formulaire -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="space-y-6">
+                        <!-- Centre de vaccination -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Centre de vaccination *
+                            </label>
+                            {{ form.centre }}
+                            {% if form.centre.errors %}
+                            <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.centre.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Type de rendez-vous -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Type de vaccination *
+                            </label>
+                            {{ form.type_rendezvous }}
+                            {% if form.type_rendezvous.errors %}
+                            <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.type_rendezvous.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Date et heure -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Date et heure *
+                            </label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Date</label>
+                                    {{ form.date_rendezvous.0 }}
+                                </div>
+                                <div>
+                                    <label class="text-xs text-slate-500 dark:text-slate-400 mb-1 block">Heure</label>
+                                    {{ form.date_rendezvous.1 }}
+                                </div>
+                            </div>
+                            {% if form.date_rendezvous.errors %}
+                            <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.date_rendezvous.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Motif -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                Motif de la consultation
+                            </label>
+                            {{ form.motif }}
+                            {% if form.motif.errors %}
+                            <div class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                {{ form.motif.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Boutons -->
+                        <div class="flex gap-3 pt-4">
+                            <a href="{% url 'patient_rendez_vous_detail' object.pk %}" 
+                               class="px-6 py-3 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium">
+                                Annuler
+                            </a>
+                            <button type="submit" 
+                                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium flex items-center gap-2">
+                                <i class="fa-solid fa-floppy-disk"></i>
+                                Enregistrer les modifications
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Informations -->
+        <div class="space-y-6">
+            <!-- Récapitulatif -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                <h3 class="font-semibold text-slate-800 dark:text-white mb-4">Rendez-vous actuel</h3>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400">Centre</p>
+                        <p class="text-slate-800 dark:text-white font-medium">{{ object.centre.nom }}</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400">Date et heure</p>
+                        <p class="text-slate-800 dark:text-white font-medium">
+                            {{ object.date_rendezvous|date:"d/m/Y H:i" }}
+                        </p>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400">Type</p>
+                        <p class="text-slate-800 dark:text-white font-medium">
+                            {{ object.get_type_rendezvous_display }}
+                        </p>
+                    </div>
+                    {% if object.motif %}
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400">Motif</p>
+                        <p class="text-slate-800 dark:text-white">{{ object.motif }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Important -->
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
+                <h3 class="font-semibold text-blue-800 dark:text-blue-300 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-exclamation-circle"></i>
+                    Important
+                </h3>
+                <ul class="space-y-2 text-sm text-blue-700 dark:text-blue-400">
+                    <li>La modification est possible jusqu'à 2 heures avant le rendez-vous</li>
+                    <li>Vous recevrez une confirmation par email</li>
+                    <li>En cas d'indisponibilité, contactez directement le centre</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation de la date
+    const dateInput = document.querySelector('input[type="date"]');
+    const today = new Date().toISOString().split('T')[0];
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 90);
+    const maxDateStr = maxDate.toISOString().split('T')[0];
+    
+    dateInput.min = today;
+    dateInput.max = maxDateStr;
+});
+</script>
+{% endblock %}

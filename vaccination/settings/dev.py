@@ -20,5 +20,5 @@ DATABASES = {
         'PORT': int(os.environ.get('DB_PORT', 5432)),
     }
 }
-
+DISABLE_SERVER_SIDE_CURSORS = True
 MPI_API_KEY = os.environ.get('MPI_API_KEY', default='key')

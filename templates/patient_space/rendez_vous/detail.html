@@ -1,0 +1,230 @@
+{% extends "patient_space/patient_base.html" %}
+{% load static %}
+
+
+
+{% block content %}
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- En-tête avec navigation -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-2">
+                <a href="{% url 'patient_rendez_vous_liste' %}"
+                   class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-arrow-left text-slate-600 dark:text-slate-400"></i>
+                </a>
+                <div class="flex-1">
+                    <h1 class="text-3xl font-bold text-slate-800 dark:text-white">
+                        Détail du rendez-vous
+                    </h1>
+                    <p class="text-slate-600 dark:text-slate-300 mt-1">
+                        {{ rendez_vous.date_rendezvous|date:"l d F Y" }} à {{ rendez_vous.date_rendezvous|date:"H:i" }}
+                    </p>
+                </div>
+
+                <!-- Badge statut -->
+                <span class="px-4 py-2 rounded-full text-sm font-medium
+                {% if rendez_vous.statut == 'planifie' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                {% elif rendez_vous.statut == 'confirme' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                {% elif rendez_vous.statut == 'honore' %}bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300
+                {% elif rendez_vous.statut == 'annule' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                {% else %}bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300{% endif %}">
+                {{ rendez_vous.get_statut_display }}
+            </span>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Informations principales -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Carte informations -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                    <h2 class="text-xl font-semibold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-blue-500"></i>
+                        Informations du rendez-vous
+                    </h2>
+
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <!-- Colonne gauche -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm font-medium text-slate-500 dark:text-slate-400">Centre</label>
+                                <p class="text-slate-800 dark:text-white font-medium mt-1">{{ rendez_vous.centre.nom }}</p>
+                                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">{{ rendez_vous.centre.adresse }}</p>
+                                {% if rendez_vous.centre.telephone %}
+                                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                        <i class="fa-solid fa-phone mr-1"></i>
+                                        {{ rendez_vous.centre.telephone }}
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            <div>
+                                <label class="text-sm font-medium text-slate-500 dark:text-slate-400">Date et
+                                    heure</label>
+                                <p class="text-slate-800 dark:text-white font-medium mt-1">
+                                    {{ rendez_vous.date_rendezvous|date:"d/m/Y" }}
+                                    à {{ rendez_vous.date_rendezvous|date:"H:i" }}
+                                </p>
+                                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                    {{ rendez_vous.duree_estimee }} minutes
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Colonne droite -->
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm font-medium text-slate-500 dark:text-slate-400">Type</label>
+                                <p class="text-slate-800 dark:text-white font-medium mt-1">
+                                    {{ rendez_vous.get_type_rendezvous_display }}
+                                </p>
+                            </div>
+
+                            <div>
+                                <label class="text-sm font-medium text-slate-500 dark:text-slate-400">Canal de
+                                    réservation</label>
+                                <p class="text-slate-800 dark:text-white font-medium mt-1">
+                                    {{ rendez_vous.get_canal_display }}
+                                </p>
+                            </div>
+
+                            {% if rendez_vous.professionnel %}
+                                <div>
+                                    <label class="text-sm font-medium text-slate-500 dark:text-slate-400">Professionnel</label>
+                                    <p class="text-slate-800 dark:text-white font-medium mt-1">
+                                        {{ rendez_vous.professionnel.get_full_name }}
+                                    </p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Motif -->
+                    {% if rendez_vous.motif %}
+                        <div class="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                            <label class="text-sm font-medium text-slate-500 dark:text-slate-400">Motif</label>
+                            <p class="text-slate-800 dark:text-white mt-2">{{ rendez_vous.motif }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Vaccins prévus -->
+                {% if rendez_vous.vaccins_prevus.exists %}
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                        <h2 class="text-xl font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-syringe text-green-500"></i>
+                            Vaccins prévus
+                        </h2>
+                        <div class="space-y-3">
+                            {% for vaccin in rendez_vous.vaccins_prevus.all %}
+                                <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50">
+                                    <div class="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                                        <i class="fa-solid-syringe text-green-600 dark:text-green-400"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-medium text-slate-800 dark:text-white">{{ vaccin.nom }}</p>
+                                        <p class="text-sm text-slate-600 dark:text-slate-400">{{ vaccin.maladie_cible }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Actions et informations -->
+            <div class="space-y-6">
+                <!-- Actions -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                    <h3 class="font-semibold text-slate-800 dark:text-white mb-4">Actions</h3>
+                    <div class="space-y-3">
+                        {% if rendez_vous.statut == 'planifie' and rendez_vous.peut_etre_annule %}
+                            <a href="{% url 'patient_rendez_vous_confirmer' rendez_vous.pk %}"
+                               class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors font-medium">
+                                <i class="fa-solid fa-check"></i>
+                                Confirmer
+                            </a>
+                        {% endif %}
+
+                        {% if rendez_vous.peut_etre_annule %}
+                            <a href="{% url 'patient_rendez_vous_annuler' rendez_vous.pk %}"
+                               class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-colors font-medium">
+                                <i class="fa-solid fa-xmark"></i>
+                                Annuler
+                            </a>
+                        {% endif %}
+
+                        {% if rendez_vous.statut == 'planifie' or rendez_vous.statut == 'confirme' and rendez_vous.peut_etre_annule %}
+                            <a href="{% url 'patient_rendez_vous_modifier' rendez_vous.pk %}"
+                               class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors font-medium">
+                                <i class="fa-solid fa-pen"></i>
+                                Modifier
+                            </a>
+                        {% endif %}
+
+                        <a href="{% url 'patient_rendez_vous_liste' %}"
+                           class="w-full flex items-center justify-center gap-2 px-4 py-3 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium">
+                            <i class="fa-solid fa-list"></i>
+                            Retour à la liste
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Informations pratiques -->
+                <div class="bg-amber-50 dark:bg-amber-900/20 rounded-2xl p-6 border border-amber-200 dark:border-amber-800">
+                    <h3 class="font-semibold text-amber-800 dark:text-amber-300 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        Recommandations
+                    </h3>
+                    <ul class="space-y-2 text-sm text-amber-700 dark:text-amber-400">
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-clock mt-0.5 text-xs"></i>
+                            <span>Arrivez 10 minutes avant l'heure du rendez-vous</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-id-card mt-0.5 text-xs"></i>
+                            <span>Pièce d'identité obligatoire</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <i class="fa-solid fa-file-medical mt-0.5 text-xs"></i>
+                            <span>Carnet de vaccination si disponible</span>
+                        </li>
+                        {% if rendez_vous.est_dans_24h %}
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-bell mt-0.5 text-xs"></i>
+                                <span>Vous recevrez un rappel 24h avant</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- Coordonnées du centre -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6">
+                    <h3 class="font-semibold text-slate-800 dark:text-white mb-3">Contact du centre</h3>
+                    <div class="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                        <p class="font-medium text-slate-800 dark:text-white">{{ rendez_vous.centre.nom }}</p>
+                        <p>{{ rendez_vous.centre.adresse }}</p>
+                        {% if rendez_vous.centre.telephone %}
+                            <p class="flex items-center gap-2 mt-2">
+                                <i class="fa-solid fa-phone"></i>
+                                <a href="tel:{{ rendez_vous.centre.telephone }}"
+                                   class="text-blue-600 dark:text-blue-400 hover:underline">
+                                    {{ rendez_vous.centre.telephone }}
+                                </a>
+                            </p>
+                        {% endif %}
+                        {% if rendez_vous.centre.email %}
+                            <p class="flex items-center gap-2">
+                                <i class="fa-solid fa-envelope"></i>
+                                <a href="mailto:{{ rendez_vous.centre.email }}"
+                                   class="text-blue-600 dark:text-blue-400 hover:underline">
+                                    {{ rendez_vous.centre.email }}
+                                </a>
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

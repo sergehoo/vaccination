@@ -1,0 +1,587 @@
+{% extends "layout/base.html" %}
+{% load humanize %}
+
+{% block title %}Performance des agents PEV{% endblock %}
+
+{% block content %}
+    <div class="nk-content nk-content-fluid">
+        <div class="container-xl wide-lg">
+            <div class="nk-content-body">
+
+                {# HERO SECTION #}
+                {# HERO SECTION #}
+<div class="hero-section relative overflow-hidden rounded-2xl shadow-lg mb-6 px-6 py-5 text-white">
+    {# décor léger #}
+    <div class="pointer-events-none absolute inset-0 opacity-20">
+        <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/20 blur-2xl"></div>
+        <div class="absolute -left-10 bottom-0 w-52 h-52 rounded-full bg-emerald-400/20 blur-3xl"></div>
+    </div>
+
+    <div class="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-5">
+        <div class="flex-1">
+            <div class="flex items-center gap-2 mb-2">
+                <div class="w-1.5 h-6 bg-white/40 rounded-full"></div>
+                <p class="text-xs md:text-sm font-medium text-white/90 uppercase tracking-[0.18em]">
+                    Tableau de bord · Performance PEV
+                </p>
+            </div>
+
+            <h1 class="text-xl md:text-2xl font-bold mb-2 flex items-center gap-3">
+                <span class="bg-white/15 p-2 rounded-xl inline-flex items-center justify-center">
+                    <em class="icon ni ni-chart-pie-2 text-lg"></em>
+                </span>
+                Suivi des actes vaccinaux
+            </h1>
+
+            <p class="text-white/80 max-w-2xl text-xs md:text-sm">
+                Visualisez en un coup d’œil les performances des agents par campagne, période et centre.
+                Les indicateurs s’adaptent automatiquement à vos filtres.
+            </p>
+
+            {# résumé des filtres #}
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-[11px] md:text-xs text-white/80">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 border border-white/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
+                    <span class="uppercase tracking-wide">Campagne</span>
+                    <span class="font-semibold">
+                        {% if filters.campagne_id %}
+                            {% for c in campagnes %}
+                                {% if c.id|stringformat:'s' == filters.campagne_id %}
+                                    {{ c.code }} · {{ c.nom }}
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            Toutes les campagnes
+                        {% endif %}
+                    </span>
+                </span>
+
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/8 border border-white/15">
+                    <em class="icon ni ni-calendar-alt text-[13px]"></em>
+                    <span class="uppercase tracking-wide">Période</span>
+                    <span class="font-medium">
+                        {% if filters.date_debut or filters.date_fin %}
+                            {% if filters.date_debut %}du {{ filters.date_debut }}{% endif %}
+                            {% if filters.date_fin %} au {{ filters.date_fin }}{% endif %}
+                        {% else %}
+                            Non filtrée
+                        {% endif %}
+                    </span>
+                </span>
+            </div>
+        </div>
+
+        {# carte user + mini récap #}
+        <div class="bg-white/10 backdrop-blur-sm rounded-xl p-4 min-w-[230px] border border-white/15">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-sm font-semibold">
+                    {{ request.user.first_name|default_if_none:""|default:""|slice:":1"|upper|default:"U" }}
+                    {{ request.user.last_name|default_if_none:""|default:""|slice:":1"|upper|default:"S" }}
+                </div>
+                <div>
+                    <p class="text-[11px] text-white/70 uppercase tracking-wide mb-0">
+                        Connecté
+                    </p>
+                    <p class="font-semibold text-white text-sm leading-tight">
+                        {{ request.user.get_full_name|default:"Utilisateur" }}
+                    </p>
+                    {% if request.user.centre %}
+                        <p class="text-[11px] text-white/70 mt-1 flex items-center gap-1">
+                            <em class="icon ni ni-map-pin text-[12px]"></em>
+                            {{ request.user.centre.name }}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if my_stats %}
+                <div class="mt-2 pt-2 border-t border-white/15">
+                    <p class="text-[11px] text-white/70 mb-1 uppercase tracking-wide">
+                        Mes performances (filtres actifs)
+                    </p>
+                    <div class="flex items-baseline justify-between gap-2">
+                        <div>
+                            <p class="text-lg font-semibold leading-none">
+                                {{ my_stats.nb_vaccinations|default:0|intcomma }}
+                            </p>
+                            <p class="text-[11px] text-white/70">vaccinations</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-semibold leading-none">
+                                {{ my_stats.nb_enfants|default:0|intcomma }}
+                            </p>
+                            <p class="text-[11px] text-white/70">enfants</p>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="mt-2 pt-2 border-t border-white/15">
+                    <p class="text-[11px] text-white/70">
+                        Aucun acte vaccinal enregistré pour vous sur cette période.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+                {# FILTRES AVANCÉS #}
+                {# FILTRES AVANCÉS #}
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/70 dark:border-slate-700 mb-6">
+                    <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row justify-between gap-4">
+                        <div>
+                            <h5 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Filtres de
+                                performance</h5>
+                            <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                Sélectionnez une campagne et une période pour affiner les résultats.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button"
+                                    onclick="exportToExcel()"
+                                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary-500/80 text-primary-600 text-xs font-medium bg-primary-50 hover:bg-primary-100 transition-colors">
+                                <em class="icon ni ni-download text-sm"></em>
+                                <span>Exporter</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="px-5 py-4">
+                        <form method="get" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="space-y-1">
+                                <label class="block text-xs font-medium text-slate-600 dark:text-slate-300">Campagne</label>
+                                <select name="campagne"
+                                        class="block w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                    <option value="">Toutes les campagnes</option>
+                                    {% for c in campagnes %}
+                                        <option value="{{ c.id }}"
+                                                {% if filters.campagne_id|default:'' == c.id|stringformat:'s' %}selected{% endif %}>
+                                            {{ c.code }} · {{ c.nom }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block text-xs font-medium text-slate-600 dark:text-slate-300">Période</label>
+                                <div class="flex gap-2">
+                                    <input type="date"
+                                           name="date_debut"
+                                           value="{{ filters.date_debut|default_if_none:'' }}"
+                                           class="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                    <input type="date"
+                                           name="date_fin"
+                                           value="{{ filters.date_fin|default_if_none:'' }}"
+                                           class="flex-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="block text-xs font-medium text-slate-600 dark:text-slate-300">Tri
+                                    par</label>
+                                <select name="tri"
+                                        class="block w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                    <option value="vaccinations"
+                                            {% if filters.tri == "vaccinations" or not filters.tri %}selected{% endif %}>
+                                        Vaccinations
+                                    </option>
+                                    <option value="enfants"
+                                            {% if filters.tri == "enfants" %}selected{% endif %}>
+                                        Enfants uniques
+                                    </option>
+                                    <option value="montant"
+                                            {% if filters.tri == "montant" %}selected{% endif %}>
+                                        Montant
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-end gap-2">
+                                <button type="submit"
+                                        class="inline-flex justify-center items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium flex-1 transition-colors">
+                                    <em class="icon ni ni-filter text-sm"></em>
+                                    <span>Appliquer</span>
+                                </button>
+                                <a href="{% url 'pev:pev_agent_performance' %}"
+                                   class="inline-flex justify-center items-center px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-xs font-medium text-slate-600 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800">
+                                    <em class="icon ni ni-reload text-sm"></em>
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {# KPI CARDS #}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div class="kpi-card bg-ivoireGreen dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 border-l-4 border-l-blue-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 text-white mb-1">
+                                    Vaccinations
+                                </p>
+                                <p class="text-2xl font-bold text-slate-900 text-white leading-tight">
+                                    {{ global_stats.total_vaccinations|default:0|intcomma }}
+                                </p>
+                            </div>
+                            <div class="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                                <em class="icon ni ni-needle text-blue-500 text-xl"></em>
+                            </div>
+                        </div>
+                        <p class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 text-[11px] text-white">
+                            Actes vaccinaux saisis sur la période.
+                        </p>
+                    </div>
+
+                    <div class="kpi-card bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 border-l-4 border-l-green-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                                    Enfants uniques
+                                </p>
+                                <p class="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+                                    {{ global_stats.total_enfants|default:0|intcomma }}
+                                </p>
+                            </div>
+                            <div class="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
+                                <em class="icon ni ni-users text-green-500 text-xl"></em>
+                            </div>
+                        </div>
+                        <p class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 text-[11px] text-slate-500">
+                            Enfants distincts ayant reçu au moins une dose.
+                        </p>
+                    </div>
+
+                    <div class="kpi-card bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 border-l-4 border-l-emerald-500">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+                                    Montant total estimé
+                                </p>
+                                <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 leading-tight">
+                                    {% if global_stats.total_montant %}
+                                        {{ global_stats.total_montant|floatformat:0|intcomma }} FCFA
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="p-3 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
+                                <em class="icon ni ni-coin text-emerald-500 text-xl"></em>
+                            </div>
+                        </div>
+                        <p class="mt-2 pt-2 border-t border-slate-100 dark:border-slate-700 text-[11px] text-slate-500">
+                            Base sur le barème défini par campagne.
+                        </p>
+                    </div>
+
+                    <div class="kpi-card bg-ivoireBlue from-emerald-500 to-green-500 text-white rounded-xl p-4 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-white/90 mb-1">
+                                    Mes performances
+                                </p>
+                                {% if my_stats %}
+                                    <p class="text-2xl font-bold text-white leading-tight">
+                                        {{ my_stats.nb_vaccinations|intcomma }}
+                                    </p>
+                                    <p class="text-[11px] text-white/80 mt-1">
+                                        {{ my_stats.nb_enfants|intcomma }} enfants ·
+                                        {% if my_stats.montant_total %}
+                                            {{ my_stats.montant_total|floatformat:0|intcomma }} FCFA
+                                        {% endif %}
+                                    </p>
+                                {% else %}
+                                    <p class="text-sm text-white/80">
+                                        Aucun acte vaccinal sur cette période.
+                                    </p>
+                                {% endif %}
+                            </div>
+                            <div class="p-3 bg-white/20 rounded-lg">
+                                <em class="icon ni ni-user text-white text-xl"></em>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+             
+                {# TABLEAU DES PERFORMANCES #}
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200/70 dark:border-slate-700">
+                    <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between gap-3">
+                        <div>
+                            <h5 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Classement des
+                                agents</h5>
+                            <p class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                Tri par nombre de vaccinations – {{ per_agent|length }}
+                                agent{{ per_agent|length|pluralize }} trouvé{{ per_agent|length|pluralize }}.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                            <span class="inline-flex w-3 h-3 rounded-full bg-emerald-400"></span>
+                            <span>Votre ligne est surlignée en vert</span>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                       <table class="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/70">
+    <tr>
+        <th class="px-4 py-2 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+            Rang
+        </th>
+        <th class="px-4 py-2 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+            Agent & centre
+        </th>
+        <th class="px-4 py-2 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+            Équipe
+        </th>
+        <th class="px-4 py-2 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+            Zone
+        </th>
+        <th class="px-4 py-2 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+            Vaccinations
+        </th>
+        <th class="px-4 py-2 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+            Enfants
+        </th>
+        <th class="px-4 py-2 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+            Prix/acte
+        </th>
+        <th class="px-4 py-2 text-right text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+            Gain
+        </th>
+    </tr>
+    </thead>
+
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+    {% if per_agent %}
+        {% for row in per_agent %}
+            <tr class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60
+                {% if row.vaccinateur_id == request.user.id %}
+                    bg-emerald-50/70 dark:bg-emerald-900/20
+                {% endif %}">
+
+                {# RANG #}
+                <td class="px-4 py-3 align-middle">
+                    <span class="text-sm font-semibold
+                        {% if forloop.counter == 1 %}text-amber-500
+                        {% elif forloop.counter == 2 %}text-slate-500
+                        {% elif forloop.counter == 3 %}text-orange-500
+                        {% elif row.vaccinateur_id == request.user.id %}text-emerald-600
+                        {% else %}text-slate-500{% endif %}">
+                        {{ forloop.counter }}
+                    </span>
+                </td>
+
+                {# AGENT + CENTRE #}
+                <td class="px-4 py-3 align-middle">
+                    <div class="flex items-center gap-3">
+                        <div class="user-avatar flex-shrink-0
+                            {% if forloop.counter == 1 %}bg-amber-100 text-amber-600
+                            {% elif forloop.counter == 2 %}bg-slate-100 text-slate-600
+                            {% elif forloop.counter == 3 %}bg-orange-100 text-orange-600
+                            {% elif row.vaccinateur_id == request.user.id %}bg-emerald-100 text-emerald-600
+                            {% else %}bg-primary-100 text-primary-600{% endif %}">
+                            {% with fn=row.vaccinateur__first_name ln=row.vaccinateur__last_name %}
+                                {{ fn|default_if_none:""|default:""|slice:":1"|upper|default:"N" }}
+                                {{ ln|default_if_none:""|default:""|slice:":1"|upper|default:"O" }}
+                            {% endwith %}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center flex-wrap gap-1">
+                                <span class="font-medium text-sm text-slate-900 dark:text-slate-50">
+                                    {{ row.vaccinateur__first_name|default:"" }} {{ row.vaccinateur__last_name|default:"" }}
+                                </span>
+                                {% if row.vaccinateur_id == request.user.id %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[10px] font-medium">
+                                        Vous
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2 mt-0.5">
+                                {% if row.vaccinateur__email %}
+                                    <span class="text-[11px] text-slate-500 dark:text-slate-400">
+                                        {{ row.vaccinateur__email }}
+                                    </span>
+                                {% endif %}
+                                <span class="text-[11px] text-slate-400">·</span>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-600 dark:text-slate-300">
+                                    <em class="icon ni ni-map-pin-fill text-xs mr-1"></em>
+                                    {{ row.centre__name|default:"Non assigné" }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+
+                {# ÉQUIPE #}
+                <td class="px-4 py-3 align-middle text-right">
+                    {% if row.equipe__code or row.equipe__nom %}
+                        <span class="inline-flex items-center justify-end px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-700 dark:text-slate-200">
+                            {{ row.equipe__code|default:"" }}
+                            {% if row.equipe__nom %}
+                                <span class="ml-1 text-[11px] text-slate-500">· {{ row.equipe__nom }}</span>
+                            {% endif %}
+                        </span>
+                    {% else %}
+                        <span class="text-xs text-slate-400">-</span>
+                    {% endif %}
+                </td>
+
+                {# ZONE #}
+                <td class="px-4 py-3 align-middle text-right">
+                    {% if row.zone_label %}
+                        <span class="text-xs text-slate-700 dark:text-slate-200">
+                            {{ row.zone_label }}
+                        </span>
+                    {% else %}
+                        <span class="text-xs text-slate-400">-</span>
+                    {% endif %}
+                </td>
+
+                {# VACCINATIONS #}
+                <td class="px-4 py-3 align-middle text-right">
+                    <div class="flex flex-col items-end">
+                        <span class="font-semibold text-slate-900 dark:text-slate-50">
+                            {{ row.nb_vaccinations|intcomma }}
+                        </span>
+                        <span class="text-[11px] text-slate-400">actes</span>
+                    </div>
+                </td>
+
+                {# ENFANTS #}
+                <td class="px-4 py-3 align-middle text-right">
+                    <div class="flex flex-col items-end">
+                        <span class="text-slate-800 dark:text-slate-100">
+                            {{ row.nb_enfants|intcomma }}
+                        </span>
+                        <span class="text-[11px] text-slate-400">enfants</span>
+                    </div>
+                </td>
+
+                {# MONTANT L'ACTE #}
+                <td class="px-4 py-3 align-middle text-right">
+                    {% if row.montant_par_vaccination %}
+                        <span class="text-xs font-medium text-slate-700 dark:text-slate-200">
+                            {{ row.montant_par_vaccination|floatformat:0|intcomma }}FCFA
+                        </span>
+                    {% else %}
+                        <span class="text-xs text-slate-400">-</span>
+                    {% endif %}
+                </td>
+
+                {# MONTANT TOTAL #}
+                <td class="px-4 py-3 align-middle text-right">
+                    {% if row.montant_total %}
+                        <div class="flex flex-col items-end">
+                            <span class="font-semibold text-emerald-600 dark:text-emerald-400">
+                                {{ row.montant_total|floatformat:0|intcomma }}FCFA
+                            </span>
+                            <span class="text-[11px] text-slate-400">estimé</span>
+                        </div>
+                    {% else %}
+                        <span class="text-sm text-slate-400">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="8" class="px-4 py-8 text-center">
+                <div class="max-w-xs mx-auto">
+                    <div class="w-16 h-16 mx-auto mb-3 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
+                        <em class="icon ni ni-info text-2xl text-slate-400"></em>
+                    </div>
+                    <p class="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">
+                        Aucune donnée disponible
+                    </p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                        Aucun acte vaccinal trouvé pour les filtres sélectionnés.
+                    </p>
+                </div>
+            </td>
+        </tr>
+    {% endif %}
+    </tbody>
+</table>
+                    </div>
+
+                    {% if per_agent %}
+                        <div class="px-5 py-3 bg-slate-50 dark:bg-slate-900/70 border-t border-slate-100 dark:border-slate-800">
+                            <div class="flex flex-wrap justify-between items-center gap-3 text-xs md:text-sm text-slate-600 dark:text-slate-400">
+                                {% with per_agent|length as nb_agents %}
+                                    <div>
+                                        <span class="font-medium">{{ nb_agents }}</span>
+                                        agent{{ nb_agents|pluralize }} affiché{{ nb_agents|pluralize }}.
+                                    </div>
+                                    <div class="flex flex-wrap gap-4">
+                        <span>
+                            Moyenne :
+                            <strong>{{ global_stats.moyenne_vaccinations|default:0|floatformat:1 }}</strong>
+                            vacc./agent
+                        </span>
+                                        <span>
+                            Top agent :
+                            <strong>{{ per_agent.0.nb_vaccinations|default:0|intcomma }}</strong>
+                            vaccinations
+                        </span>
+                                    </div>
+                                {% endwith %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div><!-- .nk-content-body -->
+        </div><!-- .container-xl -->
+    </div><!-- .nk-content -->
+
+    <style>
+        .kpi-card {
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px -10px rgba(15, 23, 42, 0.25);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #1d4ed8 0%, #4f46e5 40%, #7c3aed 100%);
+        }
+
+        @media (max-width: 768px) {
+            .user-card {
+                gap: 8px;
+            }
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+    </style>
+
+    <script>
+        function exportToExcel() {
+            // À implémenter : ex. ajouter ?export=xlsx sur l'URL ou ouvrir une vue dédiée
+            alert("Fonction d'export à implémenter (Excel / CSV).");
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,455 @@
+{% extends "layout/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Campagnes PEV – Plateforme Vaccination CI{% endblock %}
+
+{% block content %}
+{# HERO #}
+<div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft mb-6">
+
+    <!-- Aura décorative à droite -->
+    <div class="absolute inset-y-0 right-0 hidden md:flex items-center pr-6 pointer-events-none">
+        <div class="relative w-40 h-40 rounded-full bg-sky-500/10 border border-sky-400/30 flex items-center justify-center">
+            <div class="w-24 h-24 rounded-full bg-slate-900/80 flex items-center justify-center border border-white/10">
+                <i class="fa-solid fa-syringe text-2xl text-sky-300"></i>
+            </div>
+            <div class="absolute -bottom-2 -left-4 px-3 py-1.5 rounded-2xl bg-white/10 border border-white/20 text-[10px] backdrop-blur">
+                {{ stats_globales.total|default:0 }} campagnes enregistrées
+            </div>
+            <div class="absolute -top-2 -right-2 px-3 py-1.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 text-[10px] flex items-center gap-1">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                {{ stats_globales.en_cours|default:0 }} en cours
+            </div>
+        </div>
+    </div>
+
+    <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <!-- Texte principal -->
+        <div class="space-y-2 max-w-xl">
+            <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90 flex items-center gap-2 flex-wrap">
+                Côte d’Ivoire · Plateforme nationale de gestion de la vaccination
+                {% if request.user.is_staff %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/10 text-yellow-300 border border-yellow-400/40">
+                        <i class="fa-solid fa-map-marker text-[12px]"></i>
+                        {% if request.user.access_level == "pole" and request.user.pole %}
+                            {{ request.user.pole }}
+                        {% elif request.user.access_level == "region" and request.user.region %}
+                            {{ request.user.region }}
+                        {% elif request.user.access_level == "district" and request.user.district %}
+                            {{ request.user.district }}
+                        {% elif request.user.access_level == "centre" and request.user.centre %}
+                            {{ request.user.centre }}
+                        {% elif request.user.access_level == "national" %}
+                            National
+                        {% endif %}
+                    </span>
+                {% endif %}
+            </p>
+
+            <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
+                <span>Gestion des campagnes PEV</span>
+                <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40 text-[10px]">
+                    <i class="fa-solid fa-bullseye text-[9px]"></i>
+                    Planification & suivi opérationnel
+                </span>
+            </h1>
+
+            <p class="text-[12px] text-slate-300">
+                Visualisez, planifiez et suivez les campagnes de vaccination : périodes, zones couvertes, 
+                populations cibles, progression de la couverture et budget.
+            </p>
+
+            <!-- Tags de contexte -->
+            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">
+                    <i class="fa-solid fa-calendar-days text-[9px]"></i>
+                    Campagnes planifiées / en cours
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
+                    <i class="fa-solid fa-shield-virus text-[9px]"></i>
+                    Vaccins & population cible
+                </span>
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/40">
+                    <i class="fa-solid fa-location-dot text-[9px]"></i>
+                    Pôles, régions, districts, centres
+                </span>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="flex flex-wrap gap-2 pt-1">
+                <a href="{% url 'pev:campaign_create' %}"
+                   class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white text-slate-900 text-[11px] shadow-soft hover:scale-[1.01] transition">
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span>Nouvelle campagne</span>
+                </a>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/5 border border-white/15 text-[11px]">
+                    <i class="fa-solid fa-magnifying-glass text-[10px]"></i>
+                    <span>Recherche par nom, code, année, statut…</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Carte chiffres campagnes -->
+        <div class="rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-[11px] min-w-[230px] space-y-2">
+            <div class="flex items-center justify-between gap-2">
+                <p class="text-slate-200/90 font-medium">
+                    Synthèse des campagnes
+                </p>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px] flex items-center gap-1">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Données à jour
+                </span>
+            </div>
+            <div class="space-y-1">
+                <p class="text-sm">
+                    <span class="font-semibold">{{ stats_globales.en_cours|default:0|intcomma:"fr" }}</span> en cours · 
+                    <span class="font-semibold text-sky-200">{{ stats_globales.planifiees|default:0|intcomma:"fr" }}</span> planifiées
+                </p>
+                <p class="text-[11px] text-slate-300">
+                    {{ stats_globales.cloturees|default:0|intcomma:"fr" }} campagnes clôturées
+                </p>
+                <p class="text-[11px] text-slate-400">
+                    Total : {{ stats_globales.total|default:0|intcomma:"fr" }} campagnes
+                </p>
+            </div>
+            <div class="flex items-center justify-between text-[10px] text-slate-300 pt-1">
+                <span>
+                    Suivi multi-niveaux : national → centre
+                </span>
+                <span class="flex items-center gap-1">
+                    <i class="fa-solid fa-circle text-[5px] text-sky-400 animate-pulse"></i>
+                    PEV
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- STATS RAPIDES -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-1 shadow-soft/40">
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-[0.16em]">Total campagnes</p>
+        <p class="text-2xl font-semibold">{{ stats_globales.total|default:0|intcomma:"fr" }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">Tous statuts confondus</p>
+    </div>
+
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-emerald-200/60 dark:border-emerald-800/80 rounded-3xl p-4 space-y-1">
+        <p class="text-[11px] text-emerald-600 dark:text-emerald-400 uppercase tracking-[0.16em]">En cours</p>
+        <p class="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">{{ stats_globales.en_cours|default:0|intcomma:"fr" }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            Campagnes opérationnelles
+        </p>
+    </div>
+
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-sky-200/60 dark:border-sky-800/80 rounded-3xl p-4 space-y-1">
+        <p class="text-[11px] text-sky-600 dark:text-sky-400 uppercase tracking-[0.16em]">Planifiées</p>
+        <p class="text-2xl font-semibold text-sky-600 dark:text-sky-400">{{ stats_globales.planifiees|default:0|intcomma:"fr" }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            À venir sur le calendrier
+        </p>
+    </div>
+
+    <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 space-y-1">
+        <p class="text-[11px] text-slate-600 dark:text-slate-300 uppercase tracking-[0.16em]">Clôturées</p>
+        <p class="text-2xl font-semibold text-slate-800 dark:text-slate-100">{{ stats_globales.cloturees|default:0|intcomma:"fr" }}</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            Campagnes terminées
+        </p>
+    </div>
+</div>
+
+<!-- BARRE D'ACTIONS + FILTRES -->
+<div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 sm:p-5 mb-5">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <!-- Titre + sous-texte -->
+        <div class="space-y-1">
+            <h2 class="text-sm font-semibold">Liste des campagnes PEV</h2>
+            <p class="text-[12px] text-slate-500 dark:text-slate-400">
+                Recherchez par nom, code, filtrez par statut, type ou année, puis ouvrez le détail pour voir les équipes, zones et indicateurs.
+            </p>
+        </div>
+
+        <!-- Boutons -->
+        <div class="flex flex-wrap gap-2 justify-end">
+            <a href="{% url 'pev:campaign_create' %}"
+               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-ivoireBlue text-white text-xs shadow-sm hover:scale-[1.01] transition">
+                <i class="fa-solid fa-plus text-[11px]"></i>
+                <span>Nouvelle campagne</span>
+            </a>
+            <a href="#" 
+               class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                <i class="fa-solid fa-download text-[11px]"></i>
+                <span>Exporter les campagnes</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulaire de filtres -->
+    <form method="get" class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-3">
+        <!-- Recherche -->
+        <div>
+            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+                Recherche
+            </label>
+            <div class="flex items-center px-2.5 py-1.5 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70">
+                <i class="fa-solid fa-magnifying-glass text-[11px] text-slate-400 mr-2"></i>
+                <input type="text"
+                       name="search"
+                       value="{{ request.GET.search }}"
+                       placeholder="Nom, code, description..."
+                       class="w-full bg-transparent border-none focus:outline-none text-[12px] placeholder:text-slate-400 dark:placeholder:text-slate-500">
+            </div>
+        </div>
+
+        <!-- Statut -->
+        <div>
+            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+                Statut
+            </label>
+            <select name="statut"
+                    class="w-full rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50">
+                <option value="">Tous les statuts</option>
+                {% for value, label in statuts %}
+                    <option value="{{ value }}" {% if request.GET.statut == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Type campagne -->
+        <div>
+            <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+                Type de campagne
+            </label>
+            <select name="type_campagne"
+                    class="w-full rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50">
+                <option value="">Tous les types</option>
+                {% for value, label in types_campagne %}
+                    <option value="{{ value }}" {% if request.GET.type_campagne == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Année + boutons -->
+        <div class="flex flex-col gap-2">
+            <div>
+                <label class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+                    Année
+                </label>
+                <select name="annee"
+                        class="w-full rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-ivoireBlue/50">
+                    <option value="">Toutes années</option>
+                    {% for annee in annees %}
+                        <option value="{{ annee }}" {% if request.GET.annee == annee|stringformat:"s" %}selected{% endif %}>
+                            {{ annee }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="submit"
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-2xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs">
+                    <i class="fa-solid fa-filter text-[11px]"></i>
+                    <span>Filtrer</span>
+                </button>
+                <a href="{% url 'pev:campaign_list' %}"
+                   class="inline-flex items-center justify-center px-3 py-2 rounded-2xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-700/70 text-[11px]">
+                    Réinitialiser
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- LISTE DES CAMPAGNES -->
+<div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl overflow-hidden">
+    {% if campagnes %}
+        <ul class="divide-y divide-slate-200/80 dark:divide-slate-800/80">
+            {% for campagne in campagnes %}
+                <li class="hover:bg-slate-50/80 dark:hover:bg-slate-900/60 transition">
+                    <a href="{% url 'pev:campaign_detail' campagne.pk %}" class="block px-5 sm:px-6 py-4">
+                        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <!-- Partie gauche : titre + dates -->
+                            <div class="flex items-start gap-3">
+                                <!-- Badge statut -->
+                                <span class="{% spaceless %}
+                                    {% if campagne.statut == 'en_cours' %}bg-emerald-100 text-emerald-800 border-emerald-200
+                                    {% elif campagne.statut == 'planifiee' %}bg-sky-100 text-sky-800 border-sky-200
+                                    {% elif campagne.statut == 'brouillon' %}bg-slate-100 text-slate-800 border-slate-200
+                                    {% elif campagne.statut == 'validee' %}bg-amber-100 text-amber-800 border-amber-200
+                                    {% elif campagne.statut == 'suspendue' %}bg-red-100 text-red-800 border-red-200
+                                    {% elif campagne.statut == 'cloturee' %}bg-slate-200 text-slate-800 border-slate-300
+                                    {% else %}bg-purple-100 text-purple-800 border-purple-200{% endif %}
+                                {% endspaceless %} inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium border mt-1">
+                                    {{ campagne.get_statut_display }}
+                                </span>
+
+                                <div>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                                            {{ campagne.nom }}
+                                        </h3>
+                                        <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-700/70">
+                                            {{ campagne.code }}
+                                        </span>
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-100 text-[11px]">
+                                            {{ campagne.get_type_campagne_display }}
+                                        </span>
+                                        {% if campagne.est_en_cours %}
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-100 text-[11px]">
+                                                <span class="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                                                {{ campagne.jours_restants }} jours restants
+                                            </span>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="mt-1 flex flex-wrap gap-3 text-[12px] text-slate-500 dark:text-slate-400">
+                                        <span class="inline-flex items-center gap-1">
+                                            <i class="fa-solid fa-calendar-day text-[11px]"></i>
+                                            {{ campagne.date_debut|date:"d/m/Y" }} – {{ campagne.date_fin|date:"d/m/Y" }}
+                                        </span>
+                                        {% if campagne.service %}
+                                        <span class="inline-flex items-center gap-1">
+                                            <i class="fa-solid fa-building text-[11px]"></i>
+                                            {{ campagne.service.nom }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Partie droite : indicateurs -->
+                            <div class="flex flex-col items-stretch gap-2 md:items-end text-[12px]">
+                                <div class="flex flex-wrap gap-4 justify-start md:justify-end text-slate-600 dark:text-slate-300">
+                                    <span class="inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-children text-[11px] text-blue-500"></i>
+                                        {{ campagne.nombre_enfants_vaccines_calc|default:0|intcomma:"fr" }} enfants
+                                    </span>
+                                    <span class="inline-flex items-center gap-1">
+                                        <i class="fa-solid fa-syringe text-[11px] text-emerald-500"></i>
+                                        {{ campagne.doses_administrees_calc|default:0|intcomma:"fr" }} doses
+                                    </span>
+                                    {% if campagne.taux_couverture_reel %}
+                                        <span class="inline-flex items-center gap-1">
+                                            <i class="fa-solid fa-chart-column text-[11px] text-purple-500"></i>
+                                            {{ campagne.taux_couverture_reel|floatformat:1 }}% couverture
+                                        </span>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Barres de progression -->
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full md:w-[420px]">
+                                    <!-- Progression temporelle -->
+                                    <div>
+                                        <div class="flex justify-between text-[10px] text-slate-500 mb-0.5">
+                                            <span>Temps</span>
+                                            <span>{{ campagne.progression_temps|default:0|floatformat:0 }}%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                            <div class="h-1.5 rounded-full bg-sky-500"
+                                                 style="width: {{ campagne.progression_temps|default:0|floatformat:0 }}%"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Progression couverture -->
+                                    {% if campagne.couverture_cible %}
+                                    <div>
+                                        <div class="flex justify-between text-[10px] text-slate-500 mb-0.5">
+                                            <span>Couverture</span>
+                                            <span>{{ campagne.progression_couverture|default:0|floatformat:0 }}%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                            <div class="h-1.5 rounded-full {% if campagne.progression_couverture > 80 %}bg-emerald-500{% elif campagne.progression_couverture > 50 %}bg-amber-500{% else %}bg-rose-500{% endif %}"
+                                                 style="width: {{ campagne.progression_couverture|default:0|floatformat:0 }}%"></div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+
+                                    <!-- Budget -->
+                                    {% if campagne.budget_alloue %}
+                                    <div>
+                                        <div class="flex justify-between text-[10px] text-slate-500 mb-0.5">
+                                            <span>Budget</span>
+                                            <span>{{ campagne.budget_utilise|default:0|floatformat:0 }}%</span>
+                                        </div>
+                                        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                            <div class="h-1.5 rounded-full {% if campagne.budget_utilise > 80 %}bg-rose-500{% elif campagne.budget_utilise > 50 %}bg-amber-500{% else %}bg-emerald-500{% endif %}"
+                                                 style="width: {{ campagne.budget_utilise|default:0|floatformat:0 }}%"></div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Tags vaccins -->
+                                <div class="flex flex-wrap gap-1.5 justify-start md:justify-end pt-1">
+                                    {% for vaccin in campagne.vaccins.all|slice:":3" %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px]">
+                                            {{ vaccin.nom }}
+                                        </span>
+                                    {% endfor %}
+                                    {% if campagne.vaccins.count > 3 %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 text-[10px]">
+                                            +{{ campagne.vaccins.count|add:"-3" }} autres
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div class="px-5 sm:px-6 py-3 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between text-[12px] text-slate-600 dark:text-slate-300">
+                <div>
+                    Page <span class="font-semibold">{{ page_obj.number }}</span> sur 
+                    <span class="font-semibold">{{ page_obj.paginator.num_pages }}</span> – 
+                    <span class="font-semibold">{{ paginator.count }}</span> campagnes
+                </div>
+                <div class="flex gap-2">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                           class="inline-flex items-center px-3 py-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900/80">
+                            Précédent
+                        </a>
+                    {% endif %}
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                           class="inline-flex items-center px-3 py-1.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900/80">
+                            Suivant
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="px-6 py-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-100">Aucune campagne trouvée</h3>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {% if request.GET %}
+                    Essayez de modifier vos critères de recherche.
+                {% else %}
+                    Commencez par créer une nouvelle campagne de vaccination.
+                {% endif %}
+            </p>
+            <div class="mt-6">
+                <a href="{% url 'pev:campaign_create' %}"
+                   class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-2xl text-white bg-ivoireBlue hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fa-solid fa-plus mr-2 text-[11px]"></i>
+                    Nouvelle campagne
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

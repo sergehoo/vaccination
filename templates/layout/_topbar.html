@@ -228,9 +228,19 @@
     </div>
 
     {# =================== LOGO =================== #}
-    <div class="h-7 w-40 flex items-center justify-center">
-        <img src="{% static 'images/logo/logo-001_0.png' %}" alt="Logo CI" class="h-6 object-contain">
-    </div>
+    <div class="w-40 flex items-center">
+    {% if request.user.is_authenticated and request.user.service and request.user.service.logo %}
+        {# Logo spécifique au service (INHP, PEV, autre) #}
+        <img src="{{ request.user.service.logo.url }}"
+             alt="{{ request.user.service.nom }}"
+             class="h-10 object-contain">
+    {% else %}
+        {# Logo par défaut Côte d’Ivoire / MSHP #}
+        <img src="{% static 'images/logo/logo-001_0.png' %}"
+             alt="Logo CI"
+             class="h-10 object-contain">
+    {% endif %}
+</div>
 </div>
     </div>
 </header>

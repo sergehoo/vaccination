@@ -1,14 +1,764 @@
 from datetime import date
-
 # from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin, Group, Permission
 from django.contrib.gis.db.models import PointField
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import permissions
 from dateutil.relativedelta import relativedelta
+# vaccination/models.py
+from django.db import models
+from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+# from inhp.models import  Patient, CentreVaccination, Vaccination, Utilisateur
+
+
+
+class RendezVousType(models.TextChoices):
+    INFANT_PEV = "infant_pev", "Vaccination infantile (PEV)"
+    INFANT_RATTRAP = "infant_rattrapage", "Rattrapage infantile"
+    ADULT_ROUTINE = "adult_routine", "Vaccination adulte"
+    VOYAGE = "voyage", "Vaccination voyage"
+    RAPPEL = "rappel", "Rappel de vaccination"
+    GROUPE = "groupe", "Vaccination de groupe"
+    CAMPAGNE = "campagne", "Vaccination de campagne"
+    URGENCE = "urgence", "Vaccination d'urgence"
+    AUTRE = "autre", "Autre"
+
+
+class RendezVousStatut(models.TextChoices):
+    PLANIFIE = "planifie", "Planifié"
+    CONFIRME = "confirme", "Confirmé"
+    HONORE = "honore", "Honoré"
+    ABSENT = "absent", "Absent (no show)"
+    ANNULE = "annule", "Annulé"
+    REPORTE = "reporte", "Reporté"
+
+
+class RendezVousCanal(models.TextChoices):
+    FRONT_OFFICE = "front", "Accueil / Centre"
+    TELEPHONE = "tel", "Téléphone"
+    WEB = "web", "Portail web"
+    SMS = "sms", "SMS"
+    MOBILE_APP = "app", "Application mobile"
+    PARTENAIRE = "partenaire", "Partenaire santé"
+    AUTRE = "autre", "Autre"
+
+
+class PEVTrancheAge(models.TextChoices):
+    NAISSANCE = "naissance", "Naissance"
+    S6 = "6_sem", "6 semaines"
+    S10 = "10_sem", "10 semaines"
+    S14 = "14_sem", "14 semaines"
+    M9 = "9_mois", "9 mois"
+    M15 = "15_mois", "15 mois"
+    M18 = "18_mois", "18 mois"
+    M24 = "24_mois", "24 mois"
+    AUTRE = "autre", "Autre"
+
+
+class PEVAntigene(models.TextChoices):
+    BCG = "bcg", "BCG"
+    PENTA = "penta", "Pentavalent"
+    VPO = "vpo", "VPO"
+    VPI = "vpi", "VPI"
+    RRO = "rro", "Rougeole – Rubéole – Oreillons"
+    ROUGEOLE = "rougeole", "Rougeole / RR"
+    FJ = "fj", "Fièvre jaune"
+    PNEUMO = "pneumo", "Pneumocoque"
+    ROTAVIRUS = "rota", "Rotavirus"
+    VARICELLE = "varicelle", "Varicelle"
+    HEPB = "hepb", "Hépatite B"
+    AUTRE = "autre", "Autre"
+
+
+class PrioriteRendezVous(models.TextChoices):
+    NORMALE = "normale", "Normale"
+    ELEVEE = "elevee", "Élevée"
+    URGENT = "urgent", "Urgent"
+
+
+class RendezVousVaccination(models.Model):
+    """
+    RDV de vaccination multi-service (INHP, PEV, ...),
+    avec support spécifique pour la vaccination infantile PEV.
+    """
+
+    # ---- Contexte multi-service ----
+    service = models.ForeignKey(
+        'ServiceVaccination',
+        on_delete=models.PROTECT,
+        related_name="rendez_vous",
+        help_text="Service gestionnaire du RDV (INHP, PEV, ...)",
+    )
+
+    patient = models.ForeignKey(
+        'Patient',
+        on_delete=models.PROTECT,
+        related_name="rendez_vous_vaccination",
+    )
+
+    centre = models.ForeignKey(
+        'CentreVaccination',
+        on_delete=models.PROTECT,
+        related_name="rendez_vous_vaccination",
+        help_text="Centre où le patient doit se présenter",
+    )
+
+    # ---- Liens avec la vaccination réelle ----
+    vaccination_cible = models.ForeignKey(
+        'Vaccination',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rendez_vous_associes",
+        help_text="Vaccination associée lorsque le RDV est honoré (optionnel).",
+    )
+
+    # ---- Infos RDV ----
+    type_rdv = models.CharField(
+        max_length=30,
+        choices=RendezVousType.choices,
+        default=RendezVousType.ADULT_ROUTINE,
+    )
+
+    statut = models.CharField(
+        max_length=20,
+        choices=RendezVousStatut.choices,
+        default=RendezVousStatut.PLANIFIE,
+    )
+
+    canal_prise = models.CharField(
+        max_length=10,
+        choices=RendezVousCanal.choices,
+        default=RendezVousCanal.FRONT_OFFICE,
+    )
+
+    date_heure = models.DateTimeField(
+        help_text="Date et heure du rendez-vous prévu.",
+    )
+
+    date_heure_fin = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Date et heure de fin calculée automatiquement.",
+    )
+
+    duree_minutes = models.PositiveIntegerField(
+        default=15,
+        validators=[MinValueValidator(5), MaxValueValidator(180)],
+        help_text="Durée prévue du RDV en minutes."
+    )
+
+    priorite = models.CharField(
+        max_length=10,
+        choices=PrioriteRendezVous.choices,
+        default=PrioriteRendezVous.NORMALE,
+        help_text="Niveau de priorité du rendez-vous"
+    )
+
+    motif = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text="Motif libre ou complément (ex: voyage, rattrapage...)."
+    )
+
+    commentaire = models.TextField(blank=True)
+
+    # ---- Champs spécifiques PEV (vaccination infantile) ----
+    est_pev = models.BooleanField(
+        default=False,
+        help_text="Coché si le RDV appartient au programme PEV (vaccination infantile).",
+    )
+
+    pev_tranche_age = models.CharField(
+        max_length=20,
+        choices=PEVTrancheAge.choices,
+        blank=True,
+        help_text="Tranche d'âge PEV (naissance, 6 semaines, 9 mois...)."
+    )
+
+    pev_antigene = models.CharField(
+        max_length=20,
+        choices=PEVAntigene.choices,
+        blank=True,
+        help_text="Antigène / vaccin principal du calendrier PEV."
+    )
+
+    pev_numero_dose = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        help_text="Numéro de dose pour le schéma PEV (ex: Penta 1, Penta 2, ...)."
+    )
+
+    # ---- Notifications et rappels ----
+    notifications_envoyees = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Historique des notifications envoyées"
+    )
+
+    prochaine_notification = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Prochaine notification programmée"
+    )
+
+    consentement_notifications = models.BooleanField(
+        default=True,
+        help_text="Le patient accepte de recevoir des notifications"
+    )
+
+    # ---- Gestion des conflits et chevauchements ----
+    chevauchement_verifie = models.BooleanField(default=False)
+    conflit_avec = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='conflit_pour',
+        help_text="RDV en conflit avec celui-ci"
+    )
+
+    # ---- Gestion & traçabilité ----
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    created_by = models.ForeignKey(
+        'Utilisateur',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rendez_vous_crees",
+    )
+
+    updated_by = models.ForeignKey(
+        'Utilisateur',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rendez_vous_modifies",
+    )
+
+    personnel_affecte = models.ForeignKey(
+        'Utilisateur',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="rendez_vous_affectes",
+        help_text="Personnel de santé affecté à ce RDV"
+    )
+
+    motif_annulation = models.TextField(
+        blank=True,
+        help_text="Raison en cas d'annulation ou d'absence."
+    )
+
+    date_statut = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Date du dernier changement de statut"
+    )
+
+    meta = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Données additionnelles (ex: source, référence externe...)."
+    )
+
+    class Meta:
+        verbose_name = "Rendez-vous de vaccination"
+        verbose_name_plural = "Rendez-vous de vaccination"
+        ordering = ["-date_heure"]
+        indexes = [
+            models.Index(fields=["service", "centre", "date_heure"]),
+            models.Index(fields=["service", "patient", "date_heure"]),
+            models.Index(fields=["statut", "date_heure"]),
+            models.Index(fields=["est_pev", "pev_tranche_age"]),
+            models.Index(fields=["priorite", "date_heure"]),
+            models.Index(fields=["prochaine_notification"]),
+            models.Index(fields=["personnel_affecte", "date_heure"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(est_pev=True, pev_antigene=""),
+                name="pev_antigene_obligatoire_si_est_pev",
+                violation_error_message="L'antigène PEV est obligatoire quand est_pev est vrai.",
+            ),
+            models.CheckConstraint(
+                check=models.Q(date_heure_fin__gt=models.F("date_heure")),
+                name="date_fin",
+            ),
+        ]
+
+    def __str__(self):
+        return f"RDV {self.patient} le {self.date_heure} au {self.centre}"
+
+    def clean(self):
+        """Validation avancée du modèle"""
+        super().clean()
+
+        errors = {}
+
+        # Validation des dates
+        if self.date_heure and self.date_heure < timezone.now():
+            errors['date_heure'] = _("La date du rendez-vous ne peut pas être dans le passé.")
+
+        # Validation PEV
+        if self.est_pev and not self.pev_antigene:
+            errors['pev_antigene'] = _("L'antigène PEV est obligatoire pour les rendez-vous PEV.")
+
+        # Validation de la durée
+        if self.duree_minutes < 5:
+            errors['duree_minutes'] = _("La durée minimum est de 5 minutes.")
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        """Surcharge de save pour calculs automatiques"""
+        # Calcul automatique de la date de fin
+        if self.date_heure and self.duree_minutes:
+            self.date_heure_fin = self.date_heure + timezone.timedelta(minutes=self.duree_minutes)
+
+        # Mise à jour de la date de statut
+        if self.pk:
+            old_instance = RendezVousVaccination.objects.get(pk=self.pk)
+            if old_instance.statut != self.statut:
+                self.date_statut = timezone.now()
+        else:
+            self.date_statut = timezone.now()
+
+        super().save(*args, **kwargs)
+
+    # ---- Properties métier ----
+    @property
+    def is_future(self):
+        return self.date_heure >= timezone.now()
+
+    @property
+    def is_today(self):
+        today = timezone.now().date()
+        return self.date_heure.date() == today
+
+    @property
+    def is_past(self):
+        return self.date_heure < timezone.now()
+
+    @property
+    def is_urgent(self):
+        return self.priorite == PrioriteRendezVous.URGENT
+
+    @property
+    def time_until_appointment(self):
+        """Temps restant avant le RDV"""
+        if self.is_future:
+            return self.date_heure - timezone.now()
+        return None
+
+    @property
+    def needs_confirmation(self):
+        """Le RDV nécessite-t-il une confirmation ?"""
+        return (self.statut == RendezVousStatut.PLANIFIE and
+                self.time_until_appointment and
+                self.time_until_appointment.days <= 1)
+
+    @property
+    def can_be_modified(self):
+        """Le RDV peut-il être modifié ?"""
+        return self.statut in [RendezVousStatut.PLANIFIE, RendezVousStatut.CONFIRME] and self.is_future
+
+    @property
+    def can_be_cancelled(self):
+        """Le RDV peut-il être annulé ?"""
+        return self.statut in [RendezVousStatut.PLANIFIE, RendezVousStatut.CONFIRME]
+
+    # ---- Méthodes métier ----
+    def marquer_confirme(self, user=None):
+        """Marquer le RDV comme confirmé"""
+        self.statut = RendezVousStatut.CONFIRME
+        if user:
+            self.updated_by = user
+        self.save(update_fields=["statut", "updated_by", "updated_at", "date_statut"])
+
+    def marquer_honore(self, vaccination=None, user=None):
+        """Marquer le RDV comme honoré"""
+        self.statut = RendezVousStatut.HONORE
+        if vaccination:
+            self.vaccination_cible = vaccination
+        if user:
+            self.updated_by = user
+        self.save(update_fields=["statut", "vaccination_cible", "updated_by", "updated_at", "date_statut"])
+
+    def marquer_absent(self, motif=None, user=None):
+        """Marquer le RDV comme absent"""
+        self.statut = RendezVousStatut.ABSENT
+        if motif:
+            self.motif_annulation = motif
+        if user:
+            self.updated_by = user
+        self.save(update_fields=["statut", "motif_annulation", "updated_by", "updated_at", "date_statut"])
+
+    def marquer_annule(self, motif=None, user=None):
+        """Annuler le RDV"""
+        self.statut = RendezVousStatut.ANNULE
+        if motif:
+            self.motif_annulation = motif
+        if user:
+            self.updated_by = user
+        self.save(update_fields=["statut", "motif_annulation", "updated_by", "updated_at", "date_statut"])
+
+    def reporter(self, nouvelle_date_heure, user=None):
+        """Reporter le RDV à une nouvelle date"""
+        if not self.can_be_modified:
+            raise ValidationError(_("Ce rendez-vous ne peut pas être reporté."))
+
+        self.date_heure = nouvelle_date_heure
+        self.statut = RendezVousStatut.REPORTE
+        if user:
+            self.updated_by = user
+        self.save()
+
+    def ajouter_notification(self, type_notif, date_envoi, statut="envoyee"):
+        """Ajouter une notification à l'historique"""
+        if 'notifications' not in self.notifications_envoyees:
+            self.notifications_envoyees['notifications'] = []
+
+        self.notifications_envoyees['notifications'].append({
+            'type': type_notif,
+            'date_envoi': date_envoi.isoformat(),
+            'statut': statut
+        })
+        self.save(update_fields=['notifications_envoyees'])
+
+    def verifier_chevauchement(self):
+        """Vérifier s'il y a chevauchement avec d'autres RDV"""
+        if not self.date_heure or not self.date_heure_fin:
+            return None
+
+        conflits = RendezVousVaccination.objects.filter(
+            centre=self.centre,
+            personnel_affecte=self.personnel_affecte,
+            statut__in=[RendezVousStatut.PLANIFIE, RendezVousStatut.CONFIRME],
+            date_heure__lt=self.date_heure_fin,
+            date_heure_fin__gt=self.date_heure
+        ).exclude(pk=self.pk)
+
+        if conflits.exists():
+            self.conflit_avec = conflits.first()
+            self.chevauchement_verifie = True
+            self.save()
+            return conflits.first()
+
+        return None
+
+    # ---- Méthodes de classe ----
+    @classmethod
+    def rdv_du_jour(cls, centre=None, service=None):
+        """Récupérer les RDV du jour"""
+        queryset = cls.objects.filter(
+            date_heure__date=timezone.now().date(),
+            statut__in=[RendezVousStatut.PLANIFIE, RendezVousStatut.CONFIRME]
+        )
+
+        if centre:
+            queryset = queryset.filter(centre=centre)
+        if service:
+            queryset = queryset.filter(service=service)
+
+        return queryset.order_by('date_heure')
+
+    @classmethod
+    def rdv_a_venir(cls, jours=7, centre=None):
+        """Récupérer les RDV à venir dans les X prochains jours"""
+        date_debut = timezone.now()
+        date_fin = date_debut + timezone.timedelta(days=jours)
+
+        queryset = cls.objects.filter(
+            date_heure__range=[date_debut, date_fin],
+            statut__in=[RendezVousStatut.PLANIFIE, RendezVousStatut.CONFIRME]
+        )
+
+        if centre:
+            queryset = queryset.filter(centre=centre)
+
+        return queryset.order_by('date_heure')
+
+    @classmethod
+    def statistiques_centre(cls, centre, date_debut, date_fin):
+        """Statistiques des RDV pour un centre sur une période"""
+        rdvs = cls.objects.filter(
+            centre=centre,
+            date_heure__range=[date_debut, date_fin]
+        )
+
+        return {
+            'total': rdvs.count(),
+            'honores': rdvs.filter(statut=RendezVousStatut.HONORE).count(),
+            'absents': rdvs.filter(statut=RendezVousStatut.ABSENT).count(),
+            'annules': rdvs.filter(statut=RendezVousStatut.ANNULE).count(),
+            'taux_honores': rdvs.filter(
+                statut=RendezVousStatut.HONORE).count() / rdvs.count() * 100 if rdvs.count() > 0 else 0,
+        }
+
+    @property
+    def duree_estimee(self):
+        return self.duree_minutes
+
+    @property
+    def est_aujourdhui(self):
+        return self.is_today
+
+    @property
+    def est_dans_24h(self):
+        if not self.time_until_appointment:
+            return False
+        return self.time_until_appointment.total_seconds() <= 24 * 3600
+
+    @property
+    def est_passe(self):
+        return self.is_past
+
+    @property
+    def peut_etre_annule(self):
+        return self.can_be_cancelled
+
+    @property
+    def peut_etre_modifie(self):
+        return self.can_be_modified
+
+    @property
+    def label_priorite(self):
+        return self.get_priorite_display()
+
+    @property
+    def label_canal(self):
+        return self.get_canal_prise_display()
+
+    @property
+    def resume_pev(self):
+        if not self.est_pev:
+            return ""
+        parts = []
+        if self.pev_tranche_age:
+            parts.append(self.get_pev_tranche_age_display())
+        if self.pev_antigene:
+            parts.append(self.get_pev_antigene_display())
+        if self.pev_numero_dose:
+            parts.append(f"Dose n°{self.pev_numero_dose}")
+        return " · ".join(parts)
+
+
+class ServiceVaccination(models.Model):
+    # Types de services disponibles
+    SERVICE_TYPES = [
+        ('public', 'Public'),
+        ('prive', 'Privé'),
+        ('associatif', 'Associatif'),
+        ('mixte', 'Mixte Public-Privé'),
+    ]
+
+    # Niveaux d'accessibilité
+    ACCESSIBILITY_LEVELS = [
+        ('faible', 'Faible'),
+        ('moyen', 'Moyen'),
+        ('bon', 'Bon'),
+        ('excellent', 'Excellent'),
+    ]
+
+    # Identifiants uniques
+    code = models.CharField(max_length=20, unique=True)  # "INHP", "PEV"
+    nom = models.CharField(max_length=150)
+    nom_court = models.CharField(max_length=50, blank=True)
+    slug = models.SlugField(max_length=100, unique=True, blank=True, help_text="URL-friendly version du nom")
+
+    # Type et catégorisation
+    type_service = models.CharField(max_length=20, choices=SERVICE_TYPES, default='public')
+    categorie = models.CharField(max_length=50, blank=True,
+                                 help_text="Ex: Vaccination générale, Vaccination voyage, etc.")
+    tags = models.JSONField(default=list, blank=True, help_text="Tags pour la recherche et filtrage")
+
+    # Informations de contact
+    email = models.EmailField(blank=True)
+    telephone = models.CharField(max_length=20, blank=True)
+    site_web = models.URLField(blank=True)
+
+    # Localisation
+    adresse = models.TextField(blank=True)
+    ville = models.CharField(max_length=100, blank=True)
+    code_postal = models.CharField(max_length=10, blank=True)
+    pays = models.CharField(max_length=50, default="France")
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+
+    # Branding amélioré
+    logo = models.ImageField(upload_to="brandings/", null=True, blank=True)
+    banniere = models.ImageField(upload_to="brandings/bannieres/", null=True, blank=True,
+                                 help_text="Bannière pour le header du service")
+    favicon = models.ImageField(upload_to="brandings/favicons/", null=True, blank=True)
+
+    primary_color = models.CharField(max_length=7, default="#0f766e")
+    secondary_color = models.CharField(max_length=7, default="#0ea5e9")
+    accent_color = models.CharField(max_length=7, default="#f97316")
+    text_color = models.CharField(max_length=7, default="#1f2937")
+    background_color = models.CharField(max_length=7, default="#ffffff")
+
+    # Configuration des fonctionnalités
+    enabled_features = models.JSONField(default=list, blank=True)
+    feature_config = models.JSONField(default=dict, blank=True,
+                                      help_text="Configuration spécifique des fonctionnalités")
+
+    # Paramètres opérationnels
+    heures_ouverture = models.JSONField(default=dict, blank=True,
+                                        help_text="Heures d'ouverture au format JSON")
+    capacite_quotidienne = models.PositiveIntegerField(default=100,
+                                                       help_text="Nombre maximum de vaccinations par jour")
+    duree_rdv_moyenne = models.PositiveIntegerField(default=15,
+                                                    help_text="Durée moyenne d'un rendez-vous en minutes")
+
+    # Accessibilité
+    niveau_accessibilite = models.CharField(max_length=15, choices=ACCESSIBILITY_LEVELS, default='moyen')
+    services_accessibilite = models.JSONField(default=list, blank=True,
+                                              help_text="Ex: ['pmr', 'parking', 'traducteur']")
+
+    # Métriques et statistiques
+    note_moyenne = models.DecimalField(max_digits=3, decimal_places=2, default=0.0,
+                                       validators=[MinValueValidator(0), MaxValueValidator(5)])
+    nombre_avis = models.PositiveIntegerField(default=0)
+    vaccinations_realisees = models.PositiveBigIntegerField(default=0)
+
+    # Sécurité et conformité
+    certificat_qualite = models.BooleanField(default=False)
+    date_certification = models.DateField(null=True, blank=True)
+    organisme_certificateur = models.CharField(max_length=100, blank=True)
+
+    # Métadonnées
+    actif = models.BooleanField(default=True)
+    date_creation = models.DateTimeField(auto_now_add=True)
+    date_modification = models.DateTimeField(auto_now=True)
+    date_activation = models.DateTimeField(null=True, blank=True)
+
+    # Responsable
+    responsable_nom = models.CharField(max_length=100, blank=True)
+    responsable_email = models.EmailField(blank=True)
+    responsable_telephone = models.CharField(max_length=20, blank=True)
+
+    class Meta:
+        verbose_name = "Service de vaccination"
+        verbose_name_plural = "Services de vaccination"
+        indexes = [
+            models.Index(fields=['actif', 'type_service']),
+            models.Index(fields=['ville', 'code_postal']),
+            models.Index(fields=['note_moyenne']),
+        ]
+        ordering = ['nom']
+
+    def __str__(self):
+        return self.nom
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(self.nom_court or self.nom)
+
+        if self.actif and not self.date_activation:
+            self.date_activation = timezone.now()
+
+        super().save(*args, **kwargs)
+
+    def has_feature(self, feature_key: str) -> bool:
+        return feature_key in (self.enabled_features or [])
+
+    def get_feature_config(self, feature_key: str, default=None):
+        """Récupère la configuration d'une fonctionnalité spécifique"""
+        return self.feature_config.get(feature_key, default)
+
+    def get_absolute_url(self):
+        return reverse('service-detail', kwargs={'slug': self.slug})
+
+    def increment_vaccinations(self, count=1):
+        """Incrémente le compteur de vaccinations réalisées"""
+        self.vaccinations_realisees += count
+        self.save(update_fields=['vaccinations_realisees'])
+
+    def update_rating(self, new_note):
+        """Met à jour la note moyenne du service"""
+        total_notes = (self.note_moyenne * self.nombre_avis) + new_note
+        self.nombre_avis += 1
+        self.note_moyenne = total_notes / self.nombre_avis
+        self.save(update_fields=['note_moyenne', 'nombre_avis'])
+
+    def is_open_now(self):
+        """Vérifie si le service est actuellement ouvert"""
+        if not self.heures_ouverture:
+            return False
+
+        now = timezone.now()
+        current_day = now.strftime('%A').lower()
+        current_time = now.time()
+
+        day_schedule = self.heures_ouverture.get(current_day, {})
+        if not day_schedule.get('ouvert', False):
+            return False
+
+        ouvert = day_schedule.get('ouverture')
+        ferme = day_schedule.get('fermeture')
+
+        if ouvert and ferme:
+            return ouvert <= current_time <= ferme
+
+        return False
+
+    def get_capacity_utilization(self, date=None):
+        """Calcule le taux d'utilisation de la capacité"""
+        from django.db.models import Count
+
+        if date is None:
+            date = timezone.now().date()
+
+        appointments_count = RendezVousVaccination.objects.filter(
+            service=self,
+            date__date=date,
+            statut='confirme'
+        ).count()
+
+        return (appointments_count / self.capacite_quotidienne) * 100 if self.capacite_quotidienne > 0 else 0
+
+    @property
+    def adresse_complete(self):
+        """Retourne l'adresse complète formatée"""
+        parts = [self.adresse, self.code_postal, self.ville, self.pays]
+        return ", ".join(filter(None, parts))
+
+    @property
+    def is_certified(self):
+        """Vérifie si la certification est valide (moins d'un an)"""
+        if not self.certificat_qualite or not self.date_certification:
+            return False
+        return (timezone.now().date() - self.date_certification).days <= 365
+
+    @classmethod
+    def get_active_services(cls):
+        return cls.objects.filter(actif=True)
+
+    @classmethod
+    def get_services_by_type(cls, service_type):
+        return cls.objects.filter(actif=True, type_service=service_type)
+
+    @classmethod
+    def get_services_by_location(cls, ville=None, code_postal=None):
+        queryset = cls.objects.filter(actif=True)
+        if ville:
+            queryset = queryset.filter(ville__icontains=ville)
+        if code_postal:
+            queryset = queryset.filter(code_postal__icontains=code_postal)
+        return queryset
 
 
 class PolesRegionaux(models.Model):
@@ -77,6 +827,13 @@ class CentreVaccination(models.Model):
                                  related_name='centres')
     geom = PointField(null=True, blank=True)
     adresse = models.TextField(null=True, blank=True)
+    service = models.ForeignKey(
+        ServiceVaccination,
+        on_delete=models.PROTECT,
+        related_name="centres",
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
@@ -141,12 +898,12 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     groups = models.ManyToManyField(
         "auth.Group",
         related_name="utilisateur_groups",
-        null=True, blank=True,
+
     )
     user_permissions = models.ManyToManyField(
         "auth.Permission",
         related_name="utilisateur_permissions",
-        null=True, blank=True,
+
     )
     is_active = models.BooleanField(default=True, null=True, blank=True, )
     is_staff = models.BooleanField(default=False, null=True, blank=True, )
@@ -159,6 +916,13 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
+    service = models.ForeignKey(
+        ServiceVaccination,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="utilisateurs",
+        help_text="Service / programme auquel est rattaché cet utilisateur (INHP, PEV, …)."
+    )
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.email})"
@@ -199,6 +963,7 @@ class PatientManager(BaseUserManager):
 
 class Patient(AbstractBaseUser, PermissionsMixin):
     code_patient = models.CharField(max_length=100, unique=True, db_index=True)
+    cmu_num = models.CharField(max_length=300, unique=True, db_index=True, blank=True, null=True)
     email = models.EmailField(unique=True, null=True, blank=True, db_index=True)
     nom = models.CharField(max_length=255, db_index=True)
     prenoms = models.CharField(max_length=255, db_index=True)
@@ -234,6 +999,27 @@ class Patient(AbstractBaseUser, PermissionsMixin):
     last_failed_login = models.DateTimeField(null=True, blank=True)
     account_locked_until = models.DateTimeField(null=True, blank=True)
 
+    # 🔹 Lien vers le parent / tuteur s’il s’agit d’un mineur
+    responsable = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='enfants_suivis',
+        help_text="Patient responsable légal (parent / tuteur) de ce patient mineur."
+    )
+
+    # 🔹 Infos complémentaires sur le parent (si pas de compte patient parent)
+    nom_parent = models.CharField(max_length=255, blank=True, null=True)
+    prenoms_parent = models.CharField(max_length=255, blank=True, null=True)
+    telephone_parent = models.CharField(max_length=50, blank=True, null=True)
+    lien_parente = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Ex: Père, Mère, Tuteur, Oncle..."
+    )
+
     must_change_password = models.BooleanField(default=False)
     last_password_change = models.DateTimeField(null=True, blank=True)
     groups = models.ManyToManyField(
@@ -251,6 +1037,23 @@ class Patient(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['nom', 'prenoms', 'date_naissance', 'telephone1']
 
     objects = PatientManager()
+    service = models.ForeignKey(
+        ServiceVaccination,
+        on_delete=models.PROTECT,
+        related_name="patients",
+        null=True,
+        blank=True
+
+    )
+    notify_on_pass_scan = models.BooleanField(
+        default=True,
+        help_text="Informer le patient à chaque fois que son carnet/pass vaccinal est scanné."
+    )
+    last_pass_scan_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Dernière fois où le carnet/pass a été scanné."
+    )
 
     def is_account_locked(self):
         if self.account_locked_until and timezone.now() < self.account_locked_until:
@@ -274,6 +1077,20 @@ class Patient(AbstractBaseUser, PermissionsMixin):
 
         return age
 
+    @property
+    def est_mineur(self):
+        """True si le patient a moins de 18 ans."""
+        return self.age is not None and self.age < 18
+
+    @property
+    def a_un_responsable(self):
+        return self.responsable is not None
+
+    def get_full_name(self):
+        return f"{self.nom} {self.prenoms}".strip()
+
+    def get_short_name(self):
+        return self.prenoms or self.nom
     def __str__(self):
         return f"{self.nom} {self.prenoms} ({self.code_patient})"
 
@@ -379,6 +1196,7 @@ class Consultation(models.Model):
 
 
 class Vaccination(models.Model):
+    from pev.models import PEVCampaign, PEVCampaignTeam
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='historique_vaccinations',
                                 db_index=True)
     centre = models.ForeignKey(CentreVaccination, on_delete=models.CASCADE, related_name='centrevaccinations',
@@ -391,6 +1209,41 @@ class Vaccination(models.Model):
     date_rappel = models.DateField(
         blank=True, null=True,
         help_text="Date prévue du rappel si applicable"
+    )
+    campagne_pev = models.ForeignKey(
+        PEVCampaign,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="vaccinations",
+        help_text="Campagne PEV dans le cadre de laquelle cette dose a été réalisée."
+    )
+    service = models.ForeignKey(
+        ServiceVaccination,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="vaccinations"
+    )
+
+    # 🔹 Équipe PEV qui a réalisé l’acte (si en campagne)
+    equipe = models.ForeignKey(
+        PEVCampaignTeam,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="vaccinations",
+        help_text="Équipe de campagne PEV ayant effectué cette vaccination."
+    )
+
+    # 🔹 Agent vaccinateur (évalué pendant la campagne)
+    vaccinateur = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="vaccinations_administrees",
+        help_text="Agent vaccinateur ayant réalisé l'acte."
     )
     created_by = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -412,8 +1265,8 @@ class Mapi(models.Model):
     date = models.DateTimeField(null=True, blank=True)
     patient = models.ForeignKey('Patient', on_delete=models.CASCADE)
     centre = models.ForeignKey('CentreVaccination', on_delete=models.CASCADE)
-    vaccination = models.ForeignKey('Vaccination', on_delete=models.CASCADE)
-    utilisateur = models.ForeignKey('Utilisateur', on_delete=models.CASCADE,null=True, blank=True)
+    vaccination = models.ForeignKey('Vaccination', on_delete=models.CASCADE, related_name='incident')
+    utilisateur = models.ForeignKey('Utilisateur', on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
     deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
@@ -602,3 +1455,96 @@ class FicheRetro(models.Model):
     date = models.DateTimeField(null=True, blank=True)
     numero_civ = models.TextField(null=True, blank=True)
     numero_unique = models.TextField(null=True, blank=True)
+
+
+class VaccinationPassEvent(models.Model):
+    """Trace chaque scan / utilisation du carnet ou pass vaccinal du patient."""
+
+    class EventType(models.TextChoices):
+        SCAN = "SCAN", "Scan du QR Code"
+        EXPORT_PDF = "EXPORT_PDF", "Export du carnet en PDF"
+        CONSULTATION = "CONSULTATION", "Consultation du carnet"
+        AUTRE = "AUTRE", "Autre"
+
+    patient = models.ForeignKey(
+        Patient,
+        on_delete=models.CASCADE,
+        related_name="pass_events",
+        db_index=True,
+    )
+
+    type_evenement = models.CharField(
+        max_length=30,
+        choices=EventType.choices,
+        default=EventType.SCAN,
+    )
+
+    service = models.ForeignKey(
+        ServiceVaccination,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pass_events",
+    )
+
+    centre = models.ForeignKey(
+        CentreVaccination,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pass_events",
+    )
+
+    utilisateur = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pass_events",
+        help_text="Agent qui a scanné le carnet/pass, si connu.",
+    )
+
+    source = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text="Source technique : portail_web, appli_mobile, api_integration..."
+    )
+
+    adresse_ip = models.GenericIPAddressField(
+        null=True,
+        blank=True,
+        help_text="IP du poste qui a scanné, si disponible."
+    )
+
+    user_agent = models.TextField(
+        null=True,
+        blank=True,
+        help_text="User-Agent HTTP, si disponible."
+    )
+
+    commentaire = models.TextField(
+        blank=True,
+        help_text="Informations complémentaires sur l’utilisation."
+    )
+
+    meta = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Données techniques additionnelles (id requête, trace, etc.)."
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        verbose_name = "Événement carnet/pass vaccinal"
+        verbose_name_plural = "Événements carnet/pass vaccinal"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["patient", "created_at"]),
+            models.Index(fields=["centre", "created_at"]),
+            models.Index(fields=["type_evenement", "created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.get_type_evenement_display()} - {self.patient} @ {self.created_at:%d/%m/%Y %H:%M}"

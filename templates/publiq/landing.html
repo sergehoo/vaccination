@@ -251,7 +251,7 @@
                 {% if request.user.first_name or request.user.last_name %}
                     {{ request.user.first_name|slice:":1" }}{{ request.user.last_name|slice:":1" }}
                 {% else %}
-                    {{ request.user.username|slice:":2" }}
+                    {{ request.user|slice:":2" }}
                 {% endif %}
             </div>
 
@@ -261,7 +261,7 @@
                     {% if request.user.first_name %}
                         {{ request.user.first_name }} {{ request.user.last_name|upper }}
                     {% else %}
-                        {{ request.user.username }}
+                        {{ request.user }}
                     {% endif %}
                 </p>
                 <p class="text-slate-500 dark:text-slate-400 text-[10px]">
@@ -283,7 +283,7 @@
                     {% if request.user.first_name %}
                         {{ request.user.first_name }} {{ request.user.last_name|upper }}
                     {% else %}
-                        {{ request.user.username }}
+                        {{ request.user }}
                     {% endif %}
                 </p>
                 <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
@@ -763,7 +763,7 @@
             {% if request.user.first_name or request.user.last_name %}
               {{ request.user.first_name|default:''|slice:":1" }}{{ request.user.last_name|default:''|slice:":1" }}
             {% else %}
-              {{ request.user.email|default:request.user.username|slice:":2" }}
+              {{ request.user.email|default:request.user|slice:":2" }}
             {% endif %}
           </span>
           <div class="text-left text-[12px]">
@@ -771,7 +771,7 @@
               {% if request.user.first_name or request.user.last_name %}
                 {{ request.user.first_name }} {{ request.user.last_name|upper }}
               {% else %}
-                {{ request.user.email|default:request.user.username }}
+                {{ request.user.email|default:request.user }}
               {% endif %}
             </p>
             <p class="text-ivoireBlue/70 text-[11px]">

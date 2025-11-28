@@ -34,7 +34,7 @@ from xhtml2pdf import pisa
 from inhp.backends import StaffOnlyMixin
 from inhp.forms import VaccinationFilterForm, VaccinationForm
 from inhp.models import Patient, Vaccination, Maladie, Mapi, VaccineExt, Consultation, AccessLevel, Role, Vaccin, \
-    LotVaccin, CentreVaccination, Utilisateur
+    LotVaccin, CentreVaccination, Utilisateur, RendezVousVaccination, RendezVousStatut, RendezVousType
 from django.utils.translation import gettext as _
 
 
@@ -1352,3 +1352,134 @@ class VaccineExtDeleteView(StaffOnlyMixin, LoginRequiredMixin, PermissionRequire
         return HttpResponseRedirect(self.get_success_url())
 
 #----------------============================== Vaccin exterieur  ========================== -----------------------------------
+
+
+class ProRdvMixin(LoginRequiredMixin):
+    """
+    Mixin pour les vues RDV côté professionnel.
+    request.user est un Utilisateur (personnel).
+    """
+
+    def get_professionnel(self) -> Utilisateur:
+        return self.request.user  # ton custom user
+
+    def get_default_centre(self):
+        return self.get_professionnel().centre
+
+    def get_base_queryset(self):
+        """
+        Logique d’accès :
+          - CENTRE : RDV du centre de l’utilisateur
+          - DISTRICT : tous les centres du district
+          - REGION : tous les centres de la région
+          - POLE : (si tu veux) tous les centres du pôle
+          - NATIONAL / ADMIN : tout (éventuellement limité au service)
+        + toujours inclure les RDV où il est `personnel_affecte`.
+        """
+        pro = self.get_professionnel()
+
+        qs = (
+            RendezVousVaccination.objects
+            .select_related("centre", "service", "patient", "personnel_affecte")
+        )
+
+        # RDV directement assignés au pro
+        filtre = Q(personnel_affecte=pro)
+
+        # Portée par niveau d’accès
+        level = pro.access_level or AccessLevel.CENTRE
+
+        # Attention : adapte les noms des constantes AccessLevel.*
+        if level == AccessLevel.CENTRE and pro.centre:
+            filtre |= Q(centre=pro.centre)
+
+        elif level == AccessLevel.DISTRICT and pro.district:
+            filtre |= Q(centre__district=pro.district)
+
+        elif level == AccessLevel.REGION and pro.region:
+            filtre |= Q(centre__district__region=pro.region)
+
+        elif hasattr(AccessLevel, "POLE") and level == AccessLevel.POLE and pro.pole:
+            filtre |= Q(centre__district__region__pole=pro.pole)
+
+        elif hasattr(AccessLevel, "NATIONAL") and level == AccessLevel.NATIONAL:
+            # on laisse ouvert, éventuellement on filtre par service ci-dessous
+            pass
+
+        # Filtre par service si l’utilisateur est rattaché à un service
+        if pro.service:
+            filtre &= Q(service=pro.service)
+
+        return qs.filter(filtre)
+
+class ProRendezVousListView(ProRdvMixin, ListView):
+    model = RendezVousVaccination
+    template_name = "professionnel_space/rendez_vous/liste.html"
+    context_object_name = "rendez_vous"
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = self.get_base_queryset()
+
+        statut = self.request.GET.get("statut")
+        if statut:
+            qs = qs.filter(statut=statut)
+
+        type_rdv = self.request.GET.get("type")
+        if type_rdv:
+            qs = qs.filter(type_rdv=type_rdv)
+
+        centre_id = self.request.GET.get("centre")
+        if centre_id:
+            qs = qs.filter(centre_id=centre_id)
+
+        date_debut = self.request.GET.get("date_debut")
+        date_fin = self.request.GET.get("date_fin")
+        if date_debut:
+            qs = qs.filter(date_heure__date__gte=date_debut)
+        if date_fin:
+            qs = qs.filter(date_heure__date__lte=date_fin)
+
+        search = self.request.GET.get("q")
+        if search:
+            qs = qs.filter(
+                Q(patient__nom__icontains=search)
+                | Q(patient__prenoms__icontains=search)
+                | Q(patient__code_patient__icontains=search)
+            )
+
+        tri = self.request.GET.get("tri", "date_heure")
+        if tri in ["date_heure", "-date_heure", "statut", "type_rdv", "priorite"]:
+            qs = qs.order_by(tri)
+        else:
+            qs = qs.order_by("date_heure")
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        base_qs = self.get_base_queryset()
+        now = timezone.now()
+
+        context["statuts_rendezvous"] = RendezVousStatut.choices
+        context["types_rendezvous"] = RendezVousType.choices
+        context["filtre_actuel"] = {
+            "statut": self.request.GET.get("statut", ""),
+            "type": self.request.GET.get("type", ""),
+            "centre": self.request.GET.get("centre", ""),
+            "date_debut": self.request.GET.get("date_debut", ""),
+            "date_fin": self.request.GET.get("date_fin", ""),
+            "tri": self.request.GET.get("tri", "date_heure"),
+            "q": self.request.GET.get("q", ""),
+        }
+
+        context["stats"] = {
+            "total": base_qs.count(),
+            "planifies": base_qs.filter(statut=RendezVousStatut.PLANIFIE).count(),
+            "confirmes": base_qs.filter(statut=RendezVousStatut.CONFIRME).count(),
+            "honores": base_qs.filter(statut=RendezVousStatut.HONORE).count(),
+            "du_jour": base_qs.filter(date_heure__date=now.date()).count(),
+        }
+
+        context["professionnel"] = self.get_professionnel()
+        return context

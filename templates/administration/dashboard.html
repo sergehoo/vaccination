@@ -18,95 +18,165 @@
             <div class="nk-content-body space-y-5">
 
                 {# HERO / CONTEXTE #}
-                <div
-                        class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft"
-                >
-                    <div class="absolute inset-y-0 right-0 hidden md:block opacity-70">
-                        <img src="{% static 'images/banner5.webp' %}" alt="Vaccination CI"
-                             class="h-full object-contain pointer-events-none">
-                    </div>
+              {% with svc=request.user.service %}
+<div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 text-white shadow-soft"
+     style="
+        background: linear-gradient(90deg, {{ svc.primary_color|default:'#020617' }}, {{ svc.secondary_color|default:'#020617' }});
+        color: {{ svc.text_color|default:'#e5e7eb' }};
+     ">
 
-                    <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-                        <div class="space-y-2 max-w-xl">
-                            <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90">
-                                Plateforme Nationale de Gestion de la Vaccination
-                            </p>
-                            <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
-                                Pilotage temps réel des campagnes vaccinales
-                            </h1>
-                            <p class="text-[12px] text-slate-300">
-                                Suivez la couverture, les stocks et les incidents sur votre périmètre.
-                                Données issues des centres de vaccination et des déclarations MAPI.
-                            </p>
-                            <div class="flex flex-wrap items-center gap-2 text-[11px]">
-                                {% if request.user.is_staff %}
+    {# Bannière à droite, spécifique au service si dispo #}
+    <div class="absolute inset-y-0 right-0 hidden md:block opacity-70 pointer-events-none">
+        {% if svc and svc.banniere %}
+            <img src="{{ svc.banniere.url }}" alt="{{ svc.nom }}"
+                 class="h-full object-contain">
+        {% elif svc and svc.code == "INHP" %}
+            <img src="{% static 'images/banner_inhp.webp' %}" alt="INHP"
+                 class="h-full object-contain">
+        {% elif svc and svc.code == "PEV" %}
+            <img src="{% static 'images/banner_pev.webp' %}" alt="PEV"
+                 class="h-full object-contain">
+        {% else %}
+            <img src="{% static 'images/banner5.webp' %}" alt="Vaccination CI"
+                 class="h-full object-contain">
+        {% endif %}
+    </div>
 
+    <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <div class="space-y-2 max-w-xl">
+            {# Ligne sur-titre : nom du service ou plateforme nationale #}
+            <p class="text-[10px] uppercase tracking-[0.32em] text-slate-300/90">
+                {% if svc %}
+                    {{ svc.nom_court|default:svc.nom }}
+                {% else %}
+                    Plateforme Nationale de Gestion de la Vaccination
+                {% endif %}
+            </p>
 
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/10 text-yellow-300 border border-yellow-400/40">
-                                    <i class="fa-solid fa-map-marker text-[12px]"></i>
-                                        {% if request.user.access_level == "pole" and request.user.pole %}
-                                            {{ request.user.pole }}
-                                        {% elif request.user.access_level == "region" and request.user.region %}
-                                            {{ request.user.region }}
-                                        {% elif request.user.access_level == "district" and request.user.district %}
-                                            {{ request.user.district }}
-                                        {% elif request.user.access_level == "centre" and request.user.centre %}
-                                            {{ request.user.centre }}
-                                        {% elif request.user.access_level == "national" %}
-                                            National
-                                        {% endif %}
+            {# Titre adapté au service #}
+            <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
+                {% if svc and svc.code == "INHP" %}
+                    Surveillance & riposte épidémiologique en temps réel
+                {% elif svc and svc.code == "PEV" %}
+                    Pilotage du Programme Élargi de Vaccination (PEV)
+                {% else %}
+                    Pilotage temps réel des campagnes vaccinales
+                {% endif %}
+            </h1>
+
+            {# Description adaptée #}
+            <p class="text-[12px] text-slate-300">
+                {% if svc and svc.code == "INHP" %}
+                    Suivi des MPE, alertes SIMR, investigations de terrain et coordination de la riposte avec les districts sanitaires.
+                {% elif svc and svc.code == "PEV" %}
+                    Suivez la couverture vaccinale, les abandons, les ruptures et la chaîne du froid sur l’ensemble des districts sanitaires.
+                {% else %}
+                    Suivez la couverture, les stocks et les incidents sur votre périmètre.
+                    Données issues des centres de vaccination et des déclarations MAPI.
+                {% endif %}
+            </p>
+
+            {# Badges thématiques selon le service #}
+            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+
+                {# Périmètre géographique (inchangé) #}
+                {% if request.user.is_staff %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/10 text-yellow-300 border border-yellow-400/40">
+                        <i class="fa-solid fa-map-marker text-[12px]"></i>
+                        {% if request.user.access_level == "pole" and request.user.pole %}
+                            {{ request.user.pole }}
+                        {% elif request.user.access_level == "region" and request.user.region %}
+                            {{ request.user.region }}
+                        {% elif request.user.access_level == "district" and request.user.district %}
+                            {{ request.user.district }}
+                        {% elif request.user.access_level == "centre" and request.user.centre %}
+                            {{ request.user.centre }}
+                        {% elif request.user.access_level == "national" %}
+                            National
+                        {% endif %}
+                    </span>
+                {% endif %}
+
+                {% if svc and svc.code == "INHP" %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-500/10 text-red-200 border border-red-400/40">
+                        <i class="fa-solid fa-biohazard text-[9px]"></i>
+                        Maladies à potentiel épidémique
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
+                        <i class="fa-solid fa-bell text-[9px]"></i>
+                        Alertes & signaux SIMR
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">
+                        <i class="fa-solid fa-people-arrows text-[9px]"></i>
+                        Investigations & riposte
+                    </span>
+
+                {% elif svc and svc.code == "PEV" %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">
+                        <i class="fa-solid fa-baby text-[9px]"></i>
+                        Vaccination infantile
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
+                        <i class="fa-solid fa-chart-column text-[9px]"></i>
+                        Couverture & abandons
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/40">
+                        <i class="fa-solid fa-snowflake text-[9px]"></i>
+                        Chaîne du froid PEV
+                    </span>
+
+                {% else %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
+                        <i class="fa-solid fa-shield-virus text-[9px]"></i>
+                        COVID-19
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">
+                        <i class="fa-solid fa-baby text-[9px]"></i>
+                        Vaccination infantile
+                    </span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/40">
+                        <i class="fa-solid fa-syringe text-[9px]"></i>
+                        PEV de routine
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        {# Bloc stats : tu peux le garder tel quel, il reste valable pour tous les services #}
+        <div class="rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-[11px] min-w-[220px] space-y-2">
+            <div class="flex items-center justify-between gap-2">
+                <p class="text-slate-200/90 font-medium"
+                   x-text="`Activité ${data.meta.scope_label ? data.meta.scope_label.toLowerCase() : ''}`"></p>
+                <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">
+                    <span x-show="!isLoading">Synchro · OK</span>
+                    <span x-show="isLoading">Mise à jour…</span>
                 </span>
-                                {% endif %}
-
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40">
-                                    <i class="fa-solid fa-shield-virus text-[9px]"></i>
-                                    COVID-19
-                                </span>
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40">
-                                    <i class="fa-solid fa-baby text-[9px]"></i>
-                                    Vaccination infantile
-                                </span>
-                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-200 border border-amber-400/40">
-                                    <i class="fa-solid fa-syringe text-[9px]"></i>
-                                    PEV de routine
-                                </span>
-                            </div>
-                        </div>
-
-                        <div class="rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-[11px] min-w-[220px] space-y-2">
-                            <div class="flex items-center justify-between gap-2">
-                                <p class="text-slate-200/90 font-medium"
-                                   x-text="`Activité ${data.meta.scope_label ? data.meta.scope_label.toLowerCase() : ''}`"></p>
-                                <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-400/40 text-[10px]">
-                                    <span x-show="!isLoading">Synchro · OK</span>
-                                    <span x-show="isLoading">Mise à jour…</span>
-                                </span>
-                            </div>
-                            <div class="flex gap-3 items-end">
-                                <div>
-                                    <p class="text-lg font-semibold"
-                                       x-text="formatNumber(data.totals.total_doses_today)"></p>
-                                    <p class="text-[10px] text-slate-300">
-                                        doses enregistrées aujourd’hui
-                                    </p>
-                                </div>
-                                <div class="flex-1 h-10 relative">
-                                    <div class="absolute inset-0 rounded-xl bg-gradient-to-tr from-emerald-500/40 via-sky-500/30 to-amber-400/40 opacity-60 blur-[10px]"></div>
-                                    <div class="absolute inset-0 border border-dashed border-slate-500/40 rounded-xl"></div>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between text-[10px] text-slate-300">
-                                <span x-text="`Dernière mise à jour : ${formatDateTime(data.meta.last_update)}`"></span>
-                                <span class="flex items-center gap-1">
-                                    <i class="fa-solid fa-circle text-[5px]"
-                                       :class="isLoading ? 'text-amber-300 animate-pulse' : 'text-emerald-400 animate-pulse'"></i>
-                                    <span x-text="isLoading ? 'rafraîchissement en cours' : 'temps quasi réel'"></span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+            <div class="flex gap-3 items-end">
+                <div>
+                    <p class="text-lg font-semibold"
+                       x-text="formatNumber(data.totals.total_doses_today)"></p>
+                    <p class="text-[10px] text-slate-300">
+                        doses enregistrées aujourd’hui
+                    </p>
                 </div>
-
+                <div class="flex-1 h-10 relative">
+                    <div class="absolute inset-0 rounded-xl bg-gradient-to-tr from-emerald-500/40 via-sky-500/30 to-amber-400/40 opacity-60 blur-[10px]"></div>
+                    <div class="absolute inset-0 border border-dashed border-slate-500/40 rounded-xl"></div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between text-[10px] text-slate-300">
+                <span x-text="`Dernière mise à jour : ${formatDateTime(data.meta.last_update)}`"></span>
+                <span class="flex items-center gap-1">
+                    <i class="fa-solid fa-circle text-[5px]"
+                       :class="isLoading ? 'text-amber-300 animate-pulse' : 'text-emerald-400 animate-pulse'"></i>
+                    <span x-text="isLoading ? 'rafraîchissement en cours' : 'temps quasi réel'"></span>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endwith %}
                 {# BARRE D'ACTIONS / PÉRIODE #}
                 <div class="flex flex-col lg:flex-row lg:items-center gap-3 justify-between">
                     <div class="flex flex-wrap gap-2 text-[11px]">

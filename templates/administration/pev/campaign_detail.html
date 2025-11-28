@@ -1,0 +1,1067 @@
+{% extends "layout/base.html" %}
+{% load static humanize %}
+
+{% block title %}{{ campagne.nom }} - Détails de la campagne{% endblock %}
+
+{% block content %}
+<div x-data="campaignDetail()" class="min-h-screen py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {# HERO CAMPAGNE #}
+        <div class="relative overflow-hidden rounded-3xl border border-white/20 dark:border-slate-800/80 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-900 text-white shadow-soft mb-8">
+            <!-- Aura droite -->
+            <div class="absolute inset-y-0 right-0 hidden md:flex items-center pr-6 pointer-events-none">
+                <div class="relative w-40 h-40 rounded-full bg-sky-500/10 border border-sky-400/30 flex items-center justify-center">
+                    <div class="w-24 h-24 rounded-full bg-slate-900/80 flex items-center justify-center border border-white/10">
+                        <i class="fa-solid fa-syringe text-2xl text-sky-300"></i>
+                    </div>
+                    {% if zones_stats %}
+                    <div class="absolute -bottom-2 -left-4 px-3 py-1.5 rounded-2xl bg-white/10 border border-white/20 text-[10px] backdrop-blur flex items-center gap-1">
+                        <i class="fa-solid fa-location-dot text-[9px]"></i>
+                        {{ zones_stats.nb_poles }} P • {{ zones_stats.nb_regions }} R • {{ zones_stats.nb_districts }} D • {{ zones_stats.nb_centres }} C
+                    </div>
+                    {% endif %}
+                    <div class="absolute -top-2 -right-2 px-3 py-1.5 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 text-[10px] flex items-center gap-1">
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                       {{ stats_detaillees.total_enfants_vaccines|default:indicateurs_campagne.nombre_enfants_vaccines|intcomma }} enfants
+                    </div>
+                </div>
+            </div>
+
+            <div class="relative px-5 sm:px-7 py-5 sm:py-6 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+                <!-- Bloc gauche : infos principales -->
+                <div class="space-y-3 max-w-2xl">
+                    <div class="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-slate-300/90">
+                        <span>Côte d’Ivoire · Campagne PEV</span>
+
+                        {% if request.user.is_staff %}
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-900/10 text-yellow-300 border border-yellow-400/40 normal-case tracking-normal">
+                            <i class="fa-solid fa-map-marker text-[11px]"></i>
+                            {% if request.user.access_level == "pole" and request.user.pole %}
+                                {{ request.user.pole }}
+                            {% elif request.user.access_level == "region" and request.user.region %}
+                                {{ request.user.region }}
+                            {% elif request.user.access_level == "district" and request.user.district %}
+                                {{ request.user.district }}
+                            {% elif request.user.access_level == "centre" and request.user.centre %}
+                                {{ request.user.centre }}
+                            {% elif request.user.access_level == "national" %}
+                                Niveau national
+                            {% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <h1 class="text-xl sm:text-2xl font-semibold flex items-center gap-2">
+                            <span>{{ campagne.nom }}</span>
+                            {% if campagne.nom_court %}
+                                <span class="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-white/5 border border-white/15 text-[11px] text-slate-100">
+                                    {{ campagne.nom_court }}
+                                </span>
+                            {% endif %}
+                        </h1>
+                    </div>
+
+                    <!-- Statut + code + temporel -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Statut -->
+                        <span class="{% spaceless %}
+                            {% if campagne.statut == 'en_cours' %}bg-emerald-500/15 text-emerald-300 border-emerald-400/40
+                            {% elif campagne.statut == 'planifiee' %}bg-sky-500/15 text-sky-200 border-sky-400/40
+                            {% elif campagne.statut == 'brouillon' %}bg-slate-500/15 text-slate-200 border-slate-400/40
+                            {% elif campagne.statut == 'validee' %}bg-amber-500/15 text-amber-200 border-amber-400/40
+                            {% elif campagne.statut == 'suspendue' %}bg-red-500/15 text-red-200 border-red-400/40
+                            {% elif campagne.statut == 'cloturee' %}bg-slate-500/20 text-slate-100 border-slate-400/40
+                            {% else %}bg-purple-500/15 text-purple-200 border-purple-400/40{% endif %}
+                        {% endspaceless %} inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium border">
+                            <span class="w-1.5 h-1.5 rounded-full mr-1.5
+                                {% if campagne.statut == 'en_cours' %}bg-emerald-400
+                                {% elif campagne.statut == 'planifiee' %}bg-sky-400
+                                {% elif campagne.statut == 'suspendue' %}bg-red-400
+                                {% elif campagne.statut == 'cloturee' %}bg-slate-300
+                                {% else %}bg-amber-300{% endif %}">
+                            </span>
+                            {{ campagne.get_statut_display }}
+                        </span>
+
+                        <!-- Code -->
+                        <span class="font-mono text-[11px] text-slate-200 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+                            {{ campagne.code }}
+                        </span>
+
+                        <!-- Type + fréquence -->
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40 text-[11px]">
+                            <i class="fa-solid fa-bullseye text-[9px] mr-1"></i>
+                            {{ campagne.get_type_campagne_display }}
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-200 border border-emerald-400/40 text-[11px]">
+                            <i class="fa-solid fa-repeat text-[9px] mr-1"></i>
+                            {{ campagne.get_frequence_display }}
+                        </span>
+                    </div>
+
+                    <!-- Période + info temps -->
+                    <div class="flex flex-wrap items-center gap-3 text-[12px] text-slate-200/90">
+                        <span class="inline-flex items-center gap-1">
+                            <i class="fa-solid fa-calendar-day text-[11px] text-sky-300"></i>
+                            {{ campagne.date_debut|date:"d/m/Y" }} – {{ campagne.date_fin|date:"d/m/Y" }}
+                        </span>
+
+                        {% if campagne.date_debut_reelle or campagne.date_fin_reelle %}
+                        <span class="inline-flex items-center gap-1">
+                            <i class="fa-solid fa-clock-rotate-left text-[11px] text-emerald-300"></i>
+                            Réelle :
+                            {% if campagne.date_debut_reelle %}{{ campagne.date_debut_reelle|date:"d/m/Y" }}{% endif %}
+                            {% if campagne.date_fin_reelle %} – {{ campagne.date_fin_reelle|date:"d/m/Y" }}{% endif %}
+                        </span>
+                        {% endif %}
+
+                        {% if progression_temps %}
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-[11px]">
+                            <i class="fa-solid fa-hourglass-half text-[10px]"></i>
+                            {% if progression_temps.etat_temps == 'en_cours' %}
+                                En cours · {{ progression_temps.jours_restants }} j restants
+                            {% elif progression_temps.etat_temps == 'pas_commencee' %}
+                                À venir · début {{ campagne.date_debut|date:"d/m/Y" }}
+                            {% elif progression_temps.etat_temps == 'terminee' %}
+                                Terminée
+                            {% elif progression_temps.etat_temps == 'en_retard' %}
+                                En retard de clôture
+                            {% else %}
+                                Période non définie
+                            {% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    {% if campagne.description %}
+                    <p class="text-[12px] text-slate-300 max-w-2xl">
+                        {{ campagne.description|truncatechars:220 }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Bloc droit : actions + mini stats -->
+                <div class="flex flex-col gap-3 items-stretch md:items-end">
+                    <!-- Actions -->
+                    <div class="flex flex-wrap gap-2 justify-end">
+                        <a href="{% url 'pev:campaign_list' %}"
+                           class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/90 text-slate-900 text-xs shadow-sm hover:scale-[1.01] transition border border-slate-200/70">
+                            <i class="fa-solid fa-arrow-left text-[11px]"></i>
+                            Retour
+                        </a>
+
+                        {% if perms.inhp.change_pevcampaign %}
+                        <a href="{% url 'pev:campaign_update' campagne.pk %}"
+                           class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-ivoireBlue text-white text-xs shadow-sm hover:scale-[1.01] transition">
+                            <i class="fa-solid fa-pen text-[11px]"></i>
+                            Modifier
+                        </a>
+                        {% endif %}
+
+                        <!-- Menu d'actions -->
+                        <div class="relative" x-data="{ open: false }">
+                            <button @click="open = !open"
+                                    class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-white/10 border border-white/20 text-xs">
+                                Actions
+                                <i class="fa-solid fa-chevron-down text-[10px] ml-1"></i>
+                            </button>
+                            <div x-show="open"
+                                 x-transition
+                                 @click.away="open = false"
+                                 class="origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-20 text-[13px]">
+                                <div class="py-1">
+                                    {% with actions=actions_flags %}
+                                        {% if actions.can_start %}
+                                        <form method="post" action="{% url 'pev:campaign_action' campagne.pk 'demarrer' %}">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                    class="flex items-center w-full px-4 py-2 text-emerald-700 hover:bg-emerald-50">
+                                                <i class="fa-solid fa-play text-[11px] mr-2"></i>
+                                                Démarrer la campagne
+                                            </button>
+                                        </form>
+                                        {% endif %}
+
+                                        {% if actions.can_suspend %}
+                                        <form method="post" action="{% url 'pev:campaign_action' campagne.pk 'suspendre' %}">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                    class="flex items-center w-full px-4 py-2 text-amber-700 hover:bg-amber-50">
+                                                <i class="fa-solid fa-pause text-[11px] mr-2"></i>
+                                                Suspendre
+                                            </button>
+                                        </form>
+                                        {% endif %}
+
+                                        {% if actions.can_resume %}
+                                        <form method="post" action="{% url 'pev:campaign_action' campagne.pk 'reprendre' %}">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                    class="flex items-center w-full px-4 py-2 text-emerald-700 hover:bg-emerald-50">
+                                                <i class="fa-solid fa-play text-[11px] mr-2"></i>
+                                                Reprendre
+                                            </button>
+                                        </form>
+                                        {% endif %}
+
+                                        {% if actions.can_close %}
+                                        <form method="post" action="{% url 'pev:campaign_action' campagne.pk 'clore' %}">
+                                            {% csrf_token %}
+                                            <button type="submit"
+                                                    class="flex items-center w-full px-4 py-2 text-red-700 hover:bg-red-50">
+                                                <i class="fa-solid fa-check-circle text-[11px] mr-2"></i>
+                                                Clôturer
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    {% endwith %}
+
+                                    <div class="border-t my-1"></div>
+
+                                    <a href="{% url 'pev:campaign_rapport' campagne.pk %}"
+                                       class="flex items-center px-4 py-2 text-slate-700 hover:bg-slate-50">
+                                        <i class="fa-solid fa-file-lines text-[11px] mr-2"></i>
+                                        Générer rapport
+                                    </a>
+                                    <a href="{% url 'pev:campaign_export' campagne.pk 'csv' %}"
+                                       class="flex items-center px-4 py-2 text-slate-700 hover:bg-slate-50">
+                                        <i class="fa-solid fa-file-export text-[11px] mr-2"></i>
+                                        Exporter CSV
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mini bloc KPI dans le hero -->
+                    <div class="mt-2 rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-[11px] space-y-2 min-w-[230px]">
+                        <div class="flex items-center justify-between gap-2">
+                            <p class="text-slate-200/90 font-medium">
+                                Synthèse campagne
+                            </p>
+                            <span class="px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-200 border border-sky-400/40 text-[10px]">
+                                Temps : {{ progression_temps.pourcentage|default:0|floatformat:0 }}%
+                            </span>
+                        </div>
+                        <div class="flex justify-between text-[11px] text-slate-300">
+                            <span>{{ stats_detaillees.total_enfants_vaccines|default:indicateurs_campagne.nombre_enfants_vaccines|intcomma }} enfants</span>
+                            <span> {{ stats_detaillees.total_doses_administrees|default:indicateurs_campagne.doses_administrees|intcomma }} doses</span>
+                        </div>
+                        {% if campagne.population_cible %}
+                        <div class="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                            <div class="h-1.5 rounded-full bg-emerald-400"
+                                 style="width: {{ campagne.progression_couverture|default:0}}%"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-300">
+                            <span>Objectif : {{ campagne.population_cible|intcomma }}</span>
+                            <span>{{ campagne.taux_couverture_reel|default:0 }}% couverture</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# CARTES DE STATS PRINCIPALES #}
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <!-- Enfants vaccinés -->
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl p-4 shadow-soft hover-lift">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-sky-500/90 flex items-center justify-center text-slate-500 shadow">
+                        <i class="fa-solid fa-children text-[14px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] uppercase tracking-[0.16em] text-slate-500">Enfants vaccinés</p>
+                        <p class="text-xl font-semibold">
+                            {{ stats_detaillees.total_enfants_vaccines|default:indicateurs_campagne.nombre_enfants_vaccines|intcomma }} enfants /  {{ campagne.nombre_patients_vaccines_calc|intcomma }} prs 
+                        </p>
+                    </div>
+                </div>
+                {% if campagne.population_cible %}
+                <div class="mt-3">
+                    <div class="flex justify-between text-[11px] text-slate-500 mb-1">
+                        <span>Objectif : {{ campagne.population_cible|intcomma }}</span>
+                        <span>{{ campagne.taux_couverture_reel|default:0|floatformat:1 }}%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div class="h-1.5 rounded-full bg-emerald-500 progress-bar"
+                             style="width: {{ campagne.progression_couverture|default:0 }}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Doses -->
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-emerald-200/60 dark:border-emerald-800/80 rounded-3xl p-4 shadow-soft hover-lift">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-emerald-500/90 flex items-center justify-center text-emerald-700 shadow">
+                        <i class="fa-solid fa-syringe text-[14px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] uppercase tracking-[0.16em] text-emerald-700">Doses administrées</p>
+                        <p class="text-xl font-semibold text-emerald-700">
+                            {{ stats_detaillees.total_doses_administrees|default:indicateurs_campagne.doses_administrees|intcomma }}
+                        </p>
+                        {% if stats_detaillees.moyenne_doses_equipe %}
+                        <p class="text-[11px] text-slate-500">
+                            {{ stats_detaillees.moyenne_doses_equipe|floatformat:0 }} doses / équipe
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Équipes -->
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-purple-200/60 dark:border-purple-800/80 rounded-3xl p-4 shadow-soft hover-lift">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-purple-500/90 flex items-center justify-center text-purple-700 shadow">
+                        <i class="fa-solid fa-users text-[14px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] uppercase tracking-[0.16em] text-purple-700">Équipes</p>
+                        <p class="text-xl font-semibold text-purple-700">
+                            {{ stats_detaillees.equipes_actives }}/{{ stats_detaillees.total_equipes }} actives
+                        </p>
+                        <p class="text-[11px] text-slate-500">
+                            {{ stats_detaillees.personnel_total }} personnels impliqués
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget -->
+            <div class="bg-white/80 dark:bg-slate-950/80 border border-amber-200/60 dark:border-amber-800/80 rounded-3xl p-4 shadow-soft hover-lift">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-amber-500/90 flex items-center justify-center text-amber-700 shadow">
+                        <i class="fa-solid fa-coins text-[14px]"></i>
+                    </div>
+                    <div>
+                        <p class="text-[11px] uppercase tracking-[0.16em] text-amber-700">Budget utilisé</p>
+                        <p class="text-xl font-semibold text-amber-700">
+                            {% if budget_stats.budget_depense %}
+                                {{ budget_stats.budget_depense|floatformat:0|intcomma }} €
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </p>
+                        {% if budget_stats.budget_alloue %}
+                        <p class="text-[11px] text-slate-500">
+                            {{ budget_stats.budget_utilise_calc|floatformat:1 }}% du budget alloué
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if budget_stats.budget_alloue %}
+                <div class="mt-3">
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div class="h-1.5 rounded-full
+                            {% if budget_stats.budget_utilise_calc > 90 %}bg-red-500
+                            {% elif budget_stats.budget_utilise_calc > 70 %}bg-amber-500
+                            {% else %}bg-emerald-500{% endif %} progress-bar"
+                             style="width: {{ budget_stats.budget_utilise_calc }}%"></div>
+                    </div>
+                    <p class="mt-1 text-[11px] text-slate-500">
+                        Reste : {{ budget_stats.budget_restant|floatformat:0|intcomma }} €
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- COLONNE PRINCIPALE -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Progression -->
+                <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl shadow-soft">
+                    <div class="px-6 py-4 border-b border-slate-100/80 dark:border-slate-800/80 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-sky-50 text-sky-600">
+                                <i class="fa-solid fa-gauge text-[14px]"></i>
+                            </span>
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Progression de la campagne</h2>
+                           <a href="{% url 'pev:poste_campagne' campagne_pk=campagne.pk %}"
+   class="inline-flex items-center px-3 py-2 rounded-md text-sm font-medium
+          text-white bg-emerald-600 hover:bg-emerald-700">
+    <svg class="w-4 h-4 mr-1.5" ...>...</svg>
+    Ouvrir le poste de vaccination pour cette campagne
+</a>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        {% if progression_temps %}
+                        <div>
+                            <div class="flex justify-between text-[12px] text-slate-600 mb-2">
+                                <span>Progression temporelle</span>
+                                <span>{{ progression_temps.pourcentage|default:0|floatformat:1 }}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                <div class="bg-sky-500 h-2 rounded-full progress-bar"
+                                     style="width: {{ progression_temps.pourcentage|default:0 }}%"></div>
+                            </div>
+                            <div class="flex justify-between text-[11px] text-slate-500 mt-2">
+                                <span>{{ progression_temps.jours_ecoules }} jours écoulés</span>
+                                <span>{{ progression_temps.jours_restants }} jours restants</span>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Efficacité -->
+                            <div class="text-center border border-slate-100/80 dark:border-slate-800/80 rounded-2xl p-4">
+                                <p class="text-[11px] text-slate-500 uppercase tracking-[0.16em] mb-1">Efficacité globale</p>
+                                <p class="text-3xl font-semibold text-slate-900 dark:text-slate-50">
+                                    {{ campagne.efficacite_campagne|default:0|floatformat:1 }}%
+                                </p>
+                                <div class="mt-3 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                    <div class="h-1.5 rounded-full bg-emerald-500 progress-bar"
+                                         style="width: {{ campagne.efficacite_campagne|default:0 }}%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Effets secondaires -->
+                            <div class="text-center border border-slate-100/80 dark:border-slate-800/80 rounded-2xl p-4">
+                                <p class="text-[11px] text-slate-500 uppercase tracking-[0.16em] mb-1">Effets secondaires</p>
+                                <p class="text-3xl font-semibold text-slate-900 dark:text-slate-50">
+                                    {{ campagne.taux_effets_secondaires|default:0 }}%
+                                </p>
+                                <div class="flex items-center justify-center mt-2 text-[11px]">
+                                    <i class="fa-solid fa-circle-info mr-1
+                                        {% if campagne.taux_effets_secondaires > 5 %}text-red-500
+                                        {% elif campagne.taux_effets_secondaires > 2 %}text-amber-500
+                                        {% else %}text-emerald-500{% endif %}"></i>
+                                    <span class="{% if campagne.taux_effets_secondaires > 5 %}text-red-600{% elif campagne.taux_effets_secondaires > 2 %}text-amber-600{% else %}text-emerald-600{% endif %}">
+                                        {% if campagne.taux_effets_secondaires > 5 %}Niveau élevé
+                                        {% elif campagne.taux_effets_secondaires > 2 %}Niveau modéré
+                                        {% else %}Niveau faible
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            {# LISTE DES VACCINATIONS DE LA CAMPAGNE #}
+<div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl shadow-soft mt-6">
+    <div class="px-6 py-4 border-b border-slate-100/80 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 text-emerald-600">
+                <i class="fa-solid fa-syringe text-[14px]"></i>
+            </span>
+            <div>
+                <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                    Vaccinations enregistrées dans cette campagne
+                </h2>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                    {{ vaccinations_total|default:0|intcomma }} actes enregistrés
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="px-6 pt-4 pb-2 border-b border-slate-100/80 dark:border-slate-800/80">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-6 gap-3 text-[13px]">
+            <div class="md:col-span-2">
+                <label class="block text-[11px] font-medium text-slate-600 mb-1">
+                    Recherche (nom, code patient, téléphone)
+                </label>
+                <input type="text" name="q"
+                       value="{{ vaccinations_filters.q }}"
+                       placeholder="Ex: KOUASSI, PEV-00123..."
+                       class="block w-full px-3 py-2 rounded-xl border border-slate-200 focus:ring-ivoireBlue focus:border-ivoireBlue text-[13px]">
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-medium text-slate-600 mb-1">
+                    Centre
+                </label>
+                <select name="centre"
+                        class="block w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-[13px]">
+                    <option value="">Tous</option>
+                    {% for c in filter_centres %}
+                        <option value="{{ c.id }}"
+                                {% if vaccinations_filters.centre == c.id|stringformat:"s" %}selected{% endif %}>
+                            {{ c.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-medium text-slate-600 mb-1">
+                    Vaccin
+                </label>
+                <select name="vaccin"
+                        class="block w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-[13px]">
+                    <option value="">Tous</option>
+                    {% for v in filter_vaccins %}
+                        <option value="{{ v.id }}"
+                                {% if vaccinations_filters.vaccin == v.id|stringformat:"s" %}selected{% endif %}>
+                            {{ v.nom }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-medium text-slate-600 mb-1">
+                    Équipe
+                </label>
+                <select name="equipe"
+                        class="block w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-[13px]">
+                    <option value="">Toutes</option>
+                    {% for e in filter_equipes %}
+                        <option value="{{ e.id }}"
+                                {% if vaccinations_filters.equipe == e.id|stringformat:"s" %}selected{% endif %}>
+                            {{ e.code }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-medium text-slate-600 mb-1">
+                    Vaccinateur
+                </label>
+                <select name="vaccinateur"
+                        class="block w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-[13px]">
+                    <option value="">Tous</option>
+                    {% for u in filter_vaccinateurs %}
+                        <option value="{{ u.id }}"
+                                {% if vaccinations_filters.vaccinateur == u.id|stringformat:"s" %}selected{% endif %}>
+                            {{ u.get_full_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="md:col-span-2 flex flex-col gap-2">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">
+                            Date début
+                        </label>
+                        <input type="date" name="date_debut"
+                               value="{{ vaccinations_filters.date_debut }}"
+                               class="block w-full px-3 py-2 rounded-xl border border-slate-200 text-[13px]">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-600 mb-1">
+                            Date fin
+                        </label>
+                        <input type="date" name="date_fin"
+                               value="{{ vaccinations_filters.date_fin }}"
+                               class="block w-full px-3 py-2 rounded-xl border border-slate-200 text-[13px]">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-1">
+                    <a href="?"
+                       class="inline-flex items-center px-3 py-1.5 rounded-xl border border-slate-200 text-[12px] text-slate-600 bg-white">
+                        Réinitialiser
+                    </a>
+                    <button type="submit"
+                            class="inline-flex items-center px-3 py-1.5 rounded-xl bg-ivoireBlue text-white text-[12px]">
+                        <i class="fa-solid fa-magnifying-glass text-[11px] mr-1"></i>
+                        Filtrer
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="p-6">
+        {% if vaccinations_page.object_list %}
+        <div class="overflow-hidden border border-slate-100/80 dark:border-slate-800/80 rounded-2xl">
+            <table class="min-w-full divide-y divide-slate-100/80 dark:divide-slate-800/80 text-[13px]">
+                <thead class="bg-slate-50 dark:bg-slate-900/80">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                            Date
+                        </th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                            Patient
+                        </th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                            Vaccin / Dose
+                        </th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                            Centre
+                        </th>
+                        <th class="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                            Équipe / Agent
+                        </th>
+                        <th class="px-4 py-3 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                            Rappel
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-slate-950 divide-y divide-slate-50/80 dark:divide-slate-900/80">
+                    {% for v in vaccinations_page.object_list %}
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/60">
+                        <td class="px-4 py-2 whitespace-nowrap text-[13px] text-slate-700 dark:text-slate-200">
+                            {{ v.date_vaccination|date:"d/m/Y" }}
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap">
+                            <div class="text-[13px] font-semibold text-slate-900 dark:text-slate-50">
+                                {{ v.patient.nom }} {{ v.patient.prenoms }}
+                            </div>
+                            <div class="text-[11px] text-slate-500">
+                                {{ v.patient.code_patient }}
+                            </div>
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap text-[13px] text-slate-700 dark:text-slate-200">
+                            {% if v.vaccin %}{{ v.vaccin.nom }}{% else %}-{% endif %}
+                            {% if v.dose %}
+                                <span class="text-[11px] text-slate-500">• Dose {{ v.dose }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap text-[13px] text-slate-700 dark:text-slate-200">
+                            {{ v.centre.name }}
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap text-[13px] text-slate-700 dark:text-slate-200">
+                            {% if v.equipe %}
+                                <div>{{ v.equipe.code }}</div>
+                            {% endif %}
+                            {% if v.vaccinateur %}
+                                <div class="text-[11px] text-slate-500">
+                                    {{ v.vaccinateur.get_full_name }}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap text-center">
+                            {% if v.date_rappel %}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-sky-50 text-sky-700 border border-sky-100">
+                                    {{ v.date_rappel|date:"d/m/Y" }}
+                                </span>
+                            {% else %}
+                                <span class="text-[11px] text-slate-400">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {# Pagination #}
+        <div class="mt-4 flex items-center justify-between text-[12px] text-slate-500">
+            <div>
+                Page {{ vaccinations_page.number }} / {{ vaccinations_page.paginator.num_pages }}
+            </div>
+            <div class="flex gap-1">
+                {% if vaccinations_page.has_previous %}
+                    <a href="?page={{ vaccinations_page.previous_page_number }}{% if request.GET.q or request.GET.centre or request.GET.vaccin or request.GET.equipe or request.GET.vaccinateur or request.GET.date_debut or request.GET.date_fin %}&{{ request.GET.urlencode }}{% endif %}"
+                       class="px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50">
+                        Précédent
+                    </a>
+                {% endif %}
+                {% if vaccinations_page.has_next %}
+                    <a href="?page={{ vaccinations_page.next_page_number }}{% if request.GET.q or request.GET.centre or request.GET.vaccin or request.GET.equipe or request.GET.vaccinateur or request.GET.date_debut or request.GET.date_fin %}&{{ request.GET.urlencode }}{% endif %}"
+                       class="px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-50">
+                        Suivant
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="py-8 text-center">
+            <i class="fa-solid fa-syringe text-slate-300 text-2xl"></i>
+            <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-50">
+                Aucune vaccination enregistrée pour le moment
+            </h3>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                Utilisez le poste de vaccination pour commencer à saisir les actes.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+                <!-- Informations détaillées -->
+                <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl shadow-soft">
+                    <div class="px-6 py-4 border-b border-slate-100/80 dark:border-slate-800/80 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 text-slate-600">
+                                <i class="fa-solid fa-list-ul text-[14px]"></i>
+                            </span>
+                            <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Informations détaillées</h2>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.16em] mb-3">Caractéristiques</h3>
+                                <dl class="space-y-2 text-[13px]">
+                                    <div class="flex justify-between">
+                                        <dt class="text-slate-600">Type :</dt>
+                                        <dd class="font-medium text-slate-900 dark:text-slate-50">{{ campagne.get_type_campagne_display }}</dd>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <dt class="text-slate-600">Fréquence :</dt>
+                                        <dd class="font-medium text-slate-900 dark:text-slate-50">{{ campagne.get_frequence_display }}</dd>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <dt class="text-slate-600">Service :</dt>
+                                        <dd class="font-medium text-slate-900 dark:text-slate-50">{{ campagne.service.nom }}</dd>
+                                    </div>
+                                    {% if campagne.responsable_campagne %}
+                                    <div class="flex justify-between">
+                                        <dt class="text-slate-600">Responsable :</dt>
+                                        <dd class="font-medium text-slate-900 dark:text-slate-50">
+                                            {{ campagne.responsable_campagne.get_full_name }}
+                                        </dd>
+                                    </div>
+                                    {% endif %}
+                                </dl>
+                            </div>
+
+                            <div>
+                                <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.16em] mb-3">Population cible</h3>
+                                <dl class="space-y-2 text-[13px]">
+                                    {% if campagne.age_min_mois or campagne.age_max_mois %}
+                                    <div class="flex justify-between">
+                                        <dt class="text-slate-600">Tranche d'âge :</dt>
+                                        <dd class="font-medium text-slate-900 dark:text-slate-50">
+                                            {% if campagne.age_min_mois %}{{ campagne.age_min_mois }} mois{% endif %}
+                                            {% if campagne.age_min_mois and campagne.age_max_mois %} – {% endif %}
+                                            {% if campagne.age_max_mois %}{{ campagne.age_max_mois }} mois{% endif %}
+                                        </dd>
+                                    </div>
+                                    {% endif %}
+                                    {% if campagne.population_cible %}
+                                    <div class="flex justify-between">
+                                        <dt class="text-slate-600">Population cible :</dt>
+                                        <dd class="font-medium text-slate-900 dark:text-slate-50">{{ campagne.population_cible|intcomma }}</dd>
+                                    </div>
+                                    {% endif %}
+                                    {% if campagne.couverture_cible %}
+                                    <div class="flex justify-between">
+                                        <dt class="text-slate-600">Couverture cible :</dt>
+                                        <dd class="font-medium text-slate-900 dark:text-slate-50">{{ campagne.couverture_cible }}%</dd>
+                                    </div>
+                                    {% endif %}
+                                </dl>
+                            </div>
+                        </div>
+
+                        {% if campagne.description %}
+                        <div class="pt-4 border-t border-dashed border-slate-200/80 dark:border-slate-800/80">
+                            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.16em] mb-2">Description</h3>
+                            <div class="prose prose-sm max-w-none text-slate-700 dark:text-slate-300">
+                                {{ campagne.description|linebreaks }}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if campagne.objectifs %}
+                        <div class="pt-4 border-t border-dashed border-slate-200/80 dark:border-slate-800/80">
+                            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.16em] mb-2">Objectifs</h3>
+                            <div class="prose prose-sm max-w-none text-slate-700 dark:text-slate-300">
+                                {{ campagne.objectifs|linebreaks }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Équipes -->
+                <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl shadow-soft">
+                    <div class="px-6 py-4 border-b border-slate-100/80 dark:border-slate-800/80 flex justify-between items-center">
+                        <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Équipes de vaccination</h2>
+                        {% if perms.inhp.add_pevcampaignteam %}
+                        <a href="{% url 'pev:campaign_team_create' campagne.pk %}"
+                           class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-full text-white bg-ivoireBlue hover:bg-blue-700">
+                            <i class="fa-solid fa-plus text-[10px] mr-1"></i>
+                            Nouvelle équipe
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="p-6">
+                        {% if equipes %}
+                        <div class="overflow-hidden border border-slate-100/80 dark:border-slate-800/80 rounded-2xl">
+                            <table class="min-w-full divide-y divide-slate-200/80 dark:divide-slate-800/80 text-[13px]">
+                                <thead class="bg-slate-50 dark:bg-slate-900/80">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left font-semibold text-slate-500 uppercase tracking-wider text-[11px]">Équipe</th>
+                                        <th class="px-6 py-3 text-left font-semibold text-slate-500 uppercase tracking-wider text-[11px]">Type</th>
+                                        <th class="px-6 py-3 text-left font-semibold text-slate-500 uppercase tracking-wider text-[11px]">Zone</th>
+                                        <th class="px-6 py-3 text-right font-semibold text-slate-500 uppercase tracking-wider text-[11px]">Enfants</th>
+                                        <th class="px-6 py-3 text-right font-semibold text-slate-500 uppercase tracking-wider text-[11px]">Doses</th>
+                                        <th class="px-6 py-3 text-center font-semibold text-slate-500 uppercase tracking-wider text-[11px]">Statut</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-slate-950 divide-y divide-slate-100/80 dark:divide-slate-900/80">
+                                    {% for equipe in equipes %}
+                                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-900/60">
+                                        <td class="px-6 py-3 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-sky-50 text-[11px] font-semibold text-sky-700 mr-2">
+                                                    {{ forloop.counter }}
+                                                </span>
+                                                <div>
+                                                    <div class="text-[13px] font-semibold text-slate-900 dark:text-slate-50">{{ equipe.code }}</div>
+                                                    {% if equipe.nom %}
+                                                    <div class="text-[11px] text-slate-500 dark:text-slate-400">{{ equipe.nom }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-3 whitespace-nowrap text-[13px] text-slate-600 dark:text-slate-300">
+                                            {{ equipe.get_type_equipe_display }}
+                                        </td>
+                                        <td class="px-6 py-3 whitespace-nowrap text-[13px] text-slate-600 dark:text-slate-300">
+                                            {{ equipe.zone_principale_label }}
+                                        </td>
+                                        <td class="px-6 py-3 whitespace-nowrap text-[13px] text-right text-slate-900 dark:text-slate-50">
+                                            {{ equipe.enfants_vaccines|default:0|intcomma }}
+                                        </td>
+                                        <td class="px-6 py-3 whitespace-nowrap text-[13px] text-right text-slate-900 dark:text-slate-50">
+                                            {{ equipe.doses_administrees|default:0|intcomma }}
+                                        </td>
+                                        <td class="px-6 py-3 whitespace-nowrap text-center">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium
+                                                {% if equipe.actif %}bg-emerald-50 text-emerald-700 border border-emerald-100
+                                                {% else %}bg-slate-50 text-slate-600 border border-slate-100{% endif %}">
+                                                <span class="w-1.5 h-1.5 rounded-full mr-1.5
+                                                    {% if equipe.actif %}bg-emerald-500{% else %}bg-slate-400{% endif %}">
+                                                </span>
+                                                {{ equipe.actif|yesno:"Actif,Inactif" }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-8">
+                            <i class="fa-solid fa-people-group text-slate-300 text-2xl"></i>
+                            <h3 class="mt-2 text-sm font-medium text-slate-900 dark:text-slate-50">Aucune équipe</h3>
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Commencez par créer une équipe pour cette campagne.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- COLONNE LATÉRALE -->
+            <div class="space-y-6">
+                <!-- Vaccins -->
+                <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl shadow-soft">
+                    <div class="px-6 py-4 border-b border-slate-100/80 dark:border-slate-800/80">
+                        <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Vaccins concernés</h2>
+                    </div>
+                    <div class="p-6">
+                        {% if campagne.vaccins.all %}
+                        <div class="space-y-2">
+                            {% for vaccin in campagne.vaccins.all %}
+                            <div class="flex items-center justify-between px-3 py-2 rounded-2xl bg-sky-50/80 border border-sky-100">
+                                <div class="flex items-center">
+                                    <div class="w-7 h-7 rounded-full bg-sky-100 flex items-center justify-center">
+                                        <i class="fa-solid fa-shield-virus text-[11px] text-sky-600"></i>
+                                    </div>
+                                    <div class="ml-2">
+                                        <p class="text-[13px] font-semibold text-slate-900">{{ vaccin.nom }}</p>
+                                        <p class="text-[11px] text-slate-500">{{ vaccin.code }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fa-solid fa-syringe text-slate-300 text-xl"></i>
+                            <p class="mt-2 text-sm text-slate-500">Aucun vaccin spécifié</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Zones couvertes -->
+                <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl shadow-soft">
+                    <div class="px-6 py-4 border-b border-slate-100/80 dark:border-slate-800/80">
+                        <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Zones couvertes</h2>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        {% if zones_stats %}
+                        <div class="flex flex-wrap gap-2 text-[11px] text-slate-600 mb-2">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200">
+                                {{ zones_stats.nb_poles }} pôles
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200">
+                                {{ zones_stats.nb_regions }} régions
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200">
+                                {{ zones_stats.nb_districts }} districts
+                            </span>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200">
+                                {{ zones_stats.nb_centres }} centres
+                            </span>
+                        </div>
+                        {% endif %}
+
+                        {% if campagne.poles.all %}
+                        <div>
+                            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.16em] mb-2">Pôles régionaux</h3>
+                            <div class="space-y-1 text-[13px]">
+                                {% for pole in campagne.poles.all %}
+                                <div class="flex items-center text-slate-600">
+                                    <i class="fa-solid fa-location-dot text-[11px] text-sky-500 mr-2"></i>
+                                    {{ pole.name }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if campagne.regions.all %}
+                        <div class="pt-3 border-t border-dashed border-slate-200/80 dark:border-slate-800/80">
+                            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.16em] mb-2">Régions de santé</h3>
+                            <div class="space-y-1 text-[13px]">
+                                {% for region in campagne.regions.all %}
+                                <div class="flex items-center text-slate-600">
+                                    <i class="fa-solid fa-diagram-project text-[11px] text-emerald-500 mr-2"></i>
+                                    {{ region.name }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if campagne.centres.all %}
+                        <div class="pt-3 border-t border-dashed border-slate-200/80 dark:border-slate-800/80">
+                            <h3 class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.16em] mb-2">Centres spécifiques</h3>
+                            <div class="space-y-1 text-[13px]">
+                                {% for centre in campagne.centres.all|slice:":5" %}
+                                <div class="flex items-center text-slate-600">
+                                    <i class="fa-solid fa-hospital text-[11px] text-purple-500 mr-2"></i>
+                                    {{ centre.name }}
+                                </div>
+                                {% endfor %}
+                                {% if campagne.centres.count > 5 %}
+                                <div class="text-[11px] text-slate-500 pl-4">
+                                    + {{ campagne.centres.count|add:"-5" }} autres centres
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Activité récente -->
+                <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl shadow-soft">
+                    <div class="px-6 py-4 border-b border-slate-100/80 dark:border-slate-800/80 flex items-center justify-between">
+                        <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Activité récente</h2>
+                        {% if rapport_stats %}
+                        <span class="text-[11px] text-slate-500">
+                            {{ rapport_stats.total_enfants_rapports|intcomma }} enfants • {{ rapport_stats.total_doses_rapports|intcomma }} doses
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="p-6">
+                        {% if derniers_rapports %}
+                        <div class="space-y-3">
+                            {% for rapport in derniers_rapports %}
+                            <div class="border-l-4 border-sky-500 pl-3 py-1.5 bg-sky-50/60 rounded-r-xl">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-[13px] font-semibold text-slate-900">
+                                        {{ rapport.date|date:"d/m/Y" }}
+                                    </p>
+                                </div>
+                                <p class="text-[11px] text-slate-600 mt-0.5">
+                                    {{ rapport.enfants_vaccines }} enfants • {{ rapport.doses_administrees }} doses
+                                    {% if rapport.incidents %}
+                                    • <span class="text-red-600">{{ rapport.incidents }} incidents</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fa-solid fa-chart-simple text-slate-300 text-xl"></i>
+                            <p class="mt-2 text-sm text-slate-500">Aucun rapport récent</p>
+                        </div>
+                        {% endif %}
+
+                        {% if campagne.statut == 'en_cours' %}
+                        <div class="mt-4 pt-4 border-t border-slate-100/80 dark:border-slate-800/80">
+                            <button class="w-full inline-flex justify-center items-center px-4 py-2 border border-slate-200/80 dark:border-slate-700/80 text-[13px] font-medium rounded-2xl text-slate-700 dark:text-slate-100 bg-white/90 dark:bg-slate-900/80 hover:bg-slate-50">
+                                <i class="fa-solid fa-plus text-[11px] mr-2"></i>
+                                Ajouter un rapport
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Métadonnées -->
+                <div class="bg-white/80 dark:bg-slate-950/80 border border-slate-200/70 dark:border-slate-800/80 rounded-3xl shadow-soft">
+                    <div class="px-6 py-4 border-b border-slate-100/80 dark:border-slate-800/80">
+                        <h2 class="text-sm font-semibold text-slate-900 dark:text-slate-50">Informations système</h2>
+                    </div>
+                    <div class="p-6">
+                        <dl class="space-y-3 text-[13px]">
+                            <div class="flex justify-between">
+                                <dt class="text-slate-500">Créée le :</dt>
+                                <dd class="text-slate-900 dark:text-slate-50">{{ campagne.date_creation|date:"d/m/Y à H:i" }}</dd>
+                            </div>
+                            {% if campagne.created_by %}
+                            <div class="flex justify-between">
+                                <dt class="text-slate-500">Créée par :</dt>
+                                <dd class="text-slate-900 dark:text-slate-50">{{ campagne.created_by.get_full_name }}</dd>
+                            </div>
+                            {% endif %}
+                            <div class="flex justify-between">
+                                <dt class="text-slate-500">Modifiée le :</dt>
+                                <dd class="text-slate-900 dark:text-slate-50">{{ campagne.date_modification|date:"d/m/Y à H:i" }}</dd>
+                            </div>
+                            {% if campagne.meta %}
+                            <div class="pt-3 border-t border-slate-100/80 dark:border-slate-800/80">
+                                <dt class="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.16em] mb-1">Métadonnées</dt>
+                                <dd class="text-[11px] text-slate-600 dark:text-slate-300 font-mono bg-slate-50 dark:bg-slate-900/70 border border-slate-200/70 dark:border-slate-800/80 p-2 rounded-2xl">
+                                    {{ campagne.meta|length }} entrées enregistrées
+                                </dd>
+                            </div>
+                            {% endif %}
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function campaignDetail() {
+    return {
+        activeTab: 'overview',
+        setActiveTab(tab) {
+            this.activeTab = tab;
+        }
+    }
+}
+</script>
+
+<style>
+.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .5; }
+}
+.hover-lift {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+}
+.progress-bar {
+    transition: width 0.4s ease-in-out;
+}
+</style>
+{% endblock %}
